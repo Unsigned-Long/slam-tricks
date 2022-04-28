@@ -1,0 +1,16 @@
+{'undistorted-nearest': 5.18229(MS)}
+{'undistorted-bilinear': 8.25476(MS)}
+------------
+gauss-newton
+------------
+{'undistort point cost': 0.00903(MS)}
+srcPt(distorted): [188.00000, 120.00000]
+dstPt(undistorted): [174.34048, 110.19159]
+error: 0.000043158372137
+------
+OpenCV
+------
+{'undistort point cost': 0.05889(MS)}
+srcPt(distorted): [188.00000, 120.00000]
+dstPt(undistorted): [174.34122, 110.19208]
+error: 0.000723787932657
