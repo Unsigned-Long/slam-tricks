@@ -4,14 +4,16 @@
  * @brief to undistort a pixel point
  * @version 0.1
  * @date 2022-04-28
- * 
+ *
  * @copyright Copyright (c) 2022
  */
 #ifndef UNDISTORT_PT_H
 #define UNDISTORT_PT_H
 
 #include "opencv2/core.hpp"
-#include "struct_define.hpp"
+#include "struct_def.hpp"
+
+using namespace ns_st0;
 
 namespace ns_st1 {
   /**
@@ -27,7 +29,7 @@ namespace ns_st1 {
   static cv::Point2f undistortPoint(
       cv::Point2f srcPt,
       const CameraInnerParam &innerParam,
-      const CameraDistCoff &distCoff,
+      const CameraDistCoeff &distCoff,
       float threshold = 1E-5,
       int iterator = 5) {
     // check input parameters

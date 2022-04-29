@@ -2,7 +2,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 find_package(OpenCV)
 
-include_directories(./include ${OpenCV_INCLUDE_DIRS})
+include_directories(./include ${OpenCV_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/../st0-core/include)
 
 add_executable(${CMAKE_PROJECT_NAME} ./main.cpp)
 

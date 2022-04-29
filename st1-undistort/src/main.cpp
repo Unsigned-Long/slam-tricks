@@ -4,12 +4,12 @@
 #include "undistort_pt.hpp"
 
 void handleImage(cv::Mat distortedImg,
-                 const ns_st1::CameraInnerParam &innerParam,
-                 const ns_st1::CameraDistCoff &distCoff) {
+                 const CameraInnerParam &innerParam,
+                 const CameraDistCoeff &distCoff) {
   ns_timer::Timer timer;
   {
     timer.re_start();
-    cv::Mat undistortedImg = ns_st1::undistortImage(distortedImg, innerParam, distCoff, ns_st1::Interpolation::NEAREST_NEIGHBOR);
+    cv::Mat undistortedImg = ns_st1::undistortImage(distortedImg, innerParam, distCoff, Interpolation::NEAREST_NEIGHBOR);
     std::cout << timer.last_elapsed("undistorted-nearest") << std::endl;
 
     cv::imshow("distortedImg", distortedImg);
@@ -22,7 +22,7 @@ void handleImage(cv::Mat distortedImg,
 
   {
     timer.re_start();
-    cv::Mat undistortedImg = ns_st1::undistortImage(distortedImg, innerParam, distCoff, ns_st1::Interpolation::BILINEAR);
+    cv::Mat undistortedImg = ns_st1::undistortImage(distortedImg, innerParam, distCoff, Interpolation::BILINEAR);
     std::cout << timer.last_elapsed("undistorted-bilinear") << std::endl;
 
     cv::imshow("distortedImg", distortedImg);
@@ -37,8 +37,8 @@ void handleImage(cv::Mat distortedImg,
 }
 
 float undistortPointError(cv::Point2f srcPt, cv::Point2f dstPt,
-                          const ns_st1::CameraInnerParam &innerParam,
-                          const ns_st1::CameraDistCoff &distCoff) {
+                          const CameraInnerParam &innerParam,
+                          const CameraDistCoeff &distCoff) {
   float fx = innerParam.fx, fy = innerParam.fy, cx = innerParam.cx, cy = innerParam.cy;
   float k1 = distCoff.k1, k2 = distCoff.k2, k3 = distCoff.k3;
   float p1 = distCoff.p1, p2 = distCoff.p2;
@@ -63,8 +63,8 @@ float undistortPointError(cv::Point2f srcPt, cv::Point2f dstPt,
 }
 
 void handlePoint(cv::Mat distortedImg,
-                 const ns_st1::CameraInnerParam &innerParam,
-                 const ns_st1::CameraDistCoff &distCoff) {
+                 const CameraInnerParam &innerParam,
+                 const CameraDistCoeff &distCoff) {
   ns_timer::Timer timer;
   cv::Point2f srcPt(distortedImg.cols / 4.0f, distortedImg.rows / 4.0f);
   {
@@ -125,8 +125,8 @@ int main(int argc, char const *argv[]) {
   double k1 = -0.28340811, k2 = 0.07395907, p1 = 0.00019359, p2 = 1.76187114e-05;
 
   // structures for camera parameters
-  ns_st1::CameraInnerParam innerParam(fx, fy, cx, cy);
-  ns_st1::CameraDistCoff distCoff(k1, k2, 0.0, p1, p2);
+  CameraInnerParam innerParam(fx, fy, cx, cy);
+  CameraDistCoeff distCoff(k1, k2, 0.0, p1, p2);
 
   // read image
   cv::Mat img = cv::imread("../img/distorted.png", cv::IMREAD_GRAYSCALE);

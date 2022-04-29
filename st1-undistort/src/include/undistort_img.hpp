@@ -11,9 +11,11 @@
 #define UNDISTORT_IMG_H
 
 #include "opencv2/core.hpp"
-#include "struct_define.hpp"
+#include "struct_def.hpp"
 #include <functional>
 #include <iostream>
+
+using namespace ns_st0;
 
 namespace ns_st1 {
   /**
@@ -28,7 +30,7 @@ namespace ns_st1 {
   static cv::Mat undistortImage(
       cv::Mat src,
       const CameraInnerParam &innerParam,
-      const CameraDistCoff &distCoff,
+      const CameraDistCoeff &distCoff,
       Interpolation methods = Interpolation::NEAREST_NEIGHBOR) {
     // assert
     CV_Assert(src.type() == CV_8UC1);
@@ -101,7 +103,7 @@ namespace ns_st1 {
 
     for (int v = 0; v != rows; ++v) {
       auto dstPtr = dst.ptr<uchar>(v);
-      
+
       for (int u = 0; u != cols; ++u) {
 
         // transfrom to the normalized pixel coordinate
