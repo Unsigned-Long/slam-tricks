@@ -87,6 +87,8 @@ namespace ns_st2 {
       matE(1, 0) = vecX(3), matE(1, 1) = vecX(4), matE(1, 2) = vecX(5);
       matE(2, 0) = vecX(6), matE(2, 1) = vecX(7), matE(2, 2) = 1.0f;
 
+      matE.normalize();
+
       matF = KInv.transpose() * matE * KInv;
 
       // find the badest outliers

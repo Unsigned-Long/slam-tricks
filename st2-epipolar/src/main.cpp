@@ -146,6 +146,8 @@ void recoveryMovement(cv::Mat img1, cv::Mat img2,
   std::vector<cv::DMatch> goodMatches;
   auto e = ns_st2::solveEpipolar(kps1, kps2, match, innerParam, &goodMatches);
 
+  std::cout << e << std::endl;
+
   Eigen::Matrix3f rot21;
   Eigen::Vector3f t21;
   {
@@ -157,7 +159,11 @@ void recoveryMovement(cv::Mat img1, cv::Mat img2,
       std::cout << "rot\n";
       std::cout << rot21 << std::endl;
       std::cout << "t\n";
-      std::cout << t21 << std::endl;
+      std::cout << t21.transpose() << std::endl;
+      auto depth = ns_st2::triangulation(kps1.at(goodMatches.front().queryIdx),
+                                         kps2.at(goodMatches.front().trainIdx), innerParam.toEigenMatrix(),
+                                         rot21, t21);
+      std::cout << depth.first << ", " << depth.second << std::endl;
     }
   }
   return;

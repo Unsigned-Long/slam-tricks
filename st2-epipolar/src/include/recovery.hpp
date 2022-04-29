@@ -31,7 +31,7 @@ namespace ns_st2 {
       Eigen::Vector3f &t21) {
 
     // SVD decomposition
-    Eigen::JacobiSVD<Eigen::Matrix3f> svd(eMatrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Eigen::JacobiSVD<Eigen::Matrix3f> svd(eMatrix.normalized(), Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::Vector3f singularVal = svd.singularValues();
     Eigen::Matrix3f uMatrix = svd.matrixU();
     Eigen::Matrix3f vMatrix = svd.matrixV();
@@ -76,7 +76,7 @@ namespace ns_st2 {
     auto checkSolution = [&kp1, &kp2, &K, &rot21, &t21](const Eigen::Matrix3f &rot, const Eigen::Vector3f &t) -> bool {
       // compute the depth
       std::pair<float, float> depth = triangulation(kp1, kp2, K, rot, t);
-
+      
       // if two values are positive
       if (depth.first > 0.0f && depth.second > 0.0f) {
         rot21 = rot;
@@ -88,7 +88,6 @@ namespace ns_st2 {
     };
 
     // different solutions
-
     // solution 1
     Eigen::Matrix3f R1 = uMatrix * pRotMat.transpose() * vMatrix.transpose();
     normRot(R1);
