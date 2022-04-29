@@ -25,9 +25,10 @@ namespace ns_st2 {
       const std::vector<cv::KeyPoint> &kps1,
       const std::vector<cv::KeyPoint> &kps2,
       const std::vector<cv::DMatch> &srcMatches,
+      const CameraInnerParam &innerParam,
       std::vector<cv::DMatch> *goodMatches = nullptr,
-      float quantile = 3.8415) {
-
+      float quantile = 1.323) {
+        
     CV_Assert(srcMatches.size() >= 8);
 
     // clean source data
@@ -48,37 +49,48 @@ namespace ns_st2 {
     }
 
     // matrices for least square
-    Eigen::MatrixXd matA(matches.size(), 8), vecl = -Eigen::VectorXd::Ones(matches.size());
-    Eigen::Vector<double, 8> matX;
+    Eigen::MatrixXf matA(matches.size(), 8), vecl = -Eigen::VectorXf::Ones(matches.size());
+    Eigen::Vector<float, 8> vecX;
 
     // record the outliers' index in the matches
     std::set<int> outliers;
 
-    // construct the A matrix and l vector
+    float fx = innerParam.fx, fy = innerParam.fy, fxInv = 1.0f / fx, fyInv = 1.0f / fy;
+    float cx = innerParam.cx, cy = innerParam.cy;
+
+    Eigen::Matrix3f K = innerParam.toEigenMatrix(), KInv = K.inverse();
+    Eigen::Matrix3f matF, matE;
+
+    // construct the A matrix
     for (int i = 0; i != matches.size(); ++i) {
       const auto &match = matches.at(i);
 
       float u1 = kps1.at(match.queryIdx).pt.x, v1 = kps1.at(match.queryIdx).pt.y;
       float u2 = kps2.at(match.trainIdx).pt.x, v2 = kps2.at(match.trainIdx).pt.y;
 
-      matA(i, 0) = u1 * u2, matA(i, 1) = v1 * u2;
-      matA(i, 2) = u2, matA(i, 3) = u1 * v2;
-      matA(i, 4) = v1 * v2, matA(i, 5) = v2;
-      matA(i, 6) = u1, matA(i, 7) = v1;
+      float x1 = (u1 - cx) * fxInv, y1 = (v1 - cy) * fyInv;
+      float x2 = (u2 - cx) * fxInv, y2 = (v2 - cy) * fyInv;
+
+      matA(i, 0) = x1 * x2, matA(i, 1) = y1 * x2;
+      matA(i, 2) = x2, matA(i, 3) = x1 * y2;
+      matA(i, 4) = y1 * y2, matA(i, 5) = y2;
+      matA(i, 6) = x1, matA(i, 7) = y1;
     }
 
     // find outliers [the condition is to ensure that the equation has a solution]
     while (matches.size() - outliers.size() > 8) {
 
       // solve
-      matX = (matA.transpose() * matA).inverse() * matA.transpose() * vecl;
+      vecX = (matA.transpose() * matA).inverse() * matA.transpose() * vecl;
 
-      // get parameters
-      double f1 = matX(0, 0), f2 = matX(1, 0), f3 = matX(2, 0), f4 = matX(3, 0);
-      double f5 = matX(4, 0), f6 = matX(5, 0), f7 = matX(6, 0), f8 = matX(7, 0);
+      matE(0, 0) = vecX(0), matE(0, 1) = vecX(1), matE(0, 2) = vecX(2);
+      matE(1, 0) = vecX(3), matE(1, 1) = vecX(4), matE(1, 2) = vecX(5);
+      matE(2, 0) = vecX(6), matE(2, 1) = vecX(7), matE(2, 2) = 1.0f;
+
+      matF = KInv.transpose() * matE * KInv;
 
       // find the badest outliers
-      double maxVar = 0.0;
+      float maxVar = 0.0;
       int maxIdx = -1;
 
       for (int i = 0; i != matches.size(); ++i) {
@@ -91,18 +103,19 @@ namespace ns_st2 {
         float u1 = kps1.at(match.queryIdx).pt.x, v1 = kps1.at(match.queryIdx).pt.y;
         float u2 = kps2.at(match.trainIdx).pt.x, v2 = kps2.at(match.trainIdx).pt.y;
 
-        double a = u2 * f1 + v2 * f4 + f7;
-        double b = u2 * f2 + v2 * f5 + f8;
-        double c = u2 * f3 + v2 * f6 + 1.0;
+        Eigen::Vector3f p2(u2, v2, 1.0f);
+        Eigen::Matrix<float, 1, 3> temp = p2.transpose() * matF;
 
-        double num = a * u1 + b * v1 + c;
-        double den = a * a + b * b;
+        float a = temp(0, 0), b = temp(0, 1), c = temp(0, 2);
+
+        float num = a * u1 + b * v1 + c;
+        float den = a * a + b * b;
 
         if (den == 0.0) {
           continue;
         }
 
-        double statistics = num * num / den;
+        float statistics = num * num / den;
 
         if (statistics < quantile) {
           // current match is a good match
@@ -125,13 +138,6 @@ namespace ns_st2 {
       }
     }
 
-    // organize F matrix
-    Eigen::Matrix3f matF;
-
-    matF(0, 0) = matX(0, 0), matF(0, 1) = matX(1, 0), matF(0, 2) = matX(2, 0);
-    matF(1, 0) = matX(3, 0), matF(1, 1) = matX(4, 0), matF(1, 2) = matX(5, 0);
-    matF(2, 0) = matX(6, 0), matF(2, 1) = matX(7, 0), matF(2, 2) = 1.0f;
-
     if (goodMatches != nullptr) {
       goodMatches->clear();
       goodMatches->resize(matches.size() - outliers.size());
@@ -144,7 +150,7 @@ namespace ns_st2 {
       }
     }
 
-    return matF;
+    return matE;
   }
 } // namespace ns_st2
 
