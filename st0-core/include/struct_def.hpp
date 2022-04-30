@@ -90,16 +90,16 @@ namespace ns_st0 {
    * @param kps2 the key points in second image
    * @param match the matches
    */
-  void detectAndMatch(cv::Mat img1, cv::Mat img2,
-                      std::vector<cv::KeyPoint> &kps1,
-                      std::vector<cv::KeyPoint> &kps2,
-                      std::vector<cv::DMatch> &match) {
+  static void detectAndMatch(cv::Mat img1, cv::Mat img2,
+                             std::vector<cv::KeyPoint> &kps1,
+                             std::vector<cv::KeyPoint> &kps2,
+                             std::vector<cv::DMatch> &match) {
     cv::Mat descriptors1, descriptors2;
 
     cv::Ptr<cv::FeatureDetector> detector = cv::ORB::create();
     cv::Ptr<cv::DescriptorExtractor> descriptor = cv::ORB::create();
     cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce-Hamming");
-    
+
     // detector
     detector->detect(img1, kps1);
     detector->detect(img2, kps2);
