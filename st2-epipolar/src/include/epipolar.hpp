@@ -71,7 +71,7 @@ namespace ns_st2 {
       sigma2.at(i) = layerScale * layerScale;
     }
 
-    Eigen::Matrix3f K = innerParam.toEigenMatrix(), KInv = K.inverse();
+    Eigen::Matrix3f K = innerParam.toEigenMatrix<float>(), KInv = K.inverse();
     Eigen::Matrix3f matF, matE;
 
     // construct the A matrix
@@ -102,7 +102,10 @@ namespace ns_st2 {
       matE(1, 0) = vecX(3), matE(1, 1) = vecX(4), matE(1, 2) = vecX(5);
       matE(2, 0) = vecX(6), matE(2, 1) = vecX(7), matE(2, 2) = 1.0f;
 
+      std::cout << vecX.transpose() << std::endl;
+      std::cout << matE << std::endl;
       matE.normalize();
+      std::cout << matE << std::endl;
 
       matF = KInv.transpose() * matE * KInv;
 

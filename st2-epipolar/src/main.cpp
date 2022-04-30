@@ -25,6 +25,7 @@ void fMatrixOpenCV(cv::Mat img1, cv::Mat img2,
   timer.re_start();
 
   std::vector<cv::DMatch> goodMatches;
+  goodMatches.reserve(0.5 * match.size());
 
   double min_dist = std::min_element(match.cbegin(), match.cend(), [](const cv::DMatch &m1, const cv::DMatch &m2) {
                       return m1.distance < m2.distance;
@@ -64,7 +65,7 @@ void fMatrixOpenCV(cv::Mat img1, cv::Mat img2,
   std::cout << "t is " << std::endl
             << t << std::endl;
 
-  cv::Mat K = (cv::Mat_<double>(3, 3) << 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1);
+  cv::Mat K = innerParam.toOpenCVMatrix<double>();
   auto f = K.inv().t() * e * K.inv();
 
   float mean = 0.0, sigma = 0.0, errorMeanNorm = 0.0;
@@ -120,7 +121,7 @@ void fMatrixStatistic(cv::Mat img1, cv::Mat img2,
   std::cout << "essential matrix:\n"
             << e << std::endl;
 
-  auto K = innerParam.toEigenMatrix();
+  auto K = innerParam.toEigenMatrix<float>();
   auto f = K.inverse().transpose() * e * K.inverse();
 
   float mean = 0.0, sigma = 0.0, errorMeanNorm = 0.0;
@@ -158,7 +159,7 @@ void fMatrixStatistic(cv::Mat img1, cv::Mat img2,
   Eigen::Matrix3f rot21;
   Eigen::Vector3f t21;
   {
-    bool b = ns_st2::recoveryMove(e, innerParam.toEigenMatrix(),
+    bool b = ns_st2::recoveryMove(e, innerParam.toEigenMatrix<float>(),
                                   kps1.at(goodMatches.front().queryIdx),
                                   kps2.at(goodMatches.front().trainIdx), rot21, t21);
     std::cout << b << std::endl;
@@ -168,7 +169,7 @@ void fMatrixStatistic(cv::Mat img1, cv::Mat img2,
       std::cout << "t\n";
       std::cout << t21.transpose() << std::endl;
       auto depth = ns_st2::triangulation(kps1.at(goodMatches.front().queryIdx),
-                                         kps2.at(goodMatches.front().trainIdx), innerParam.toEigenMatrix(),
+                                         kps2.at(goodMatches.front().trainIdx), innerParam.toEigenMatrix<float>(),
                                          rot21, t21);
       std::cout << depth.first << ", " << depth.second << std::endl;
     }
@@ -187,7 +188,7 @@ void recoveryMovement(cv::Mat img1, cv::Mat img2,
   Eigen::Matrix3f rot21;
   Eigen::Vector3f t21;
   {
-    bool b = ns_st2::recoveryMove(e, innerParam.toEigenMatrix(),
+    bool b = ns_st2::recoveryMove(e, innerParam.toEigenMatrix<float>(),
                                   kps1.at(goodMatches.front().queryIdx),
                                   kps2.at(goodMatches.front().trainIdx), rot21, t21);
     std::cout << b << std::endl;
@@ -197,7 +198,7 @@ void recoveryMovement(cv::Mat img1, cv::Mat img2,
       std::cout << "t\n";
       std::cout << t21.transpose() << std::endl;
       auto depth = ns_st2::triangulation(kps1.at(goodMatches.front().queryIdx),
-                                         kps2.at(goodMatches.front().trainIdx), innerParam.toEigenMatrix(),
+                                         kps2.at(goodMatches.front().trainIdx), innerParam.toEigenMatrix<float>(),
                                          rot21, t21);
       std::cout << depth.first << ", " << depth.second << std::endl;
     }
