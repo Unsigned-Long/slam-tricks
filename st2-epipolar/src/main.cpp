@@ -5,9 +5,12 @@
 #include <algorithm>
 
 const float fx = 520.9, cx = 325.1, fy = 521.0, cy = 249.7;
-const CameraInnerParam innerParam(fx, fy, cx, cy);
 const cv::Point2d principal_point(325.1, 249.7);
 const double focal_length = 521;
+// const float fx = 718.856, fy = 718.856, cx = 607.1928, cy = 185.2157;
+// const cv::Point2d principal_point(607.1928, 185.2157);
+// const double focal_length = 718.856;
+const CameraInnerParam innerParam(fx, fy, cx, cy);
 
 void fMatrixOpenCV(cv::Mat img1, cv::Mat img2,
                    const std::vector<cv::KeyPoint> &kps1,
@@ -41,11 +44,25 @@ void fMatrixOpenCV(cv::Mat img1, cv::Mat img2,
   }
 
   auto e = cv::findEssentialMat(pts1, pts2, focal_length, principal_point);
-
   std::cout << timer.last_elapsed("cost time") << std::endl;
+
   std::cout << "matched points: " << goodMatches.size() << std::endl;
   std::cout << "essential matrix:\n"
             << e << std::endl;
+
+  std::vector<cv::Point2f> points1;
+  std::vector<cv::Point2f> points2;
+
+  for (int i = 0; i < (int)goodMatches.size(); i++) {
+    points1.push_back(kps1[goodMatches[i].queryIdx].pt);
+    points2.push_back(kps2[goodMatches[i].trainIdx].pt);
+  }
+  cv::Mat R, t;
+  recoverPose(e, points1, points2, R, t, focal_length, principal_point);
+  std::cout << "R is " << std::endl
+            << R << std::endl;
+  std::cout << "t is " << std::endl
+            << t << std::endl;
 
   cv::Mat K = (cv::Mat_<double>(3, 3) << 520.9, 0, 325.1, 0, 521.0, 249.7, 0, 0, 1);
   auto f = K.inv().t() * e * K.inv();
@@ -137,6 +154,25 @@ void fMatrixStatistic(cv::Mat img1, cv::Mat img2,
   cv::imshow("match", matchImg);
   cv::waitKey(0);
   cv::imwrite("../img/select-matches-ourself.png", matchImg);
+
+  Eigen::Matrix3f rot21;
+  Eigen::Vector3f t21;
+  {
+    bool b = ns_st2::recoveryMove(e, innerParam.toEigenMatrix(),
+                                  kps1.at(goodMatches.front().queryIdx),
+                                  kps2.at(goodMatches.front().trainIdx), rot21, t21);
+    std::cout << b << std::endl;
+    if (b) {
+      std::cout << "rot\n";
+      std::cout << rot21 << std::endl;
+      std::cout << "t\n";
+      std::cout << t21.transpose() << std::endl;
+      auto depth = ns_st2::triangulation(kps1.at(goodMatches.front().queryIdx),
+                                         kps2.at(goodMatches.front().trainIdx), innerParam.toEigenMatrix(),
+                                         rot21, t21);
+      std::cout << depth.first << ", " << depth.second << std::endl;
+    }
+  }
 }
 
 void recoveryMovement(cv::Mat img1, cv::Mat img2,
@@ -178,8 +214,8 @@ int main(int argc, char const *argv[]) {
   std::vector<cv::DMatch> match;
 
   detectAndMatch(img1, img2, kps1, kps2, match);
-  ::fMatrixOpenCV(img1, img2, kps1, kps2, match);
-  ::fMatrixStatistic(img1, img2, kps1, kps2, match);
+  // ::fMatrixOpenCV(img1, img2, kps1, kps2, match);
+  // ::fMatrixStatistic(img1, img2, kps1, kps2, match);
   ::recoveryMovement(img1, img2, kps1, kps2, match);
 
   return 0;
