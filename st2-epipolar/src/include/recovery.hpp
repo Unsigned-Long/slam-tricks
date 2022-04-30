@@ -36,6 +36,13 @@ namespace ns_st2 {
     Eigen::Matrix3f uMatrix = svd.matrixU();
     Eigen::Matrix3f vMatrix = svd.matrixV();
 
+    if (uMatrix.determinant() < 0.0f) {
+      uMatrix *= -1.0f;
+    }
+    if (vMatrix.determinant() < 0.0f) {
+      vMatrix *= -1.0f;
+    }
+
     // normalize sigma matrix
     float sigma = 0.5f * (singularVal(0) + singularVal(1));
     Eigen::Matrix3f sigmaMatrix = Eigen::Matrix3f::Zero();
@@ -76,7 +83,7 @@ namespace ns_st2 {
     auto checkSolution = [&kp1, &kp2, &K, &rot21, &t21](const Eigen::Matrix3f &rot, const Eigen::Vector3f &t) -> bool {
       // compute the depth
       std::pair<float, float> depth = triangulation(kp1, kp2, K, rot, t);
-      
+
       // if two values are positive
       if (depth.first > 0.0f && depth.second > 0.0f) {
         rot21 = rot;
