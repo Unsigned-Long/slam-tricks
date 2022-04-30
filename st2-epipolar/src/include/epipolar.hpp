@@ -19,6 +19,8 @@ namespace ns_st2 {
    * @param srcMatches the source matches, It can be matching data without preprocessing
    * @param goodMatches the good matches that this algorithm return
    * @param quantile the quantile to judge whether a match is an outlier
+   * @param scaleFactor the scale factor used in orb feature algorithm
+   * @param layerNum the layer total quantity in orb feature algorithm
    * @return Eigen::Matrix3f the function matrix
    */
   static Eigen::Matrix3f solveEpipolar(
@@ -27,8 +29,8 @@ namespace ns_st2 {
       const std::vector<cv::DMatch> &srcMatches,
       const CameraInnerParam &innerParam,
       std::vector<cv::DMatch> *goodMatches = nullptr,
-      float quantile = 1.323) {
-        
+      float quantile = 1.323, float scaleFactor = 1.2f, uint layerNum = 8) {
+
     CV_Assert(srcMatches.size() >= 8);
 
     // clean source data
@@ -48,6 +50,8 @@ namespace ns_st2 {
       }
     }
 
+    CV_Assert(matches.size() >= 8);
+
     // matrices for least square
     Eigen::MatrixXf matA(matches.size(), 8), vecl = -Eigen::VectorXf::Ones(matches.size());
     Eigen::Vector<float, 8> vecX;
@@ -58,15 +62,26 @@ namespace ns_st2 {
     float fx = innerParam.fx, fy = innerParam.fy, fxInv = 1.0f / fx, fyInv = 1.0f / fy;
     float cx = innerParam.cx, cy = innerParam.cy;
 
+    // key point on different layer with different sigma
+    std::vector<float> sigma2(layerNum);
+    sigma2.front() = 1.0f;
+    float layerScale = 1.0;
+    for (int i = 1; i != layerNum; ++i) {
+      layerScale *= scaleFactor;
+      sigma2.at(i) = layerScale * layerScale;
+    }
+
     Eigen::Matrix3f K = innerParam.toEigenMatrix(), KInv = K.inverse();
     Eigen::Matrix3f matF, matE;
 
     // construct the A matrix
     for (int i = 0; i != matches.size(); ++i) {
       const auto &match = matches.at(i);
+      const cv::KeyPoint &kp1 = kps1.at(match.queryIdx);
+      const cv::KeyPoint &kp2 = kps2.at(match.trainIdx);
 
-      float u1 = kps1.at(match.queryIdx).pt.x, v1 = kps1.at(match.queryIdx).pt.y;
-      float u2 = kps2.at(match.trainIdx).pt.x, v2 = kps2.at(match.trainIdx).pt.y;
+      float u1 = kp1.pt.x, v1 = kp1.pt.y;
+      float u2 = kp2.pt.x, v2 = kp2.pt.y;
 
       float x1 = (u1 - cx) * fxInv, y1 = (v1 - cy) * fyInv;
       float x2 = (u2 - cx) * fxInv, y2 = (v2 - cy) * fyInv;
@@ -102,8 +117,11 @@ namespace ns_st2 {
         }
 
         const auto &match = matches.at(i);
-        float u1 = kps1.at(match.queryIdx).pt.x, v1 = kps1.at(match.queryIdx).pt.y;
-        float u2 = kps2.at(match.trainIdx).pt.x, v2 = kps2.at(match.trainIdx).pt.y;
+        const cv::KeyPoint &kp1 = kps1.at(match.queryIdx);
+        const cv::KeyPoint &kp2 = kps2.at(match.trainIdx);
+
+        float u1 = kp1.pt.x, v1 = kp1.pt.y;
+        float u2 = kp2.pt.x, v2 = kp2.pt.y;
 
         Eigen::Vector3f p2(u2, v2, 1.0f);
         Eigen::Matrix<float, 1, 3> temp = p2.transpose() * matF;
@@ -119,7 +137,7 @@ namespace ns_st2 {
 
         float statistics = num * num / den;
 
-        if (statistics < quantile) {
+        if (statistics < quantile * sigma2.at(kps2.at(match.trainIdx).octave)) {
           // current match is a good match
           continue;
         }
