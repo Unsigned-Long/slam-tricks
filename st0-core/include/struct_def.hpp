@@ -23,11 +23,30 @@ namespace ns_st0 {
     CameraInnerParam(const float &fx, const float &fy, const float &cx, const float &cy)
         : fx(fx), fy(fy), cx(cx), cy(cy) {}
 
-    inline Eigen::Matrix3f toEigenMatrix() const {
-      Eigen::Matrix3f K = Eigen::Matrix3f::Identity();
+    /**
+     * @brief organize the parameters to an Eigen matrix
+     *
+     * @tparam Type the vaule type e.t. double, float...
+     * @return Eigen::Matrix<Type, 3, 3> the K matrix
+     */
+    template <typename Type>
+    inline Eigen::Matrix<Type, 3, 3> toEigenMatrix() const {
+      Eigen::Matrix<Type, 3, 3> K = Eigen::Matrix<Type, 3, 3>::Identity();
       K(0, 0) = fx, K(1, 1) = fy;
       K(0, 2) = cx, K(1, 2) = cy;
       return K;
+    }
+
+    /**
+     * @brief organize the parameters to an OpenCV matrix
+     *
+     * @tparam Type the vaule type e.t. double, float...
+     * @return cv::Mat the K matrix
+     */
+    template <typename Type>
+    inline cv::Mat toOpenCVMatrix() const {
+      cv::Mat mat = (cv::Mat_<Type>(3, 3) << fx, 0, cx, 0, fy, cy, 0, 0, 1);
+      return mat;
     }
   };
 
