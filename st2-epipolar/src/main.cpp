@@ -215,9 +215,9 @@ int main(int argc, char const *argv[]) {
   std::vector<cv::DMatch> match;
 
   detectAndMatch(img1, img2, kps1, kps2, match);
-  // ::fMatrixOpenCV(img1, img2, kps1, kps2, match);
-  // ::fMatrixStatistic(img1, img2, kps1, kps2, match);
-  ::recoveryMovement(img1, img2, kps1, kps2, match);
+  ::fMatrixOpenCV(img1, img2, kps1, kps2, match);
+  ::fMatrixStatistic(img1, img2, kps1, kps2, match);
+  // ::recoveryMovement(img1, img2, kps1, kps2, match);
 
   return 0;
 }

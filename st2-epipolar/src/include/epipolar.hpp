@@ -21,7 +21,7 @@ namespace ns_st2 {
    * @param quantile the quantile to judge whether a match is an outlier
    * @param scaleFactor the scale factor used in orb feature algorithm
    * @param layerNum the layer total quantity in orb feature algorithm
-   * @return Eigen::Matrix3f the function matrix
+   * @return Eigen::Matrix3d the function matrix
    */
   static Eigen::Matrix3f solveEpipolar(
       const std::vector<cv::KeyPoint> &kps1,
@@ -29,7 +29,7 @@ namespace ns_st2 {
       const std::vector<cv::DMatch> &srcMatches,
       const CameraInnerParam &innerParam,
       std::vector<cv::DMatch> *goodMatches = nullptr,
-      float quantile = 1.323, float scaleFactor = 1.2f, uint layerNum = 8) {
+      double quantile = 1.323, double scaleFactor = 1.2, uint layerNum = 8) {
 
     CV_Assert(srcMatches.size() >= 8);
 
@@ -52,62 +52,100 @@ namespace ns_st2 {
 
     CV_Assert(matches.size() >= 8);
 
-    // matrices for least square
-    Eigen::MatrixXf matA(matches.size(), 8), vecl = -Eigen::VectorXf::Ones(matches.size());
-    Eigen::Vector<float, 8> vecX;
-
-    // record the outliers' index in the matches
-    std::set<int> outliers;
-
-    float fx = innerParam.fx, fy = innerParam.fy, fxInv = 1.0f / fx, fyInv = 1.0f / fy;
-    float cx = innerParam.cx, cy = innerParam.cy;
-
     // key point on different layer with different sigma
-    std::vector<float> sigma2(layerNum);
+    std::vector<double> sigma2(layerNum);
     sigma2.front() = 1.0f;
-    float layerScale = 1.0;
+    double layerScale = 1.0;
     for (int i = 1; i != layerNum; ++i) {
       layerScale *= scaleFactor;
       sigma2.at(i) = layerScale * layerScale;
     }
 
-    Eigen::Matrix3f K = innerParam.toEigenMatrix<float>(), KInv = K.inverse();
-    Eigen::Matrix3f matF, matE;
+    // normalize
+    std::vector<Eigen::Vector2d> normKps1(matches.size()), normKps2(matches.size());
+    Eigen::Vector2d pm1 = Eigen::Vector2d::Zero(), pm2 = Eigen::Vector2d::Zero();
+    Eigen::Vector2d pd1 = Eigen::Vector2d::Zero(), pd2 = Eigen::Vector2d::Zero();
 
-    // construct the A matrix
+    // compute the mean
     for (int i = 0; i != matches.size(); ++i) {
       const auto &match = matches.at(i);
       const cv::KeyPoint &kp1 = kps1.at(match.queryIdx);
       const cv::KeyPoint &kp2 = kps2.at(match.trainIdx);
 
-      float u1 = kp1.pt.x, v1 = kp1.pt.y;
-      float u2 = kp2.pt.x, v2 = kp2.pt.y;
+      normKps1.at(i) = Eigen::Vector2d(kp1.pt.x, kp1.pt.y);
+      normKps2.at(i) = Eigen::Vector2d(kp2.pt.x, kp2.pt.y);
 
-      float x1 = (u1 - cx) * fxInv, y1 = (v1 - cy) * fyInv;
-      float x2 = (u2 - cx) * fxInv, y2 = (v2 - cy) * fyInv;
+      pm1 += normKps1.at(i);
+      pm2 += normKps2.at(i);
+    }
+    std::cout << std::endl;
+    pm1 /= matches.size(), pm2 /= matches.size();
 
-      matA(i, 0) = x1 * x2, matA(i, 1) = y1 * x2;
-      matA(i, 2) = x2, matA(i, 3) = x1 * y2;
-      matA(i, 4) = y1 * y2, matA(i, 5) = y2;
-      matA(i, 6) = x1, matA(i, 7) = y1;
+    // compute the norm variance
+    for (int i = 0; i != matches.size(); ++i) {
+
+      normKps1.at(i) -= pm1;
+      normKps2.at(i) -= pm2;
+
+      const Eigen::Vector2d &nkp1 = normKps1.at(i);
+      const Eigen::Vector2d &nkp2 = normKps2.at(i);
+
+      pd1 += Eigen::Vector2d(std::abs(nkp1(0)), std::abs(nkp1(1)));
+      pd2 += Eigen::Vector2d(std::abs(nkp2(0)), std::abs(nkp2(1)));
+    }
+    pd1 /= matches.size(), pd2 /= matches.size();
+
+    double us1 = 1.0 / pd1(0), vs1 = 1.0 / pd1(1);
+    double us2 = 1.0 / pd2(0), vs2 = 1.0 / pd2(1);
+    double um1 = pm1(0), vm1 = pm1(1);
+    double um2 = pm2(0), vm2 = pm2(1);
+
+    // normalize variance
+    for (int i = 0; i != matches.size(); ++i) {
+      Eigen::Vector2d &nkp1 = normKps1.at(i);
+      Eigen::Vector2d &nkp2 = normKps2.at(i);
+
+      nkp1(0) *= us1, nkp1(1) *= vs1;
+      nkp2(0) *= us2, nkp2(1) *= vs2;
+    }
+
+    Eigen::Matrix3d N1 = Eigen::Matrix3d::Identity(), N2 = Eigen::Matrix3d::Identity();
+    N1(0, 0) = us1, N1(0, 2) = -um1 * us1;
+    N1(1, 1) = vs1, N1(1, 2) = -vm1 * vs1;
+    N2(0, 0) = us2, N2(0, 2) = -um2 * us2;
+    N2(1, 1) = vs2, N2(1, 2) = -vm2 * vs2;
+
+    // matrices for least square
+    Eigen::MatrixXd matA(matches.size(), 9);
+    Eigen::Matrix3d matF;
+
+    // record the outliers' index in the matches
+    std::set<int> outliers;
+
+    // construct the A matrix
+    for (int i = 0; i != matches.size(); ++i) {
+      const Eigen::Vector2d &nkp1 = normKps1.at(i);
+      const Eigen::Vector2d &nkp2 = normKps2.at(i);
+
+      double nu1 = nkp1(0), nv1 = nkp1(1);
+      double nu2 = nkp2(0), nv2 = nkp2(1);
+
+      matA(i, 0) = nu1 * nu2, matA(i, 1) = nv1 * nu2, matA(i, 2) = nu2;
+      matA(i, 3) = nu1 * nv2, matA(i, 4) = nv1 * nv2, matA(i, 5) = nv2;
+      matA(i, 6) = nu1, matA(i, 7) = nv1, matA(i, 8) = 1.0;
     }
 
     // find outliers [the condition is to ensure that the equation has a solution]
     while (matches.size() - outliers.size() > 8) {
 
       // solve
-      vecX = (matA.transpose() * matA).inverse() * matA.transpose() * vecl;
-
-      matE(0, 0) = vecX(0), matE(0, 1) = vecX(1), matE(0, 2) = vecX(2);
-      matE(1, 0) = vecX(3), matE(1, 1) = vecX(4), matE(1, 2) = vecX(5);
-      matE(2, 0) = vecX(6), matE(2, 1) = vecX(7), matE(2, 2) = 1.0f;
-
-      matE.normalize();
-
-      matF = KInv.transpose() * matE * KInv;
+      Eigen::JacobiSVD<Eigen::MatrixXd> svd(matA, Eigen::ComputeFullV);
+      Eigen::MatrixXd vMatrix = svd.matrixV();
+      matF = vMatrix.col(8).reshaped(3, 3).transpose();
+      matF = N2.transpose() * matF * N1;
 
       // find the badest outliers
-      float maxVar = 0.0;
+      double maxVar = 0.0;
       int maxIdx = -1;
 
       for (int i = 0; i != matches.size(); ++i) {
@@ -116,40 +154,52 @@ namespace ns_st2 {
           continue;
         }
 
-        const auto &match = matches.at(i);
+        const cv::DMatch &match = matches.at(i);
         const cv::KeyPoint &kp1 = kps1.at(match.queryIdx);
         const cv::KeyPoint &kp2 = kps2.at(match.trainIdx);
 
-        float u1 = kp1.pt.x, v1 = kp1.pt.y;
-        float u2 = kp2.pt.x, v2 = kp2.pt.y;
+        double u1 = kp1.pt.x, v1 = kp1.pt.y;
+        double u2 = kp2.pt.x, v2 = kp2.pt.y;
 
-        Eigen::Vector3f p2(u2, v2, 1.0f);
-        Eigen::Matrix<float, 1, 3> temp = p2.transpose() * matF;
+        Eigen::Vector3d p1(u1, v1, 1.0);
+        Eigen::Vector3d p2(u2, v2, 1.0);
+        Eigen::Matrix<double, 3, 1> temp1 = matF * p1;
+        Eigen::Matrix<double, 1, 3> temp2 = p2.transpose() * matF;
 
-        float a = temp(0, 0), b = temp(0, 1), c = temp(0, 2);
+        double a1 = temp1(0, 0), b1 = temp1(1, 0), c1 = temp1(2, 0);
+        double a2 = temp2(0, 0), b2 = temp2(0, 1), c2 = temp2(0, 2);
 
-        float num = a * u1 + b * v1 + c;
-        float den = a * a + b * b;
+        double num1 = a1 * u2 + b1 * v2 + c1;
+        double den1 = a1 * a1 + b1 * b1;
 
-        if (den == 0.0) {
+        double num2 = a2 * u1 + b2 * v1 + c2;
+        double den2 = a2 * a2 + b2 * b2;
+
+        if (den1 == 0.0f || den2 == 0.0f) {
           continue;
         }
 
-        float statistics = num * num / den;
+        // reproject to frame 2
+        double statistics1 = num1 * num1 / den1;
+        // reproject to frame 1
+        double statistics2 = num2 * num2 / den2;
 
-        if (statistics < quantile * sigma2.at(kps2.at(match.trainIdx).octave)) {
+        if (statistics1 < quantile * sigma2.at(kp2.octave) &&
+            statistics2 < quantile * sigma2.at(kp1.octave)) {
           // current match is a good match
           continue;
         }
 
-        if (maxVar < statistics) {
-          maxVar = statistics;
+        double msta = (statistics1 + statistics2) * 0.5f;
+
+        if (maxVar < msta) {
+          maxVar = msta;
           maxIdx = i;
         }
       }
 
       if (maxIdx == -1) {
-        // which means no outliers in current left matches
+        // which means no outlier in current left matches
         break;
       } else {
         // remove the outlier's affect
@@ -169,6 +219,11 @@ namespace ns_st2 {
         }
       }
     }
+
+    Eigen::Matrix3f matE;
+    Eigen::Matrix3f K = innerParam.toEigenMatrix<float>();
+    matE = K.transpose() * matF.cast<float>() * K;
+    matE.normalize();
 
     return matE;
   }
