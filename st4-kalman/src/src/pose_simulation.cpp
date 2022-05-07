@@ -190,4 +190,18 @@ namespace ns_st4 {
     }
     return rot21;
   }
+
+  float absTrajectoryError(const std::vector<Sophus::SE3f> &truth,
+                           const std::vector<Sophus::SE3f> &esti) {
+    float ate = 0.0;
+    std::size_t num = truth.size();
+    for (int i = 0; i != num; ++i) {
+      const auto &truthPose = truth.at(i);
+      const auto &estiPose = esti.at(i);
+      ate += std::pow((truthPose.inverse() * estiPose).log().norm(), 2);
+    }
+    ate = std::sqrt(ate / num);
+    return ate;
+  }
+
 } // namespace na_st4

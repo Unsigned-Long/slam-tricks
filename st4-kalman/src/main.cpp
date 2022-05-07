@@ -26,6 +26,14 @@ int main(int argc, char const *argv[]) {
     writerObs->writeLine(',', obsTranslation(0), obsTranslation(1), obsTranslation(2),
                          obsQuat.x(), obsQuat.y(), obsQuat.z(), obsQuat.w());
   }
-  // ns_st4::visualization(data);
+  ns_st4::visualization(data);
+
+  std::vector<Sophus::SE3f> truth(data.size()), esti(data.size());
+  for (int i = 0; i != data.size(); ++i) {
+    truth.at(i) = data.at(i).truth();
+    esti.at(i) = data.at(i).obs();
+  }
+
+  std::cout << "ATS: " << ns_st4::absTrajectoryError(truth, esti) << std::endl;
   return 0;
 }

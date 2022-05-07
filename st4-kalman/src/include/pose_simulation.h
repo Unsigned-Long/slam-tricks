@@ -52,12 +52,27 @@ namespace ns_st4 {
                                    float sigmaTrans = 0.01f,
                                    float sigmaAngle = M_PI / 1800.0f);
 
+  /**
+   * @brief to visualize the data
+   *
+   * @param data the data
+   */
   void visualization(const std::vector<PoseItem> &data);
 
+  /**
+   * @brief get the rotation from coord 1 to coord 2
+   *
+   * @param pts1 the points coords in coord 1
+   * @param pts2 the points coords in coord 2
+   * @param t21 the translation from coord 1 to coord 2
+   * @return Sophus::SO3f the rotation from coord 1 to coord 2
+   */
   Sophus::SO3f computeRotation(const std::vector<Eigen::Vector3f> &pts1,
                                const std::vector<Eigen::Vector3f> &pts2,
-                               const Eigen::Vector3f& t21);
+                               const Eigen::Vector3f &t21);
 
+  float absTrajectoryError(const std::vector<Sophus::SE3f> &truth,
+                           const std::vector<Sophus::SE3f> &esti);
 } // namespace name
 
 #endif
