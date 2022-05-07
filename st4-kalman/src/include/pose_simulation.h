@@ -54,6 +54,10 @@ namespace ns_st4 {
 
   void visualization(const std::vector<PoseItem> &data);
 
+  Sophus::SO3f computeRotation(const std::vector<Eigen::Vector3f> &pts1,
+                               const std::vector<Eigen::Vector3f> &pts2,
+                               const Eigen::Vector3f& t21);
+
 } // namespace name
 
 #endif
