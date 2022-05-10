@@ -8,7 +8,7 @@ find_package(fmt)
 
 find_package(Eigen3)
 
-find_package(PCL 1.3 REQUIRED COMPONENTS common io visualization)
+find_package(PCL)
 
 include_directories(
     ./include
@@ -16,6 +16,10 @@ include_directories(
     ${EIGEN3_INCLUDE_DIRS}
     ${PCL_INCLUDE_DIRS}
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+
+add_definitions(${PCL_DEFINITIONS})
 
 aux_source_directory(./src SRC_LIST)
 

@@ -3,7 +3,7 @@
 #include "solver.h"
 
 int main(int argc, char const *argv[]) {
-  auto data = ns_st4::simulation(30.0f);
+  auto data = ns_st4::simulation(10.0f);
   auto writerTruth = ns_csv::CSVWriter::create("../output/truth.csv");
   auto writerObs = ns_csv::CSVWriter::create("../output/obs.csv");
 

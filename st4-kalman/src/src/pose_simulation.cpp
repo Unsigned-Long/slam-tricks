@@ -95,14 +95,14 @@ namespace ns_st4 {
     obsCloud->reserve(data.size());
 
     // view
-    pcl::visualization::PCLVisualizer viewer("win");
-    viewer.setSize(1000, 640);
-    viewer.setBackgroundColor(0.9f, 0.9f, 0.9f);
+    pcl::visualization::PCLVisualizer::Ptr viewer = std::make_shared<pcl::visualization::PCLVisualizer>("win");
+    viewer->setSize(1000, 640);
+    viewer->setBackgroundColor(0.9f, 0.9f, 0.9f);
 
     // the center
     Eigen::Isometry3f origin(Eigen::Quaternionf::Identity());
     origin.pretranslate(Eigen::Vector3f::Zero());
-    viewer.addCoordinateSystem(0.5, Eigen::Affine3f(origin.affine()), "origin");
+    viewer->addCoordinateSystem(0.5, Eigen::Affine3f(origin.affine()), "origin");
 
     // get coord and point
     auto getInfo = [](const Sophus::SE3f &pose) {
@@ -133,26 +133,25 @@ namespace ns_st4 {
       truthCloud->push_back(truth.second);
       obsCloud->push_back(obs.second);
 
-      viewer.removeCoordinateSystem("truthCoord");
-      viewer.addCoordinateSystem(0.2, Eigen::Affine3f(truth.first.affine()), "truthCoord");
-      viewer.removePointCloud("truthCloud");
-      viewer.addPointCloud(truthCloud, "truthCloud");
-      viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "truthCloud");
-      viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0, "truthCloud");
+      viewer->removeCoordinateSystem("truthCoord");
+      viewer->addCoordinateSystem(0.2, Eigen::Affine3f(truth.first.affine()), "truthCoord");
+      viewer->removePointCloud("truthCloud");
+      viewer->addPointCloud(truthCloud, "truthCloud");
+      viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "truthCloud");
+      viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 1.0, 0.0, 0, "truthCloud");
 
-      viewer.removeCoordinateSystem("obsCoord");
-      viewer.addCoordinateSystem(0.2, Eigen::Affine3f(obs.first.affine()), "obsCoord");
-      viewer.removePointCloud("obsCloud");
-      viewer.addPointCloud(obsCloud, "obsCloud");
-      viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "obsCloud");
-      viewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.4, 0.4, 0.4, "obsCloud");
+      viewer->removeCoordinateSystem("obsCoord");
+      viewer->addCoordinateSystem(0.2, Eigen::Affine3f(obs.first.affine()), "obsCoord");
+      viewer->removePointCloud("obsCloud");
+      viewer->addPointCloud(obsCloud, "obsCloud");
+      viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "obsCloud");
+      viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.4, 0.4, 0.4, "obsCloud");
 
       // set camera position
-      viewer.setCameraPosition(truth.second.x + 3.0f, truth.second.y + 3.0f, truth.second.z + 3.0f,
-                               0.0f, 0.0f, 0.0f);
+      viewer->setCameraPosition(truth.second.x + 3.0f, truth.second.y + 3.0f, truth.second.z + 3.0f,
+                                0.0f, 0.0f, 0.0f);
       // display
-      while (!viewer.wasStopped()) {
-        viewer.spinOnce();
+      while (true) {
         if (i == data.size() - 1) {
           continue;
         }
@@ -161,6 +160,11 @@ namespace ns_st4 {
           elapsed = 0.0f;
           break;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+      viewer->spinOnce();
+      if (viewer->wasStopped()) {
+        break;
       }
     }
   }
