@@ -149,7 +149,7 @@ namespace ns_st4 {
 
       // set camera position
       viewer->setCameraPosition(truth.second.x + 3.0f, truth.second.y + 3.0f, truth.second.z + 3.0f,
-                                0.0f, 0.0f, 0.0f);
+                                0.0f, 0.0f, 0.0f,0.0f,0.0f,0.0f);
       // display
       while (true) {
         if (i == data.size() - 1) {
