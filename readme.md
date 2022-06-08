@@ -142,3 +142,15 @@ SLAM中一般不会谈及图像畸变的问题，因为我们都假设图像或�
 ### 2.4 [位姿轨迹滤波](./st4-kalman)
 
 SLAM中估计的手段一般有两种：基于滤波的方式和基于非线性优化的方式。本次模拟了一个用于算法开发的位姿轨迹。同时，本文基于卡尔曼滤波的方式，给出了对一个位姿轨迹的估计滤波过程。该项目的原理介绍以PDF的格式展示，具体的位置为[算法原理](./st4-kalman/docs/kalman.pdf)。
+
+<img src="./st4-kalman/img/all.png" width=33%><img src="./st4-kalman/img/pcl_truth.png" width=33%><img src="./st4-kalman/img/pcl_obs.png" width=33%>
+
+### 2.4 [光流](./st5-opticalflow)
+
+光流法基于光度不变假设，估计像素的运动特性，进而实现点的追踪。slam中的直接法基于其，将像点和物点相联系，构建了优化目标函数，进而求解相机位姿变换。
+
+### 2.5 [ICP](./st6-icp)
+
+ICP 算法是求解两帧点之间的位姿变换关系的一种经典方法，其对点间有匹配和点间无匹配的点云帧都有着比较鲁棒的估计结果。具体的位置为[算法原理](./st6-icp/docs/icp.pdf)。
+
+<img src="./st6-icp/img/binding/src.png" width=33%><img src="./st6-icp/img/binding/dst_1.png" width=33%><img src="./st6-icp/img/binding/dst_2.png" width=33%>
