@@ -6,8 +6,8 @@ import csv
 plt.rcParams["font.family"] = "Ubuntu Mono"
 plt.rcParams["font.size"] = 13
 
-pc1_filename = "./log/nobinding/pc1.csv"
-# pc1_filename = "./log/nobinding/pc1_prime_4.csv"
+# pc1_filename = "./log/nobinding/pc1.csv"
+pc1_filename = "./log/nobinding/pc1_prime_4.csv"
 pc2_filename = "./log/nobinding/pc2.csv"
 
 pc1_x = []
@@ -37,5 +37,5 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.title('Point Clouds [src]')
 plt.grid(ls='--', alpha=0.5)
-plt.savefig("./img/nobinding/src.png", dpi=600)
+# plt.savefig("./img/nobinding/src.png", dpi=600)
 plt.show()

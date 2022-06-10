@@ -47,7 +47,7 @@ namespace ns_st6 {
     return T21;
   }
 
-  static point_cloud_2d normalize(const point_cloud_2d &pc) {
+  static std::pair<point_cloud_2d, Eigen::Vector2f> normalize(const point_cloud_2d &pc) {
     Eigen::Vector2f center(0.0f, 0.0f);
     for (const auto &elem : pc) {
       center += elem;
@@ -57,48 +57,40 @@ namespace ns_st6 {
     for (const auto &elem : pc) {
       pc_new.push_back(elem - center);
     }
-    return pc_new;
+    return {pc_new, center};
   }
 
   static Sophus::SE2f icp_no_binding(const point_cloud_2d &pc1, const point_cloud_2d &pc2, uint iter = 10) {
-auto count = pc1.size();
-auto pc1_new = normalize(pc1), pc2_new = normalize(pc2);
-Sophus::SO2f R21;
-for (int i = 0; i != iter; ++i) {
-  float H = 0.0f;
-  float g = 0.0f;
-  for (int i = 0; i != count; ++i) {
-    auto &p1 = pc1_new.at(i);
-    auto p1_prime = R21 * p1;
-    // find min dis point
-    auto min_iter = std::min_element(pc2_new.cbegin(), pc2_new.cend(), [p1_prime](const Eigen::Vector2f &p2_i, const Eigen::Vector2f &p2_j) {
-      auto p1_prime_t = ns_geo::Point2f(p1_prime(0), p1_prime(1));
-      auto p2_i_t = ns_geo::Point2f(p2_i(0), p2_i(1));
-      auto p2_j_t = ns_geo::Point2f(p2_j(0), p2_j(1));
-      return ns_geo::distance(p1_prime_t, p2_i_t) < ns_geo::distance(p1_prime_t, p2_j_t);
-    });
-    auto &p2 = *min_iter;
-    auto error = p1_prime - p2;
-    Eigen::Vector2f J;
-    J(0) = -p1_prime(1);
-    J(1) = p1_prime(0);
-    H += J.transpose() * J;
-    g -= J.transpose() * error;
-  }
-  auto delta = g / H;
-  R21 = Sophus::SO2f::exp(delta) * R21;
-}
-Eigen::MatrixXf A(2 * count, 2);
-Eigen::VectorXf l(2 * count);
-for (int i = 0; i != count; ++i) {
-  auto trans = pc2.at(i) - R21 * pc1.at(i);
-  A(2 * i + 0, 0) = 1, A(2 * i + 0, 1) = 0;
-  A(2 * i + 1, 0) = 0, A(2 * i + 1, 1) = 1;
-  l(2 * i + 0) = trans(0);
-  l(2 * i + 1) = trans(1);
-}
-auto t21 = (A.transpose() * A).inverse() * A.transpose() * l;
-Sophus::SE2f T21(R21.matrix(), Eigen::Vector2f(t21(0), t21(1)));
+    auto count = pc1.size();
+    auto [pc1_new, pc1_cen] = normalize(pc1);
+    auto [pc2_new, pc2_cen] = normalize(pc2);
+    Sophus::SO2f R21;
+    for (int i = 0; i != iter; ++i) {
+      float H = 0.0f;
+      float g = 0.0f;
+      for (int i = 0; i != count; ++i) {
+        auto &p1 = pc1_new.at(i);
+        auto p1_prime = R21 * p1;
+        // find min dis point
+        auto min_iter = std::min_element(pc2_new.cbegin(), pc2_new.cend(), [p1_prime](const Eigen::Vector2f &p2_i, const Eigen::Vector2f &p2_j) {
+          auto p1_prime_t = ns_geo::Point2f(p1_prime(0), p1_prime(1));
+          auto p2_i_t = ns_geo::Point2f(p2_i(0), p2_i(1));
+          auto p2_j_t = ns_geo::Point2f(p2_j(0), p2_j(1));
+          return ns_geo::distance(p1_prime_t, p2_i_t) < ns_geo::distance(p1_prime_t, p2_j_t);
+        });
+        auto &p2 = *min_iter;
+        auto error = p1_prime - p2;
+        Eigen::Vector2f J;
+        J(0) = -p1_prime(1);
+        J(1) = p1_prime(0);
+        H += J.transpose() * J;
+        g -= J.transpose() * error;
+      }
+      auto delta = g / H;
+      R21 = Sophus::SO2f::exp(delta) * R21;
+    }
+    auto t21 = pc2_cen - R21 * pc1_cen;
+    Sophus::SE2f T21(R21.matrix(), Eigen::Vector2f(t21(0), t21(1)));
     return T21;
   }
 } // namespace ns_st6
