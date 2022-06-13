@@ -154,3 +154,9 @@ SLAM中估计的手段一般有两种：基于滤波的方式和基于非线性�
 ICP 算法是求解两帧点之间的位姿变换关系的一种经典方法，其对点间有匹配和点间无匹配的点云帧都有着比较鲁棒的估计结果。具体的位置为[算法原理](./st6-icp/docs/icp.pdf)。
 
 <img src="./st6-icp/img/binding/src.png" width=33%><img src="./st6-icp/img/binding/dst_1.png" width=33%><img src="./st6-icp/img/binding/dst_2.png" width=33%>
+
+### 2.6 RANSAC
+
+RANSCA算法是一种基于概率的模型构建手段。其相较于最小二乘法，能够在数据集存在较多粗差或者误差数据的情况下，重构处正确的模型。具体文档为[算法原理](./st7-ransac/docs/ransac.pdf)。
+
+<img src="./st7-ransac/img/gpransac.png" width="50%"><img src="./st7-ransac/img/bpransac.png" width="50%">
