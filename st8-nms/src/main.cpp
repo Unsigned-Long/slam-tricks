@@ -62,18 +62,20 @@ void test_nms2d() {
         img.at<uchar>(i, j) = n(e);
       }
     }
-    auto max = ns_st8::nms2d(img, 2);
+    auto max = ns_st8::nms2d(img, 3);
     LOG_VAR(max);
 
+    cv::resize(img, img, cv::Size(200, 200), 0.0, 0.0, cv::InterpolationFlags::INTER_NEAREST);
     cv::Mat color;
     cv::cvtColor(img, color, cv::COLOR_GRAY2BGR);
     for (const auto &elem : max) {
-      color.at<cv::Vec3b>(elem) = cv::Vec3b(0, 0, 255);
+      cv::drawMarker(color, elem * 10 + cv::Point2i(5, 5), cv::Scalar(0, 0, 255), cv::MarkerTypes::MARKER_CROSS, 5, 1);
     }
     cv::namedWindow("win", cv::WindowFlags::WINDOW_FREERATIO);
     cv::imshow("win", color);
     cv::waitKey(0);
-    cv::imwrite("../img/nms2d_2.png", color);
+    cv::imwrite("../img/nms2d_3.png", color);
+    cv::imwrite("../img/nms2d_src.png", img);
   }
 }
 

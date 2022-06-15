@@ -160,3 +160,11 @@ ICP 算法是求解两帧点之间的位姿变换关系的一种经典方法，�
 RANSCA算法是一种基于概率的模型构建手段。其相较于最小二乘法，能够在数据集存在较多粗差或者误差数据的情况下，重构处正确的模型。具体文档为[算法原理](./st7-ransac/docs/ransac.pdf)。
 
 <img src="./st7-ransac/img/gpransac.png" width="50%"><img src="./st7-ransac/img/bpransac.png" width="50%">
+
+### 2.7 NMS非极大值抑制
+
+在进行图像处理时，当我们用特定算法提取图像中的特定对象时，往往会在局域内有多个响应对象，如图像角点的提取、图像识别物体区域、图像边缘提取等。通过NMS算法的处理，我们可以提取冗余的对象，得到响应最佳的对象。[算法文档](./st8-nms/docs/nms.pdf)。
+
+<img src="./st8-nms//img/norm_nms1d_2.png" width=50%><img src="./st8-nms/img/nms1d_3.png" width=50%>
+
+<img src="./st8-nms/img/norm_nms2d_src_scene.png" width=25%><img src="./st8-nms/img/norm_nms2d_3.png" width=25%><img src="./st8-nms/img/nms2d_src_scene.png" width=25%><img src="./st8-nms/img/nms2d_2.png" width=25%>
