@@ -43,7 +43,7 @@ namespace ns_st8 {
     std::vector<cv::Point2i> max;
     int rows = img.rows, cols = img.cols;
     for (int i = hws; i < rows - 2 * hws; i += hws + 1) {
-      for (int j = hws; j < rows - 2 * hws; j += hws + 1) {
+      for (int j = hws; j < cols - 2 * hws; j += hws + 1) {
         uchar maxVal = img.at<uchar>(i, j);
         cv::Point2i maxIdx(j, i);
         for (int r = i; r < i + hws + 1; ++r) {
