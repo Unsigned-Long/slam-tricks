@@ -168,3 +168,10 @@ RANSCA算法是一种基于概率的模型构建手段。其相较于最小二�
 <img src="./st8-nms//img/norm_nms1d_2.png" width=50%><img src="./st8-nms/img/nms1d_3.png" width=50%>
 
 <img src="./st8-nms/img/norm_nms2d_src_scene.png" width=25%><img src="./st8-nms/img/norm_nms2d_3.png" width=25%><img src="./st8-nms/img/nms2d_src_scene.png" width=25%><img src="./st8-nms/img/nms2d_2.png" width=25%>
+
+### 2.8 射影变换
+
+射影变换是最一般的几何变换。对于二维平面的变换而言，其有8个自由度。[算法文档](./st9-projective/docs/projective.pdf)。
+
+<img src="./st9-projective/img/src.png" width=50%><img src="./st9-projective/img/dst.png" width=50%>
+
