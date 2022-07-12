@@ -49,7 +49,48 @@ void test_projective() {
   cv::waitKey(0);
 }
 
+void test_projective_pic() {
+  int r = 500, c = 400, thickness = 4;
+
+  cv::Mat src = cv::imread("../img/src2.png");
+  cv::Mat dst(r, c, CV_8UC3, cv::Scalar(255, 255, 255));
+
+  // the point pairs
+  ns_geo::PointSet2d pc1{{455, 84}, {770, 130}, {686, 544}, {314, 467}};
+  ns_geo::PointSet2d pc2{{0.0, 0.0}, {c - 1.0, 0.0}, {c - 1.0, r - 1.0}, {0.0, r - 1.0}};
+
+  for (int i = 0; i != pc1.size(); ++i) {
+    const auto &p = pc1[i];
+    if (i == pc1.size() - 1) {
+      cv::line(src, cv::Point(p.x, p.y), cv::Point(pc1[0].x, pc1[0].y), cv::Scalar(0, 0, 255), thickness);
+      cv::circle(src, cv::Point(pc1[0].x, pc1[0].y), 5, cv::Scalar(255, 0, 0), thickness);
+    } else {
+      cv::line(src, cv::Point(p.x, p.y), cv::Point(pc1[i + 1].x, pc1[i + 1].y), cv::Scalar(0, 0, 255), thickness);
+    }
+    cv::circle(src, cv::Point(p.x, p.y), 5, cv::Scalar(255, 0, 0), thickness);
+  }
+
+  // from pc2 to pc1
+  auto trans = ns_st9::projectiveBackward(pc1, pc2);
+
+  for (int i = 0; i != dst.rows; ++i) {
+    for (int j = 0; j != dst.cols; ++j) {
+      ns_geo::Point2d p(j, i);
+      auto tp = trans(p);
+      int ti = tp.y + 0.5, tj = tp.x + 0.5;
+      dst.at<cv::Vec3b>(i, j) = src.at<cv::Vec3b>(ti, tj);
+    }
+  }
+
+  cv::imshow("win1", src);
+  cv::imshow("win2", dst);
+  cv::imwrite("../img/src2.png", src);
+  cv::imwrite("../img/dst2.png", dst);
+  cv::waitKey(0);
+}
+
 int main(int argc, char const *argv[]) {
-  test_projective();
+  // test_projective();
+  test_projective_pic();
   return 0;
 }
