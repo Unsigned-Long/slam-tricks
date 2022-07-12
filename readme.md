@@ -171,7 +171,7 @@ RANSCA算法是一种基于概率的模型构建手段。其相较于最小二�
 
 ### 2.8 射影变换
 
-射影变换是最一般的几何变换。对于二维平面的变换而言，其有8个自由度。[算法文档](./st9-projective/docs/projective.pdf)。
+射影变换是最一般的几何变换。对于二维平面的变换而言，其有8个自由度。相机拍摄场景实际上就是一种射影变换，为此，我们可以对像片中感兴趣区域进行射影变换，将原始图片中的纸张进行反射影变换，得到了纸张的正射投影图像，对于人眼而言，更加易于识别。[算法文档](./st9-projective/docs/projective.pdf)。
 
-<img src="./st9-projective/img/src.png" width=50%><img src="./st9-projective/img/dst.png" width=50%>
+<img src="./st9-projective/img/src.png" height=220><img src="./st9-projective/img/dst.png" height=220><img src="./st9-projective/img/src2.png" height=220><img src="./st9-projective/img/dst2.png" height=220>
 
