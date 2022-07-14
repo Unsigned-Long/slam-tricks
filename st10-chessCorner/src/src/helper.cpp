@@ -46,4 +46,57 @@ namespace ns_st10 {
       return angle > startAng || angle < endAng;
     }
   }
+
+  std::vector<cv::Point2i> nms2d(const cv::Mat img, const ushort hws) {
+    std::vector<cv::Point2i> max;
+    int rows = img.rows, cols = img.cols;
+    ushort ws = 2 * hws + 1;
+    for (int i = 0; i < rows; i += hws + 1) {
+      for (int j = 0; j < cols; j += hws + 1) {
+        // find max val and idx
+        float maxVal;
+        cv::Point2i maxIdx;
+        {
+          cv::Mat win = img(cv::Range(i, std::min(i + hws + 1, rows)), cv::Range(j, std::min(j + hws + 1, cols)));
+          double maxVal_t;
+          int maxIdx_t[2];
+          cv::minMaxIdx(win, nullptr, &maxVal_t, nullptr, maxIdx_t);
+          maxVal = maxVal_t;
+          maxIdx.y = maxIdx_t[0] + i;
+          maxIdx.x = maxIdx_t[1] + j;
+        }
+
+        bool isMax = true;
+        for (int r = std::max(0, maxIdx.y - hws); r < std::min(maxIdx.y + hws + 1, rows); ++r) {
+          for (int c = std::max(0, maxIdx.x - hws); c < std::min(maxIdx.x + hws + 1, cols); ++c) {
+            if (r == maxIdx.y && c == maxIdx.x) {
+              continue;
+            }
+            float val = img.at<float>(r, c);
+            if (val > maxVal) {
+              isMax = false;
+              break;
+            }
+          }
+          if (!isMax) {
+            break;
+          }
+        }
+        if (isMax) {
+          max.push_back(maxIdx);
+        }
+      }
+    }
+    return max;
+  }
+
+  cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point> &pts) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (const auto &pt : pts) {
+      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 10);
+    }
+    return color;
+  }
+
 } // namespace ns_st10

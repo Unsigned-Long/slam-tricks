@@ -1,10 +1,12 @@
 #include "detector.h"
 
 namespace ns_st10 {
-  Detector::Detector(ushort radius) : PROTO_RADIUS(radius) {}
+  Detector::Detector(ushort radius, ushort hws)
+      : PROTO_RADIUS(radius), NMS_HALFWIN_SIZE(hws) {}
 
   void Detector::solve(cv::Mat grayImg) {
     compute_likehood(grayImg);
+    findCorners();
   }
 
   void Detector::compute_likehood(cv::Mat grayImg) {
@@ -38,8 +40,25 @@ namespace ns_st10 {
       s_type2 = cv::max(s1, s2);
     }
     likehood = cv::max(s_type1, s_type2);
-    showImg(cvt_32FC1_8UC1(likehood), "likehood");
-    cv::waitKey(0);
+    likehood = cv::max(0.0f, likehood);
   }
 
+  void Detector::findCorners() {
+    double maxVal;
+    cv::minMaxIdx(likehood, nullptr, &maxVal);
+    auto corners_t = nms2d(likehood, NMS_HALFWIN_SIZE);
+    for (const auto &pt : corners_t) {
+      if (likehood.at<float>(pt) > 0.5 * maxVal &&
+          pt.x >= PROTO_RADIUS &&
+          pt.y >= PROTO_RADIUS &&
+          pt.x < likehood.cols - PROTO_RADIUS &&
+          pt.y < likehood.rows - PROTO_RADIUS) {
+        corners.push_back(pt);
+      }
+    }
+    // display
+    LOG_VAR(corners.size());
+    showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), corners));
+    cv::waitKey(0);
+  }
 } // namespace ns_st10
