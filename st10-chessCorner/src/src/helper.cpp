@@ -99,4 +99,73 @@ namespace ns_st10 {
     return color;
   }
 
+  void gaussFilter(std::vector<float> &ary) {
+    const float a1 = 0.1f, a2 = 0.2f, a3 = 0.4f, a4 = 0.2f, a5 = 0.1f;
+    int size = ary.size();
+    std::vector<float> res(ary.size());
+    for (int i = 0; i != ary.size(); ++i) {
+      res[i] = a1 * ary[((i - 2) + size) % size] +
+               a2 * ary[((i - 1) + size) % size] +
+               a3 * ary[((i) + size) % size] +
+               a4 * ary[((i + 1) + size) % size] +
+               a5 * ary[((i + 2) + size) % size];
+    }
+    ary = res;
+  }
+
+  std::pair<std::size_t, std::size_t> meanShift(const std::vector<float> &ary) {
+    float idx1 = 6.0f, idx2 = 16.0f, idx3 = 26.0f;
+    const std::size_t hws = 4, size = ary.size();
+
+    auto weightFunc = [&ary, &hws, &size](std::size_t idx) -> float {
+      float vec = 0.0f, total = 0.0f;
+      for (int i = idx - hws; i != idx + hws + 1; ++i) {
+        float val = ary[(i + size) % size];
+        vec += (i - float(idx)) * val;
+        total += val;
+      }
+      vec /= total;
+      return vec;
+    };
+
+    for (int i = 0; i != 10; ++i) {
+      idx1 += weightFunc((int(idx1 + 0.5f) + size) % size);
+      idx2 += weightFunc((int(idx2 + 0.5f) + size) % size);
+      idx3 += weightFunc((int(idx3 + 0.5f) + size) % size);
+    }
+    auto choiceFunc = [&size, &ary](std::size_t idx) -> std::size_t {
+      int lower = (int(idx) + size) % size;
+      int top = (int(idx + 0.5f) + size) % size;
+      if (ary[lower] > ary[top]) {
+        return lower;
+      } else {
+        return top;
+      }
+    };
+    int i1 = choiceFunc(idx1);
+    int i2 = choiceFunc(idx2);
+    int i3 = choiceFunc(idx3);
+
+    // LOG_VAR(i1, i2, i3);
+    // LOG_VAR(idx1, idx2, idx3);
+
+    int dis12 = std::abs(i1 - i2), dis13 = std::abs(i1 - i3), dis23 = std::abs(i2 - i3);
+    if (dis12 > 16) {
+      dis12 = 32 - dis12;
+    }
+    if (dis13 > 16) {
+      dis13 = 32 - dis13;
+    }
+    if (dis23 > 16) {
+      dis23 = 32 - dis23;
+    }
+    int min = std::min({dis12, dis13, dis23});
+    if (dis12 == min) {
+      return {i3, ary[i1] > ary[i2] ? i1 : i2};
+    } else if (dis13 == min) {
+      return {i2, ary[i1] > ary[i3] ? i1 : i3};
+    } else {
+      return {i1, ary[i2] > ary[i3] ? i2 : i3};
+    }
+  }
 } // namespace ns_st10
