@@ -39,7 +39,7 @@ void test_nms2d() {
         }
       }
     }
-    auto max = ns_st8::nms2d(img, 2);
+    auto max = ns_st8::nms2d(img, 3);
     LOG_VAR(max);
 
     cv::Mat color;
@@ -50,8 +50,8 @@ void test_nms2d() {
     cv::namedWindow("win", cv::WindowFlags::WINDOW_FREERATIO);
     cv::imshow("win", color);
     cv::waitKey(0);
-    cv::imwrite("../img/norm_nms2d_2.png", color);
-    cv::imwrite("../img/norm_nms2d_src.png", img);
+    cv::imwrite("../img/2d/norm_nms2d_3.png", color);
+    cv::imwrite("../img/2d/norm_nms2d_src.png", img);
   }
   {
     cv::Mat img(20, 20, CV_8UC1);
@@ -74,13 +74,13 @@ void test_nms2d() {
     cv::namedWindow("win", cv::WindowFlags::WINDOW_FREERATIO);
     cv::imshow("win", color);
     cv::waitKey(0);
-    cv::imwrite("../img/nms2d_3.png", color);
-    cv::imwrite("../img/nms2d_src.png", img);
+    cv::imwrite("../img/2d/unif_nms2d_3.png", color);
+    cv::imwrite("../img/2d/unif_nms2d_src.png", img);
   }
 }
 
 int main(int argc, char const *argv[]) {
-  // test_nms1d();
-  test_nms2d();
+  test_nms1d();
+  // test_nms2d();
   return 0;
 }

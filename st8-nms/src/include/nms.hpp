@@ -9,68 +9,70 @@
 namespace ns_st8 {
   static std::vector<ushort> nms1d(const std::vector<float> &vals, const ushort hws) {
     std::vector<ushort> max;
-    for (int i = hws; i < vals.size() - 2 * hws;) {
+    ushort ws = 2 * hws + 1;
+    for (int i = 0; i < vals.size(); i += hws + 1) {
       float maxVal = vals[i];
-      ushort maxIdx = i;
-      for (int j = i; j < i + hws + 1; ++j) {
-        if (vals[j] > vals[i]) {
-          maxIdx = j;
+      int maxIdx = i;
+      for (int j = i + 1; j < std::min(i + hws + 1, int(vals.size())); ++j) {
+        if (vals[j] > maxVal) {
           maxVal = vals[j];
+          maxIdx = j;
         }
       }
-      bool findMax = true, hasLower = false;
-      for (int k = maxIdx - hws; k < maxIdx + hws + 1; ++k) {
+      int sIdx = std::max(maxIdx - hws, 0);
+      int eIdx = std::min(maxIdx + hws + 1, int(vals.size()));
+      for (int k = sIdx; k < eIdx; ++k) {
         if (k == maxIdx) {
           continue;
         }
-        if (vals[k] > maxVal) {
-          findMax = false;
+        if (vals[k] >= maxVal) {
+          maxIdx = -1;
           break;
-        } else if (vals[k] < maxVal) {
-          hasLower = true;
         }
       }
-      if (findMax && hasLower) {
+      if (maxIdx != -1) {
         max.push_back(maxIdx);
-        i = maxIdx + hws + 1;
-      } else {
-        i += 1;
       }
     }
     return max;
   }
+
   static std::vector<cv::Point2i> nms2d(const cv::Mat img, const ushort hws) {
     std::vector<cv::Point2i> max;
     int rows = img.rows, cols = img.cols;
-    for (int i = hws; i < rows - 2 * hws; i += hws + 1) {
-      for (int j = hws; j < cols - 2 * hws; j += hws + 1) {
-        uchar maxVal = img.at<uchar>(i, j);
-        cv::Point2i maxIdx(j, i);
-        for (int r = i; r < i + hws + 1; ++r) {
-          for (int c = j; c < j + hws + 1; ++c) {
-            uchar val = img.at<uchar>(r, c);
-            if (val > maxVal) {
-              maxVal = val;
-              maxIdx = cv::Point2i(c, r);
-            }
-          }
+    ushort ws = 2 * hws + 1;
+    for (int i = 0; i < rows; i += hws + 1) {
+      for (int j = 0; j < cols; j += hws + 1) {
+        // find max val and idx
+        uchar maxVal;
+        cv::Point2i maxIdx;
+        {
+          cv::Mat win = img(cv::Range(i, std::min(i + hws + 1, rows)), cv::Range(j, std::min(j + hws + 1, cols)));
+          double maxVal_t;
+          int maxIdx_t[2];
+          cv::minMaxIdx(win, nullptr, &maxVal_t, nullptr, maxIdx_t);
+          maxVal = maxVal_t;
+          maxIdx.y = maxIdx_t[0] + i;
+          maxIdx.x = maxIdx_t[1] + j;
         }
-        bool findMax = true, hasLower = false;
-        for (int r = maxIdx.y - hws; r < maxIdx.y + hws + 1; ++r) {
-          for (int c = maxIdx.x - hws; c < maxIdx.x + hws + 1; ++c) {
+
+        bool isMax = true;
+        for (int r = std::max(0, maxIdx.y - hws); r < std::min(maxIdx.y + hws + 1, rows); ++r) {
+          for (int c = std::max(0, maxIdx.x - hws); c < std::min(maxIdx.x + hws + 1, cols); ++c) {
             if (r == maxIdx.y && c == maxIdx.x) {
               continue;
             }
             uchar val = img.at<uchar>(r, c);
-            if (val > maxVal) {
-              findMax = false;
+            if (val >= maxVal) {
+              isMax = false;
               break;
-            } else if (val < maxVal) {
-              hasLower = true;
             }
           }
+          if (!isMax) {
+            break;
+          }
         }
-        if (findMax && hasLower) {
+        if (isMax) {
           max.push_back(maxIdx);
         }
       }
