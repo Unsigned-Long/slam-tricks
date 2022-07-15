@@ -14,7 +14,11 @@ namespace ns_st10 {
     verifyCorners();
     // showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), corners), "new corners");
     // cv::waitKey(0);
+    showImg(ns_st10::drawModes(grayImg, corners, corners_modes), "old modes");
+    cv::waitKey(0);
     refineCorners();
+    showImg(ns_st10::drawModes(grayImg, corners, corners_modes), "new modes");
+    cv::waitKey(0);
   }
 
   void Detector::compute_likehood() {
@@ -78,6 +82,8 @@ namespace ns_st10 {
     const float binSize = M_PI / 32;
     std::vector<cv::Point> corners_new;
     std::vector<float> scores_new;
+    std::vector<std::pair<float, float>> modes_new;
+
     for (const auto &pt : corners) {
       int x = pt.x, y = pt.y;
       std::vector<float> bins(32, 0.0f);
@@ -98,6 +104,7 @@ namespace ns_st10 {
       auto modes = meanShift(bins);
       // LOG_VAR(modes.first, modes.second);
       int m1 = modes.first, m2 = modes.second;
+      float m1_f = std::min(m1, m2) / 31.0f * M_PI, m2_f = std::max(m1, m2) / 31.0f * M_PI;
       float v1 = bins[m1], v2 = bins[m2];
       int dis = std::abs(m1 - m2);
       if (dis > 16) {
@@ -105,7 +112,7 @@ namespace ns_st10 {
       }
       if (dis > 10 && std::abs(v1 - v2) < std::max(v1, v2) * 0.5f) {
         // compute score
-        auto proto = ProtoType(HIST_HWS, std::min(m1, m2) / 31.0f * M_PI, std::max(m1, m2) / 31.0f * M_PI);
+        auto proto = ProtoType(HIST_HWS, m1_f, m2_f);
         {
           cv::Mat gx, gy;
           cv::Sobel(proto.A, gx, CV_32FC1, 1, 0);
@@ -131,6 +138,7 @@ namespace ns_st10 {
         // is a good corner
         corners_new.push_back(pt);
         scores_new.push_back(score_likehood * score_grad);
+        modes_new.push_back({m1_f, m2_f});
       }
       {
         // draw
@@ -152,32 +160,86 @@ namespace ns_st10 {
       if (scores_new[i] > 0.5f * score_max) {
         corners.push_back(corners_new[i]);
         scores.push_back(scores_new[i]);
+        corners_modes.push_back(modes_new[i]);
       }
     }
   }
 
   void Detector::refineCorners() {
-    // corner position
-    for (const auto &pt : corners) {
-      Eigen::Vector2f c(pt.x, pt.y);
-      Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
-      Eigen::Vector2f g = Eigen::Vector2f::Zero();
+    for (int i = 0; i != corners.size(); ++i) {
+      {
+        // corner position
+        auto &pt = corners[i];
+        Eigen::Vector2f c(pt.x, pt.y);
+        Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
+        Eigen::Vector2f g = Eigen::Vector2f::Zero();
 
-      for (int i = pt.y - REFINE_HWS; i != pt.y + REFINE_HWS + 1; ++i) {
-        auto gradXPtr = gradX.ptr<float>(i);
-        auto gradYPtr = gradY.ptr<float>(i);
-        for (int j = pt.x - REFINE_HWS; j != pt.x + REFINE_HWS + 1; ++j) {
-          float gx = gradXPtr[j], gy = gradYPtr[j];
-          Eigen::Vector2f Jacobian(gx, gy);
-          float error = gx * (pt.x - j) + gy * (pt.y - i);
-          H += Jacobian * Jacobian.transpose();
-          g -= Jacobian * error;
+        for (int i = pt.y - REFINE_HWS; i != pt.y + REFINE_HWS + 1; ++i) {
+          auto gradXPtr = gradX.ptr<float>(i);
+          auto gradYPtr = gradY.ptr<float>(i);
+          for (int j = pt.x - REFINE_HWS; j != pt.x + REFINE_HWS + 1; ++j) {
+            float gx = gradXPtr[j], gy = gradYPtr[j];
+            Eigen::Vector2f Jacobian(gx, gy);
+            float error = gx * (pt.x - j) + gy * (pt.y - i);
+            H += Jacobian * Jacobian.transpose();
+            g -= Jacobian * error;
+          }
+        }
+        c += H.ldlt().solve(g);
+        corners_sp.push_back(cv::Point2f(c(0), c(1)));
+      }
+      {
+        // angle
+        auto &modes = corners_modes[i];
+        const auto &pt = corners_sp[i];
+        auto &alpha1 = modes.first;
+        auto &alpha2 = modes.second;
+        Eigen::Vector2f vec1(std::cos(alpha1), std::sin(alpha1));
+        Eigen::Vector2f vec2(std::cos(alpha2), std::sin(alpha2));
+        std::vector<cv::Point2f> grad_alpha1, grad_alpha2;
+
+        for (int i = int(pt.y) - REFINE_HWS; i != int(pt.y) + REFINE_HWS + 1; ++i) {
+          auto gradXPtr = gradX.ptr<float>(i);
+          auto gradYPtr = gradY.ptr<float>(i);
+          for (int j = int(pt.x) - REFINE_HWS; j != int(pt.x) + REFINE_HWS + 1; ++j) {
+            float gx = gradXPtr[j], gy = gradYPtr[j];
+            Eigen::Vector2f grad(gx, gy);
+            grad.normalize();
+            if (std::abs(vec1.dot(grad)) < 0.3f) {
+              grad_alpha1.push_back(cv::Point2f(gx, gy));
+            }
+            if (std::abs(vec2.dot(grad)) < 0.3f) {
+              grad_alpha2.push_back(cv::Point2f(gx, gy));
+            }
+          }
+        }
+
+        {
+          Eigen::MatrixXf A(grad_alpha1.size(), 2);
+          for (int i = 0; i != grad_alpha1.size(); ++i) {
+            A(i, 0) = grad_alpha1[i].x;
+            A(i, 1) = grad_alpha1[i].y;
+          }
+          Eigen::JacobiSVD<Eigen::MatrixXf> svd(A, Eigen::ComputeFullV);
+          Eigen::Matrix2f vMatrix = svd.matrixV();
+          float vx = vMatrix.col(vMatrix.cols() - 1)(0);
+          float vy = vMatrix.col(vMatrix.cols() - 1)(1);
+          alpha1 = std::atan2(vy, vx);
+        }
+        {
+          Eigen::MatrixXf A(grad_alpha2.size(), 2);
+          for (int i = 0; i != grad_alpha2.size(); ++i) {
+            A(i, 0) = grad_alpha2[i].x;
+            A(i, 1) = grad_alpha2[i].y;
+          }
+          Eigen::JacobiSVD<Eigen::MatrixXf> svd(A, Eigen::ComputeFullV);
+          Eigen::Matrix2f vMatrix = svd.matrixV();
+          float vx = vMatrix.col(vMatrix.cols() - 1)(0);
+          float vy = vMatrix.col(vMatrix.cols() - 1)(1);
+          alpha2 = std::atan2(vy, vx);
         }
       }
-      c += H.ldlt().solve(g);
-      corners_sp.push_back(cv::Point2f(c(0), c(1)));
     }
-    // angle
   }
 
 } // namespace ns_st10

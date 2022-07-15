@@ -99,6 +99,27 @@ namespace ns_st10 {
     return color;
   }
 
+  cv::Mat drawModes(cv::Mat grayImg, const std::vector<cv::Point> &pts, const std::vector<std::pair<float, float>> &modes) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (int i = 0; i != pts.size(); ++i) {
+      const auto &pt = pts[i];
+      const auto &m = modes[i];
+      float alpha1 = m.first, alpha2 = m.second;
+      {
+        float vx = std::cos(alpha1) * 20, vy = std::sin(alpha1) * 20;
+        cv::Point p(pt.x + vx, pt.y + vy);
+        cv::line(color, pt, p, cv::Scalar(0, 255, 0), 2);
+      }
+      {
+        float vx = std::cos(alpha2) * 20, vy = std::sin(alpha2) * 20;
+        cv::Point p(pt.x + vx, pt.y + vy);
+        cv::line(color, pt, p, cv::Scalar(255, 0, 0), 2);
+      }
+    }
+    return color;
+  }
+
   void gaussFilter(std::vector<float> &ary) {
     const float a1 = 0.1f, a2 = 0.2f, a3 = 0.4f, a4 = 0.2f, a5 = 0.1f;
     int size = ary.size();

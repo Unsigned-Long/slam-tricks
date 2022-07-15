@@ -16,8 +16,10 @@ namespace ns_st10 {
     cv::Mat gradX;
     cv::Mat gradY;
     std::vector<cv::Point> corners;
+    
     std::vector<cv::Point2f> corners_sp;
     std::vector<float> scores;
+    std::vector<std::pair<float, float>> corners_modes;
 
   public:
     Detector(ushort protoHWS = 5, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
