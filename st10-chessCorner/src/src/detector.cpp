@@ -186,10 +186,13 @@ namespace ns_st10 {
           }
         }
         c += H.ldlt().solve(g);
+        
         corners_sp.push_back(cv::Point2f(c(0), c(1)));
       }
-      {
-        // angle
+
+      // angle
+      for (int k = 0; k != 2; ++k) {
+
         auto &modes = corners_modes[i];
         const auto &pt = corners_sp[i];
         auto &alpha1 = modes.first;
@@ -205,10 +208,10 @@ namespace ns_st10 {
             float gx = gradXPtr[j], gy = gradYPtr[j];
             Eigen::Vector2f grad(gx, gy);
             grad.normalize();
-            if (std::abs(vec1.dot(grad)) < 0.3f) {
+            if (std::abs(vec1.dot(grad)) < 0.25f) {
               grad_alpha1.push_back(cv::Point2f(gx, gy));
             }
-            if (std::abs(vec2.dot(grad)) < 0.3f) {
+            if (std::abs(vec2.dot(grad)) < 0.25f) {
               grad_alpha2.push_back(cv::Point2f(gx, gy));
             }
           }
