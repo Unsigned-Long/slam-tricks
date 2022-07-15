@@ -1,18 +1,20 @@
 #include "detector.h"
+#include "eigen3/Eigen/Dense"
 
 namespace ns_st10 {
-  Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS)
-      : PROTO_HWS(protoHWS), NMS_HWS(nmsHWS), HIST_HWS(histHWS) {}
+  Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS, ushort refineHWS)
+      : PROTO_HWS(protoHWS), NMS_HWS(nmsHWS), HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
 
   void Detector::solve(cv::Mat gImg) {
     this->grayImg = gImg;
     compute_likehood();
     findCorners();
-    showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), corners), "old corners");
-    cv::waitKey(0);
+    // showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), corners), "old corners");
+    // cv::waitKey(0);
     verifyCorners();
-    showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), corners), "new corners");
-    cv::waitKey(0);
+    // showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), corners), "new corners");
+    // cv::waitKey(0);
+    refineCorners();
   }
 
   void Detector::compute_likehood() {
@@ -69,7 +71,6 @@ namespace ns_st10 {
 
   void Detector::verifyCorners() {
     ushort rows = grayImg.rows, cols = grayImg.cols;
-    cv::Mat gradX, gradY;
     cv::Sobel(grayImg, gradX, CV_32FC1, 1, 0);
     cv::Sobel(grayImg, gradY, CV_32FC1, 0, 1);
     cv::Mat grad, angle;
@@ -154,4 +155,29 @@ namespace ns_st10 {
       }
     }
   }
+
+  void Detector::refineCorners() {
+    // corner position
+    for (const auto &pt : corners) {
+      Eigen::Vector2f c(pt.x, pt.y);
+      Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
+      Eigen::Vector2f g = Eigen::Vector2f::Zero();
+
+      for (int i = pt.y - REFINE_HWS; i != pt.y + REFINE_HWS + 1; ++i) {
+        auto gradXPtr = gradX.ptr<float>(i);
+        auto gradYPtr = gradY.ptr<float>(i);
+        for (int j = pt.x - REFINE_HWS; j != pt.x + REFINE_HWS + 1; ++j) {
+          float gx = gradXPtr[j], gy = gradYPtr[j];
+          Eigen::Vector2f Jacobian(gx, gy);
+          float error = gx * (pt.x - j) + gy * (pt.y - i);
+          H += Jacobian * Jacobian.transpose();
+          g -= Jacobian * error;
+        }
+      }
+      c += H.ldlt().solve(g);
+      corners_sp.push_back(cv::Point2f(c(0), c(1)));
+    }
+    // angle
+  }
+
 } // namespace ns_st10
