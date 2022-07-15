@@ -47,6 +47,7 @@ namespace ns_st10 {
     }
     likehood = cv::max(s_type1, s_type2);
     likehood = cv::max(0.0f, likehood);
+    cv::normalize(likehood, likehood);
   }
 
   void Detector::findCorners() {
@@ -75,6 +76,7 @@ namespace ns_st10 {
     cv::cartToPolar(gradX, gradY, grad, angle);
     const float binSize = M_PI / 32;
     std::vector<cv::Point> corners_new;
+    std::vector<float> scores_new;
     for (const auto &pt : corners) {
       int x = pt.x, y = pt.y;
       std::vector<float> bins(32, 0.0f);
@@ -101,7 +103,33 @@ namespace ns_st10 {
         dis = 32 - dis;
       }
       if (dis > 10 && std::abs(v1 - v2) < std::max(v1, v2) * 0.5f) {
+        // compute score
+        auto proto = ProtoType(HIST_HWS, std::min(m1, m2) / 31.0f * M_PI, std::max(m1, m2) / 31.0f * M_PI);
+        {
+          cv::Mat gx, gy;
+          cv::Sobel(proto.A, gx, CV_32FC1, 1, 0);
+          cv::Sobel(proto.A, gy, CV_32FC1, 0, 1);
+          cv::cartToPolar(gx, gy, proto.A, gx);
+
+          cv::Sobel(proto.B, gx, CV_32FC1, 1, 0);
+          cv::Sobel(proto.B, gy, CV_32FC1, 0, 1);
+          cv::cartToPolar(gx, gy, proto.B, gx);
+
+          cv::Sobel(proto.C, gx, CV_32FC1, 1, 0);
+          cv::Sobel(proto.C, gy, CV_32FC1, 0, 1);
+          cv::cartToPolar(gx, gy, proto.C, gx);
+
+          cv::Sobel(proto.D, gx, CV_32FC1, 1, 0);
+          cv::Sobel(proto.D, gy, CV_32FC1, 0, 1);
+          cv::cartToPolar(gx, gy, proto.D, gx);
+        }
+        cv::Mat subGrad = grad(cv::Range(y - HIST_HWS, y + HIST_HWS + 1), cv::Range(x - HIST_HWS, x + HIST_HWS + 1));
+        cv::Mat subExpGrad = cv::max(cv::Mat(cv::max(proto.A, proto.B)), cv::Mat(cv::max(proto.C, proto.D)));
+        float score_grad = subGrad.dot(subExpGrad) / (cv::norm(subGrad) * cv::norm(subExpGrad));
+        float score_likehood = likehood.at<float>(pt);
+        // is a good corner
         corners_new.push_back(pt);
+        scores_new.push_back(score_likehood * score_grad);
       }
       {
         // draw
@@ -116,6 +144,14 @@ namespace ns_st10 {
         // int re = system("/bin/python3 /home/csl/CppWorks/artwork/slam-tricks/st10-chessCorner/pyDrawer/drawer.py");
       }
     }
-    corners = corners_new;
+    float score_max = *std::max_element(scores_new.cbegin(), scores_new.cend());
+    corners.clear();
+    scores.clear();
+    for (int i = 0; i != corners_new.size(); ++i) {
+      if (scores_new[i] > 0.5f * score_max) {
+        corners.push_back(corners_new[i]);
+        scores.push_back(scores_new[i]);
+      }
+    }
   }
 } // namespace ns_st10

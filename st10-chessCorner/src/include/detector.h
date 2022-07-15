@@ -13,6 +13,7 @@ namespace ns_st10 {
     cv::Mat grayImg;
     cv::Mat likehood;
     std::vector<cv::Point> corners;
+    std::vector<float> scores;
 
   public:
     Detector(ushort protoHWS = 5, ushort nmsHWS = 4, ushort histHWS = 10);

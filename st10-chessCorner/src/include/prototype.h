@@ -12,6 +12,7 @@ namespace ns_st10 {
 
   public:
     ProtoType(ushort radius, float angle1, float angle2);
+
   };
 } // namespace ns_st10
 

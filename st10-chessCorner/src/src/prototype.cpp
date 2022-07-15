@@ -3,11 +3,11 @@
 
 namespace ns_st10 {
   ProtoType::ProtoType(ushort radius, float angle1, float angle2)
-      : A(2 * radius - 1, 2 * radius - 1, CV_32FC1, cv::Scalar(0.0)),
-        B(2 * radius - 1, 2 * radius - 1, CV_32FC1, cv::Scalar(0.0)),
-        C(2 * radius - 1, 2 * radius - 1, CV_32FC1, cv::Scalar(0.0)),
-        D(2 * radius - 1, 2 * radius - 1, CV_32FC1, cv::Scalar(0.0)) {
-    ushort size = 2 * radius - 1, r = radius - 1;
+      : A(2 * radius + 1, 2 * radius + 1, CV_32FC1, cv::Scalar(0.0)),
+        B(2 * radius + 1, 2 * radius + 1, CV_32FC1, cv::Scalar(0.0)),
+        C(2 * radius + 1, 2 * radius + 1, CV_32FC1, cv::Scalar(0.0)),
+        D(2 * radius + 1, 2 * radius + 1, CV_32FC1, cv::Scalar(0.0)) {
+    ushort size = 2 * radius + 1, r = radius;
     for (int i = 0; i != size; ++i) {
       for (int j = 0; j != size; ++j) {
         if (i == r && j == r) {
@@ -28,4 +28,5 @@ namespace ns_st10 {
       }
     }
   }
+
 } // namespace ns_st10
