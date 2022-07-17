@@ -99,7 +99,17 @@ namespace ns_st10 {
     return color;
   }
 
-  cv::Mat drawModes(cv::Mat grayImg, const std::vector<cv::Point> &pts, const std::vector<std::pair<float, float>> &modes) {
+  cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point2f> &pts) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (const auto &pt : pts) {
+      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 10);
+    }
+    return color;
+  }
+
+  cv::Mat drawModes(cv::Mat grayImg, const std::vector<cv::Point2f> &pts,
+                    const std::vector<std::pair<float, float>> &modes) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
     for (int i = 0; i != pts.size(); ++i) {
@@ -108,12 +118,12 @@ namespace ns_st10 {
       float alpha1 = m.first, alpha2 = m.second;
       {
         float vx = std::cos(alpha1) * 20, vy = std::sin(alpha1) * 20;
-        cv::Point p(pt.x + vx, pt.y + vy);
+        cv::Point2f p(pt.x + vx, pt.y + vy);
         cv::line(color, pt, p, cv::Scalar(0, 255, 0), 2);
       }
       {
         float vx = std::cos(alpha2) * 20, vy = std::sin(alpha2) * 20;
-        cv::Point p(pt.x + vx, pt.y + vy);
+        cv::Point2f p(pt.x + vx, pt.y + vy);
         cv::line(color, pt, p, cv::Scalar(255, 0, 0), 2);
       }
     }
@@ -188,5 +198,21 @@ namespace ns_st10 {
     } else {
       return {i1, ary[i2] > ary[i3] ? i2 : i3};
     }
+  }
+
+  cv::Mat drawChessBoard(cv::Mat grayImg,
+                         const std::vector<std::vector<std::size_t>> &board,
+                         const std::vector<cv::Point2f> &corner) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (int i = 0; i != board.size(); ++i) {
+      for (int j = 0; j != board[0].size(); ++j) {
+        const cv::Point2f &pt = corner[board[i][j]];
+        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, 10);
+        cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
+                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), 1);
+      }
+    }
+    return color;
   }
 } // namespace ns_st10
