@@ -26,11 +26,12 @@ namespace ns_st10 {
     std::vector<std::pair<float, float>> corners_modes;
 
     using ChessBoard = std::vector<std::vector<std::size_t>>;
+    using CBCorners = std::vector<std::vector<cv::Point2f>>;
 
   public:
     Detector(ushort protoHWS = 5, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
 
-    void solve(cv::Mat gImg);
+    std::pair<bool, Detector::CBCorners> solve(cv::Mat gImg, bool computeEach = false);
 
   protected:
     void compute_likehood();
@@ -41,11 +42,11 @@ namespace ns_st10 {
 
     void refineCorners();
 
-    void genChessBoard();
+    std::pair<bool, CBCorners> genChessBoard(bool computeEach);
 
   protected:
     std::tuple<bool, float, ChessBoard>
-    genChessBoard(std::size_t idx);
+    genChessBoardOnce(std::size_t idx);
 
     std::pair<bool, ChessBoard>
     initChessBoard(std::size_t idx);

@@ -4,7 +4,7 @@ namespace ns_st10 {
   Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS, ushort refineHWS)
       : PROTO_HWS(protoHWS), NMS_HWS(nmsHWS), HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
 
-  void Detector::solve(cv::Mat gImg) {
+  std::pair<bool, Detector::CBCorners> Detector::solve(cv::Mat gImg, bool computeEach) {
     this->grayImg = gImg;
     compute_likehood();
 #ifdef WRITE_PROC_IMG
@@ -27,9 +27,11 @@ namespace ns_st10 {
     cv::imwrite("../img/process/newCorners.png", drawMarks(grayImg, corners_sp));
     cv::imwrite("../img/process/newModes.png", drawModes(grayImg, corners_sp, corners_modes));
 #endif
-    showImg(drawModes(grayImg, corners_sp, corners_modes), "modes");
-    cv::waitKey(0);
-    genChessBoard();
+    // showImg(drawModes(grayImg, corners_sp, corners_modes), "modes");
+    // cv::waitKey(0);
+
+    std::pair<bool, Detector::CBCorners> cbcs = genChessBoard(computeEach);
+    return cbcs;
   }
 
   void Detector::compute_likehood() {
@@ -256,19 +258,41 @@ namespace ns_st10 {
     }
   }
 
-  void Detector::genChessBoard() {
+  std::pair<bool, Detector::CBCorners>
+  Detector::genChessBoard(bool computeEach) {
     std::size_t size = corners_sp.size();
+    std::vector<std::pair<float, Detector::ChessBoard>> res;
     for (int i = 0; i != size; ++i) {
-      auto [isVaild, engry, board] = genChessBoard(i);
+      auto [isVaild, engry, board] = genChessBoardOnce(i);
       if (isVaild) {
+        res.push_back({engry, board});
+        // display
         showImg(drawChessBoard(grayImg, board, corners_sp));
         cv::waitKey(0);
+        if (!computeEach) {
+          break;
+        }
       }
     }
+    if (res.empty()) {
+
+      return {false, CBCorners()};
+    }
+    auto iter = std::min_element(res.cbegin(), res.cend(), [](const auto &p1, const auto &p2) {
+      return p1.first < p2.first;
+    });
+    const auto &board = iter->second;
+    CBCorners cbcs(board.size(), std::vector<cv::Point2f>(board.front().size()));
+    for (int i = 0; i != board.size(); ++i) {
+      for (int j = 0; j != board[0].size(); ++j) {
+        cbcs[i][j] = corners_sp[board[i][j]];
+      }
+    }
+    return {true, cbcs};
   }
 
   std::tuple<bool, float, Detector::ChessBoard>
-  Detector::genChessBoard(std::size_t idx) {
+  Detector::genChessBoardOnce(std::size_t idx) {
     std::vector<bool> isUsed(corners_sp.size(), false);
     auto res = initChessBoard(idx);
     if (!res.first) {
