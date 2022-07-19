@@ -10,10 +10,18 @@ namespace ns_st10 {
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/likehood.png", cvt_32FC1_8UC1(likehood));
 #endif
+#ifdef SHOW_PROC_IMG
+    showImg(cvt_32FC1_8UC1(likehood), "likehood");
+    cv::waitKey(0);
+#endif
 
     findCorners();
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/findCorners.png", drawMarks(grayImg, corners));
+#endif
+#ifdef SHOW_PROC_IMG
+    showImg(drawMarks(grayImg, corners), "findCorners");
+    cv::waitKey(0);
 #endif
 
     verifyCorners();
@@ -21,16 +29,30 @@ namespace ns_st10 {
     cv::imwrite("../img/process/oldCorners.png", drawMarks(grayImg, corners));
     cv::imwrite("../img/process/oldModes.png", drawModes(grayImg, corners, corners_modes));
 #endif
+#ifdef SHOW_PROC_IMG
+    showImg(drawMarks(grayImg, corners), "oldCorners");
+    showImg(drawModes(grayImg, corners, corners_modes), "oldModes");
+    cv::waitKey(0);
+#endif
 
     refineCorners();
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/newCorners.png", drawMarks(grayImg, corners_sp));
     cv::imwrite("../img/process/newModes.png", drawModes(grayImg, corners_sp, corners_modes));
 #endif
-    // showImg(drawModes(grayImg, corners_sp, corners_modes), "modes");
-    // cv::waitKey(0);
+#ifdef SHOW_PROC_IMG
+    showImg(drawMarks(grayImg, corners_sp), "newCorners");
+    showImg(drawModes(grayImg, corners_sp, corners_modes), "newModes");
+    cv::waitKey(0);
+#endif
 
     std::pair<bool, Detector::CBCorners> cbcs = genChessBoard(computeEach);
+#ifdef SHOW_PROC_IMG
+    if (cbcs.first) {
+      showImg(drawChessBoard(grayImg, cbcs.second), "chessboard");
+      cv::waitKey(0);
+    }
+#endif
     return cbcs;
   }
 
@@ -322,9 +344,6 @@ namespace ns_st10 {
         energy = iter->first;
         cb = iter->second;
       }
-      // display
-      showImg(drawChessBoard(grayImg, cb, corners_sp));
-      cv::waitKey(0);
     }
     return {true, energy, res.second};
   }

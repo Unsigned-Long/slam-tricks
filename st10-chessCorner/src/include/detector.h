@@ -10,6 +10,7 @@
 #include <tuple>
 
 // #define WRITE_PROC_IMG
+#define SHOW_PROC_IMG
 
 namespace ns_st10 {
   class Detector {

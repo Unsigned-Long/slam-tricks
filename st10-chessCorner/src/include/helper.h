@@ -24,6 +24,9 @@ namespace ns_st10 {
 
   cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point2f> &pts);
 
+  cv::Mat drawModes(cv::Mat grayImg, const std::vector<cv::Point> &pts,
+                    const std::vector<std::pair<float, float>> &modes);
+
   cv::Mat drawModes(cv::Mat grayImg, const std::vector<cv::Point2f> &pts,
                     const std::vector<std::pair<float, float>> &modes);
 
@@ -34,6 +37,9 @@ namespace ns_st10 {
   cv::Mat drawChessBoard(cv::Mat grayImg,
                          const std::deque<std::deque<std::size_t>> &board,
                          const std::vector<cv::Point2f> &corner);
+
+  cv::Mat drawChessBoard(cv::Mat grayImg,
+                         const std::vector<std::vector<cv::Point2f>> &board);
 } // namespace ns_st10
 
 #endif

@@ -130,6 +130,28 @@ namespace ns_st10 {
     return color;
   }
 
+  cv::Mat drawModes(cv::Mat grayImg, const std::vector<cv::Point> &pts,
+                    const std::vector<std::pair<float, float>> &modes) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (int i = 0; i != pts.size(); ++i) {
+      const auto &pt = pts[i];
+      const auto &m = modes[i];
+      float alpha1 = m.first, alpha2 = m.second;
+      {
+        float vx = std::cos(alpha1) * 20, vy = std::sin(alpha1) * 20;
+        cv::Point2f p(pt.x + vx, pt.y + vy);
+        cv::line(color, pt, p, cv::Scalar(0, 255, 0), 2);
+      }
+      {
+        float vx = std::cos(alpha2) * 20, vy = std::sin(alpha2) * 20;
+        cv::Point2f p(pt.x + vx, pt.y + vy);
+        cv::line(color, pt, p, cv::Scalar(255, 0, 0), 2);
+      }
+    }
+    return color;
+  }
+
   void gaussFilter(std::vector<float> &ary) {
     const float a1 = 0.1f, a2 = 0.2f, a3 = 0.4f, a4 = 0.2f, a5 = 0.1f;
     int size = ary.size();
@@ -199,7 +221,7 @@ namespace ns_st10 {
       return {i1, ary[i2] > ary[i3] ? i2 : i3};
     }
   }
-  
+
   cv::Mat drawChessBoard(cv::Mat grayImg,
                          const std::deque<std::deque<std::size_t>> &board,
                          const std::vector<cv::Point2f> &corner) {
@@ -208,6 +230,20 @@ namespace ns_st10 {
     for (int i = 0; i != board.size(); ++i) {
       for (int j = 0; j != board[0].size(); ++j) {
         const cv::Point2f &pt = corner[board[i][j]];
+        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, 10);
+        cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
+                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), 1);
+      }
+    }
+    return color;
+  }
+  cv::Mat drawChessBoard(cv::Mat grayImg,
+                         const std::vector<std::vector<cv::Point2f>> &board) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (int i = 0; i != board.size(); ++i) {
+      for (int j = 0; j != board[0].size(); ++j) {
+        const cv::Point2f &pt = board[i][j];
         cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, 10);
         cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
                     cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), 1);
