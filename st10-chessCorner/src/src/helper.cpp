@@ -199,9 +199,9 @@ namespace ns_st10 {
       return {i1, ary[i2] > ary[i3] ? i2 : i3};
     }
   }
-
+  
   cv::Mat drawChessBoard(cv::Mat grayImg,
-                         const std::vector<std::vector<std::size_t>> &board,
+                         const std::deque<std::deque<std::size_t>> &board,
                          const std::vector<cv::Point2f> &corner) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);

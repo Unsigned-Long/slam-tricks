@@ -3,7 +3,10 @@
 
 #include "eigen3/Eigen/Dense"
 #include "helper.h"
+#include "pcl-1.12/pcl/kdtree/kdtree_flann.h"
+#include "pcl-1.12/pcl/point_types.h"
 #include "prototype.h"
+#include <deque>
 #include <tuple>
 
 // #define WRITE_PROC_IMG
@@ -24,9 +27,18 @@ namespace ns_st10 {
     std::vector<cv::Point2f> corners_sp;
     std::vector<float> scores;
     std::vector<std::pair<float, float>> corners_modes;
+    pcl::KdTreeFLANN<pcl::PointXY>::Ptr kdtree;
 
-    using ChessBoard = std::vector<std::vector<std::size_t>>;
+  public:
+    using ChessBoard = std::deque<std::deque<std::size_t>>;
     using CBCorners = std::vector<std::vector<cv::Point2f>>;
+
+    enum class CBGrowDir {
+      TOP,
+      LOWER,
+      LEFT,
+      RIGHT
+    };
 
   public:
     Detector(ushort protoHWS = 5, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
@@ -53,6 +65,13 @@ namespace ns_st10 {
 
     std::pair<bool, std::size_t>
     closestCornerInDir(std::size_t cornerIdx, const Eigen::Vector2f &dir, float &dist);
+
+    float chessBoardEnergy(const ChessBoard &cb);
+
+    std::pair<float, ChessBoard>
+    growChessBoard(const ChessBoard &cb, CBGrowDir dir);
+
+    cv::Point2f predictCorner(const cv::Point2f &p1, const cv::Point2f &p2);
   };
 
 } // namespace ns_st10

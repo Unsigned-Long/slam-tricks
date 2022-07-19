@@ -7,6 +7,7 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
+#include <deque>
 
 namespace ns_st10 {
   cv::Mat cvt_32FC1_8UC1(cv::Mat img_f);
@@ -31,7 +32,7 @@ namespace ns_st10 {
   std::pair<std::size_t, std::size_t> meanShift(const std::vector<float> &ary);
 
   cv::Mat drawChessBoard(cv::Mat grayImg,
-                         const std::vector<std::vector<std::size_t>> &board,
+                         const std::deque<std::deque<std::size_t>> &board,
                          const std::vector<cv::Point2f> &corner);
 } // namespace ns_st10
 
