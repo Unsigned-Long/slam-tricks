@@ -42,7 +42,7 @@ namespace ns_st10 {
     };
 
   public:
-    Detector(ushort protoHWS = 5, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
+    Detector(ushort protoHWS = 10, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
 
     std::pair<bool, CBCorners> solve(cv::Mat gImg, bool computeEach = false);
 

@@ -114,7 +114,7 @@ namespace ns_st10 {
                     const std::vector<std::pair<float, float>> &modes) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size1 = grayImg.cols / 30;
+    int size1 = grayImg.cols / 40;
     int size2 = grayImg.cols / 300;
     for (int i = 0; i != pts.size(); ++i) {
       const auto &pt = pts[i];
@@ -138,7 +138,7 @@ namespace ns_st10 {
                     const std::vector<std::pair<float, float>> &modes) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size1 = grayImg.cols / 30;
+    int size1 = grayImg.cols / 40;
     int size2 = grayImg.cols / 300;
     for (int i = 0; i != pts.size(); ++i) {
       const auto &pt = pts[i];
