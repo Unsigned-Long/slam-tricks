@@ -234,17 +234,19 @@ namespace ns_st10 {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
     int size1 = grayImg.cols / 60;
-    int size2 = grayImg.cols / 600;
+    int size2 = grayImg.cols / 300;
+    float size3 = grayImg.cols / 1200.0f;
     for (int i = 0; i != board.size(); ++i) {
       for (int j = 0; j != board[0].size(); ++j) {
         const cv::Point2f &pt = corner[board[i][j]];
-        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, size1, size1 * 0.2f);
+        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, size1, size2);
         cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
-                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), size2);
+                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, size3, cv::Scalar(0, 0, 255), 3);
       }
     }
     return color;
   }
+
   cv::Mat drawChessBoard(cv::Mat grayImg,
                          const std::vector<std::vector<cv::Point2f>> &board) {
     cv::Mat color;

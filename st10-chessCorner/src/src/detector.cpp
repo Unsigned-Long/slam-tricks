@@ -89,7 +89,6 @@ namespace ns_st10 {
     }
     likehood = cv::max(s_type1, s_type2);
     likehood = cv::max(0.0f, likehood);
-    cv::normalize(likehood, likehood);
   }
 
   void Detector::findCorners() {
@@ -97,7 +96,7 @@ namespace ns_st10 {
     cv::minMaxIdx(likehood, nullptr, &maxVal);
     auto corners_t = nms2d(likehood, NMS_HWS);
     for (const auto &pt : corners_t) {
-      if (likehood.at<float>(pt) > 0.5 * maxVal &&
+      if (likehood.at<float>(pt) > 0.45 * maxVal &&
           pt.x >= HIST_HWS &&
           pt.y >= HIST_HWS &&
           pt.x < likehood.cols - HIST_HWS &&
@@ -138,7 +137,6 @@ namespace ns_st10 {
       gaussFilter(bins);
       // mean shift
       auto modes = meanShift(bins);
-      // LOG_VAR(modes.first, modes.second);
       int m1 = modes.first, m2 = modes.second;
       float m1_f = std::min(m1, m2) / 31.0f * M_PI, m2_f = std::max(m1, m2) / 31.0f * M_PI;
       float v1 = bins[m1], v2 = bins[m2];
@@ -184,8 +182,9 @@ namespace ns_st10 {
         // }
         // file << bins[bins.size() - 1];
         // file.close();
-        // showImg(ns_st10::drawMarks(cvt_32FC1_8UC1(likehood), {pt}));
+        // showImg(ns_st10::drawMarks(grayImg, std::vector<cv::Point>{pt}));
         // cv::waitKey(0);
+        // LOG_VAR(modes.first, modes.second, dis, v1, v2);
         // int re = system("/bin/python3 /home/csl/CppWorks/artwork/slam-tricks/st10-chessCorner/pyDrawer/drawer.py");
       }
     }
@@ -193,7 +192,7 @@ namespace ns_st10 {
     corners.clear();
     scores.clear();
     for (int i = 0; i != corners_new.size(); ++i) {
-      if (scores_new[i] > 0.5f * score_max) {
+      if (scores_new[i] > 0.2f * score_max) {
         corners.push_back(corners_new[i]);
         scores.push_back(scores_new[i]);
         corners_modes.push_back(modes_new[i]);
@@ -327,7 +326,7 @@ namespace ns_st10 {
     }
     // test
     ChessBoard &cb = res.second;
-    float energy = 0.0f;
+    float lastEnergy = res.first;
     while (true) {
       auto cb_top = growChessBoard(cb, CBGrowDir::TOP);
       auto cb_lower = growChessBoard(cb, CBGrowDir::LOWER);
@@ -339,18 +338,18 @@ namespace ns_st10 {
       });
       // display
       LOG_VAR(iter->first);
-      showImg(drawChessBoard(grayImg, cb, corners_sp));
+      showImg(drawChessBoard(grayImg, iter->second, corners_sp), "try once [best]");
       cv::waitKey(0);
-      if (iter->first > 0.0f) {
+      if (iter->first < lastEnergy) {
+        // grow success
+        lastEnergy = iter->first;
+        cb = iter->second;
+      } else {
         // grow faild
         break;
-      } else {
-        // grow success
-        energy = iter->first;
-        cb = iter->second;
       }
     }
-    return {true, energy, res.second};
+    return {true, lastEnergy, res.second};
   }
 
   std::pair<bool, Detector::ChessBoard>
@@ -449,7 +448,7 @@ namespace ns_st10 {
   }
 
   float Detector::chessBoardEnergy(const Detector::ChessBoard &cb) {
-    float energy = 0.0f;
+    float lastEnergy = 0.0f;
     std::size_t rows = cb.size(), cols = cb.front().size();
     for (int i = 0; i != rows; ++i) {
       for (int j = 1; j != cols - 1; ++j) {
@@ -457,7 +456,10 @@ namespace ns_st10 {
         const cv::Point2f &p2 = corners_sp[cb[i][j]];
         const cv::Point2f &p3 = corners_sp[cb[i][j + 1]];
         Eigen::Vector2f ci(p1.x, p1.y), cj(p2.x, p2.y), ck(p3.x, p3.y);
-        energy += (ci + ck - 2.0f * cj).norm() / (ci - ck).norm();
+        float energy = (ci + ck - 2.0f * cj).norm() / (ci - ck).norm();
+        if (energy > lastEnergy) {
+          lastEnergy = energy;
+        }
       }
     }
     for (int i = 1; i != rows - 1; ++i) {
@@ -466,10 +468,13 @@ namespace ns_st10 {
         const cv::Point2f &p2 = corners_sp[cb[i][j]];
         const cv::Point2f &p3 = corners_sp[cb[i + 1][j]];
         Eigen::Vector2f ci(p1.x, p1.y), cj(p2.x, p2.y), ck(p3.x, p3.y);
-        energy += (ci + ck - 2.0f * cj).norm() / (ci - ck).norm();
+        float energy = (ci + ck - 2.0f * cj).norm() / (ci - ck).norm();
+        if (energy > lastEnergy) {
+          lastEnergy = energy;
+        }
       }
     }
-    energy = (energy - 1.0f) * rows * cols;
+    float energy = (lastEnergy - 1.0f) * rows * cols;
     return energy;
   }
 
