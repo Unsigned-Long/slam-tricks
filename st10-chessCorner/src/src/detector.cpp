@@ -4,7 +4,8 @@ namespace ns_st10 {
   Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS, ushort refineHWS)
       : PROTO_HWS(protoHWS), NMS_HWS(nmsHWS), HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
 
-  std::pair<bool, Detector::CBCorners> Detector::solve(cv::Mat gImg, bool computeEach) {
+  std::pair<bool, CBCorners>
+  Detector::solve(cv::Mat gImg, bool computeEach) {
     this->grayImg = gImg;
     compute_likehood();
 #ifdef WRITE_PROC_IMG
@@ -46,7 +47,7 @@ namespace ns_st10 {
     cv::waitKey(0);
 #endif
 
-    std::pair<bool, Detector::CBCorners> cbcs = genChessBoard(computeEach);
+    std::pair<bool, CBCorners> cbcs = genChessBoard(computeEach);
 #ifdef SHOW_PROC_IMG
     if (cbcs.first) {
       showImg(drawChessBoard(grayImg, cbcs.second), "chessboard");
@@ -289,7 +290,7 @@ namespace ns_st10 {
     kdtree->setInputCloud(cloud);
   }
 
-  std::pair<bool, Detector::CBCorners>
+  std::pair<bool, CBCorners>
   Detector::genChessBoard(bool computeEach) {
     std::size_t size = corners_sp.size();
     std::vector<std::pair<float, Detector::ChessBoard>> res;
@@ -336,6 +337,10 @@ namespace ns_st10 {
       auto iter = std::min_element(cbs.cbegin(), cbs.cend(), [](const auto &p1, const auto &p2) {
         return p1.first < p2.first;
       });
+      // display
+      LOG_VAR(iter->first);
+      showImg(drawChessBoard(grayImg, cb, corners_sp));
+      cv::waitKey(0);
       if (iter->first > 0.0f) {
         // grow faild
         break;

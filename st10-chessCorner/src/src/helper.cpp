@@ -93,8 +93,9 @@ namespace ns_st10 {
   cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point> &pts) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    int size = grayImg.cols / 60;
     for (const auto &pt : pts) {
-      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 10);
+      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, size, size * 0.1);
     }
     return color;
   }
@@ -102,8 +103,9 @@ namespace ns_st10 {
   cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point2f> &pts) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    int size = grayImg.cols / 60;
     for (const auto &pt : pts) {
-      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, 10);
+      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, size, size * 0.1);
     }
     return color;
   }
@@ -112,19 +114,21 @@ namespace ns_st10 {
                     const std::vector<std::pair<float, float>> &modes) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    int size1 = grayImg.cols / 30;
+    int size2 = grayImg.cols / 300;
     for (int i = 0; i != pts.size(); ++i) {
       const auto &pt = pts[i];
       const auto &m = modes[i];
       float alpha1 = m.first, alpha2 = m.second;
       {
-        float vx = std::cos(alpha1) * 20, vy = std::sin(alpha1) * 20;
+        float vx = std::cos(alpha1) * size1, vy = std::sin(alpha1) * size1;
         cv::Point2f p(pt.x + vx, pt.y + vy);
-        cv::line(color, pt, p, cv::Scalar(0, 255, 0), 2);
+        cv::line(color, pt, p, cv::Scalar(0, 255, 0), size2);
       }
       {
-        float vx = std::cos(alpha2) * 20, vy = std::sin(alpha2) * 20;
+        float vx = std::cos(alpha2) * size1, vy = std::sin(alpha2) * size1;
         cv::Point2f p(pt.x + vx, pt.y + vy);
-        cv::line(color, pt, p, cv::Scalar(255, 0, 0), 2);
+        cv::line(color, pt, p, cv::Scalar(255, 0, 0), size2);
       }
     }
     return color;
@@ -134,19 +138,21 @@ namespace ns_st10 {
                     const std::vector<std::pair<float, float>> &modes) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    int size1 = grayImg.cols / 30;
+    int size2 = grayImg.cols / 300;
     for (int i = 0; i != pts.size(); ++i) {
       const auto &pt = pts[i];
       const auto &m = modes[i];
       float alpha1 = m.first, alpha2 = m.second;
       {
-        float vx = std::cos(alpha1) * 20, vy = std::sin(alpha1) * 20;
+        float vx = std::cos(alpha1) * size1, vy = std::sin(alpha1) * size1;
         cv::Point2f p(pt.x + vx, pt.y + vy);
-        cv::line(color, pt, p, cv::Scalar(0, 255, 0), 2);
+        cv::line(color, pt, p, cv::Scalar(0, 255, 0), size2);
       }
       {
-        float vx = std::cos(alpha2) * 20, vy = std::sin(alpha2) * 20;
+        float vx = std::cos(alpha2) * size1, vy = std::sin(alpha2) * size1;
         cv::Point2f p(pt.x + vx, pt.y + vy);
-        cv::line(color, pt, p, cv::Scalar(255, 0, 0), 2);
+        cv::line(color, pt, p, cv::Scalar(255, 0, 0), size2);
       }
     }
     return color;
@@ -227,12 +233,14 @@ namespace ns_st10 {
                          const std::vector<cv::Point2f> &corner) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    int size1 = grayImg.cols / 60;
+    int size2 = grayImg.cols / 600;
     for (int i = 0; i != board.size(); ++i) {
       for (int j = 0; j != board[0].size(); ++j) {
         const cv::Point2f &pt = corner[board[i][j]];
-        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, 10);
+        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, size1, size1 * 0.2f);
         cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
-                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), 1);
+                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), size2);
       }
     }
     return color;
@@ -241,12 +249,14 @@ namespace ns_st10 {
                          const std::vector<std::vector<cv::Point2f>> &board) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    int size1 = grayImg.cols / 60;
+    int size2 = grayImg.cols / 600;
     for (int i = 0; i != board.size(); ++i) {
       for (int j = 0; j != board[0].size(); ++j) {
         const cv::Point2f &pt = board[i][j];
-        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, 10);
+        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, size1, size1 * 0.2f);
         cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
-                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), 1);
+                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), size2);
       }
     }
     return color;

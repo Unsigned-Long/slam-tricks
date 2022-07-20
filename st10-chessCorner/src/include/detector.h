@@ -1,8 +1,8 @@
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
+#include "cbcorners.h"
 #include "eigen3/Eigen/Dense"
-#include "helper.h"
 #include "pcl-1.12/pcl/kdtree/kdtree_flann.h"
 #include "pcl-1.12/pcl/point_types.h"
 #include "prototype.h"
@@ -13,6 +13,7 @@
 #define SHOW_PROC_IMG
 
 namespace ns_st10 {
+
   class Detector {
   private:
     const ushort PROTO_HWS;
@@ -32,7 +33,6 @@ namespace ns_st10 {
 
   public:
     using ChessBoard = std::deque<std::deque<std::size_t>>;
-    using CBCorners = std::vector<std::vector<cv::Point2f>>;
 
     enum class CBGrowDir {
       TOP,
@@ -44,7 +44,7 @@ namespace ns_st10 {
   public:
     Detector(ushort protoHWS = 5, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
 
-    std::pair<bool, Detector::CBCorners> solve(cv::Mat gImg, bool computeEach = false);
+    std::pair<bool, CBCorners> solve(cv::Mat gImg, bool computeEach = false);
 
   protected:
     void compute_likehood();
