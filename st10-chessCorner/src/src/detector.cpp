@@ -96,7 +96,7 @@ namespace ns_st10 {
     cv::minMaxIdx(likehood, nullptr, &maxVal);
     auto corners_t = nms2d(likehood, NMS_HWS);
     for (const auto &pt : corners_t) {
-      if (likehood.at<float>(pt) > 0.45 * maxVal &&
+      if (likehood.at<float>(pt) > 0.5 * maxVal &&
           pt.x >= HIST_HWS &&
           pt.y >= HIST_HWS &&
           pt.x < likehood.cols - HIST_HWS &&
@@ -192,7 +192,7 @@ namespace ns_st10 {
     corners.clear();
     scores.clear();
     for (int i = 0; i != corners_new.size(); ++i) {
-      if (scores_new[i] > 0.2f * score_max) {
+      if (scores_new[i] > 0.5f * score_max) {
         corners.push_back(corners_new[i]);
         scores.push_back(scores_new[i]);
         corners_modes.push_back(modes_new[i]);
