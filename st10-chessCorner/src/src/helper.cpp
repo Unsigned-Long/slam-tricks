@@ -93,9 +93,9 @@ namespace ns_st10 {
   cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point> &pts) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size = grayImg.cols / 60;
+    int size = grayImg.cols / 50;
     for (const auto &pt : pts) {
-      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, size, size * 0.1);
+      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, size, size * 0.2);
     }
     return color;
   }
@@ -103,9 +103,9 @@ namespace ns_st10 {
   cv::Mat drawMarks(cv::Mat grayImg, const std::vector<cv::Point2f> &pts) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size = grayImg.cols / 60;
+    int size = grayImg.cols / 50;
     for (const auto &pt : pts) {
-      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, size, size * 0.1);
+      cv::drawMarker(color, pt, cv::Scalar(0, 0, 255), cv::MARKER_CROSS, size, size * 0.2);
     }
     return color;
   }
@@ -233,17 +233,47 @@ namespace ns_st10 {
                          const std::vector<cv::Point2f> &corner) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size1 = grayImg.cols / 60;
+    int size1 = grayImg.cols / 100;
     int size2 = grayImg.cols / 300;
-    float size3 = grayImg.cols / 1200.0f;
-    for (int i = 0; i != board.size(); ++i) {
-      for (int j = 0; j != board[0].size(); ++j) {
-        const cv::Point2f &pt = corner[board[i][j]];
-        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, size1, size2);
-        cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
-                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, size3, cv::Scalar(0, 0, 255), 3);
+    std::size_t rows = board.size();
+    std::size_t cols = board.front().size();
+
+    for (int i = 0; i != rows; ++i) {
+      for (int j = 0; j != cols - 1; ++j) {
+        auto &cp = corner[board[i][j]];
+        auto &rp = corner[board[i][j + 1]];
+        cv::line(color, cp, rp, cv::Scalar(0, 0, 255), size1);
       }
     }
+    for (int i = 0; i != rows - 1; ++i) {
+      for (int j = 0; j != cols; ++j) {
+        auto &cp = corner[board[i][j]];
+        auto &lp = corner[board[i + 1][j]];
+        cv::line(color, cp, lp, cv::Scalar(0, 0, 255), size1);
+      }
+    }
+    for (int i = 0; i != rows; ++i) {
+      for (int j = 0; j != cols - 1; ++j) {
+        auto &cp = corner[board[i][j]];
+        auto &rp = corner[board[i][j + 1]];
+        cv::line(color, cp, rp, cv::Scalar(255, 255, 255), size2);
+      }
+    }
+    for (int i = 0; i != rows - 1; ++i) {
+      for (int j = 0; j != cols; ++j) {
+        auto &cp = corner[board[i][j]];
+        auto &lp = corner[board[i + 1][j]];
+        cv::line(color, cp, lp, cv::Scalar(255, 255, 255), size2);
+      }
+    }
+
+    cv::Point2f op = corner[board[0][0]];
+    cv::Point2f xp = corner[board[0][cols - 1]];
+    cv::Point2f yp = corner[board[rows - 1][0]];
+    cv::circle(color, op, size1, cv::Scalar(0, 0, 255), size1 * 2);
+    cv::circle(color, xp, size1, cv::Scalar(0, 255, 0), size1 * 2);
+    cv::circle(color, yp, size1, cv::Scalar(255, 0, 0), size1 * 2);
+
     return color;
   }
 
@@ -251,16 +281,47 @@ namespace ns_st10 {
                          const std::vector<std::vector<cv::Point2f>> &board) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size1 = grayImg.cols / 60;
-    int size2 = grayImg.cols / 600;
-    for (int i = 0; i != board.size(); ++i) {
-      for (int j = 0; j != board[0].size(); ++j) {
-        const cv::Point2f &pt = board[i][j];
-        cv::drawMarker(color, pt, cv::Scalar(0, 255, 0), cv::MARKER_SQUARE, size1, size1 * 0.2f);
-        cv::putText(color, std::to_string(i) + ',' + std::to_string(j), pt,
-                    cv::HersheyFonts::FONT_HERSHEY_COMPLEX_SMALL, 0.7f, cv::Scalar(0, 0, 255), size2);
+    int size1 = grayImg.cols / 100;
+    int size2 = grayImg.cols / 300;
+    std::size_t rows = board.size();
+    std::size_t cols = board.front().size();
+
+    for (int i = 0; i != rows; ++i) {
+      for (int j = 0; j != cols - 1; ++j) {
+        auto &cp = board[i][j];
+        auto &rp = board[i][j + 1];
+        cv::line(color, cp, rp, cv::Scalar(0, 0, 255), size1);
       }
     }
+    for (int i = 0; i != rows - 1; ++i) {
+      for (int j = 0; j != cols; ++j) {
+        auto &cp = board[i][j];
+        auto &lp = board[i + 1][j];
+        cv::line(color, cp, lp, cv::Scalar(0, 0, 255), size1);
+      }
+    }
+    for (int i = 0; i != rows; ++i) {
+      for (int j = 0; j != cols - 1; ++j) {
+        auto &cp = board[i][j];
+        auto &rp = board[i][j + 1];
+        cv::line(color, cp, rp, cv::Scalar(255, 255, 255), size2);
+      }
+    }
+    for (int i = 0; i != rows - 1; ++i) {
+      for (int j = 0; j != cols; ++j) {
+        auto &cp = board[i][j];
+        auto &lp = board[i + 1][j];
+        cv::line(color, cp, lp, cv::Scalar(255, 255, 255), size2);
+      }
+    }
+
+    cv::Point2f op = board[0][0];
+    cv::Point2f xp = board[0][cols - 1];
+    cv::Point2f yp = board[rows - 1][0];
+    cv::circle(color, op, size1, cv::Scalar(0, 0, 255), size1 * 2);
+    cv::circle(color, xp, size1, cv::Scalar(0, 255, 0), size1 * 2);
+    cv::circle(color, yp, size1, cv::Scalar(255, 0, 0), size1 * 2);
+
     return color;
   }
 } // namespace ns_st10

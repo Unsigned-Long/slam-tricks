@@ -48,6 +48,11 @@ namespace ns_st10 {
 #endif
 
     std::pair<bool, CBCorners> cbcs = genChessBoard(computeEach);
+#ifdef WRITE_PROC_IMG
+    if (cbcs.first) {
+      cv::imwrite("../img/process/chessboard.png", drawChessBoard(grayImg, cbcs.second));
+    }
+#endif
 #ifdef SHOW_PROC_IMG
     if (cbcs.first) {
       showImg(drawChessBoard(grayImg, cbcs.second), "chessboard");
@@ -337,9 +342,11 @@ namespace ns_st10 {
         return p1.first < p2.first;
       });
       // display
+#ifdef SHOW_GROW_CB
       LOG_VAR(iter->first);
       showImg(drawChessBoard(grayImg, iter->second, corners_sp), "try once [best]");
       cv::waitKey(0);
+#endif
       if (iter->first < lastEnergy) {
         // grow success
         lastEnergy = iter->first;

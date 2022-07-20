@@ -11,6 +11,7 @@
 
 // #define WRITE_PROC_IMG
 #define SHOW_PROC_IMG
+// #define SHOW_GROW_CB
 
 namespace ns_st10 {
 
