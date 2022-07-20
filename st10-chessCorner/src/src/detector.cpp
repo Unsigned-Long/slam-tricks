@@ -197,7 +197,7 @@ namespace ns_st10 {
     corners.clear();
     scores.clear();
     for (int i = 0; i != corners_new.size(); ++i) {
-      if (scores_new[i] > 0.5f * score_max) {
+      if (scores_new[i] > 0.4f * score_max) {
         corners.push_back(corners_new[i]);
         scores.push_back(scores_new[i]);
         corners_modes.push_back(modes_new[i]);
