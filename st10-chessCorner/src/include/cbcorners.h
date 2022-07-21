@@ -12,6 +12,7 @@ namespace ns_st10 {
 
   public:
     void adjust();
+    void write(const std::string& filename);
   };
 } // namespace ns_st10
 

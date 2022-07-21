@@ -48,6 +48,9 @@ namespace ns_st10 {
 #endif
 
     std::pair<bool, CBCorners> cbcs = genChessBoard(computeEach);
+    if (cbcs.first) {
+      cbcs.second.adjust();
+    }
 #ifdef WRITE_PROC_IMG
     if (cbcs.first) {
       cv::imwrite("../img/process/chessboard.png", drawChessBoard(grayImg, cbcs.second));

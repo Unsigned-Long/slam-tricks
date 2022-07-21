@@ -318,8 +318,11 @@ namespace ns_st10 {
     cv::Point2f op = board[0][0];
     cv::Point2f xp = board[0][cols - 1];
     cv::Point2f yp = board[rows - 1][0];
+    // red [O]
     cv::circle(color, op, size1, cv::Scalar(0, 0, 255), size1 * 2);
+    // green [X]
     cv::circle(color, xp, size1, cv::Scalar(0, 255, 0), size1 * 2);
+    // blue [Y]
     cv::circle(color, yp, size1, cv::Scalar(255, 0, 0), size1 * 2);
 
     return color;
