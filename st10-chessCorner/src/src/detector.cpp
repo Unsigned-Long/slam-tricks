@@ -1,4 +1,5 @@
 #include "detector.h"
+#include "artwork/timer/timer.h"
 
 namespace ns_st10 {
   Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS, ushort refineHWS)
@@ -7,7 +8,15 @@ namespace ns_st10 {
   std::pair<bool, CBCorners>
   Detector::solve(cv::Mat gImg, bool computeEach) {
     this->grayImg = gImg;
+#ifdef TIMING_PROC
+    ns_timer::Timer timer;
+    timer.re_start();
+#endif
     compute_likehood();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("compute_likehood"));
+#endif
+
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/likehood.png", cvt_32FC1_8UC1(likehood));
 #endif
@@ -16,7 +25,14 @@ namespace ns_st10 {
     cv::waitKey(0);
 #endif
 
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
     findCorners();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("findCorners"));
+#endif
+
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/findCorners.png", drawMarks(grayImg, corners));
 #endif
@@ -25,7 +41,14 @@ namespace ns_st10 {
     cv::waitKey(0);
 #endif
 
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
     verifyCorners();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("verifyCorners"));
+#endif
+
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/oldCorners.png", drawMarks(grayImg, corners));
     cv::imwrite("../img/process/oldModes.png", drawModes(grayImg, corners, corners_modes));
@@ -36,7 +59,14 @@ namespace ns_st10 {
     cv::waitKey(0);
 #endif
 
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
     refineCorners();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("refineCorners"));
+#endif
+
 #ifdef WRITE_PROC_IMG
     cv::imwrite("../img/process/newCorners.png", drawMarks(grayImg, corners_sp));
     cv::imwrite("../img/process/newModes.png", drawModes(grayImg, corners_sp, corners_modes));
@@ -47,7 +77,13 @@ namespace ns_st10 {
     cv::waitKey(0);
 #endif
 
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
     std::pair<bool, CBCorners> cbcs = genChessBoard(computeEach);
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("genChessBoard"));
+#endif
     if (cbcs.first) {
       cbcs.second.adjust();
     }
@@ -112,8 +148,6 @@ namespace ns_st10 {
         corners.push_back(pt);
       }
     }
-    // display
-    LOG_VAR(corners.size());
   }
 
   void Detector::verifyCorners() {

@@ -14,7 +14,6 @@ namespace ns_st10 {
     Eigen::Vector3f oy(yp.x - op.x, yp.y - op.y, 0.0f);
     // The sign of the third component of the cross product vector determines the coordinate system
     float dir = ox.cross(oy)[2];
-    LOG_VAR(dir);
     if (dir > 0.0f) {
       // is a right-hand coordinate system
       return;
