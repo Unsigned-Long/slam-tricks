@@ -175,3 +175,9 @@ RANSCA算法是一种基于概率的模型构建手段。其相较于最小二�
 
 <img src="./st9-projective/img/src.png" height=220><img src="./st9-projective/img/dst.png" height=220><img src="./st9-projective/img/src2.png" height=220><img src="./st9-projective/img/dst2.png" height=220>
 
+### 2.9 棋盘格网点结构恢复
+
+最经典的相机标定方法是张正友方法。但是该方法的前提是获得棋盘的格网点（结构）。本次参考论文《Automatic Camera and Range Sensor Calibration using a single Shot》，实现了鲁棒的棋盘格结构提取。[算法文档](./st10-chessCorner/docs/chessCorner.pdf)。
+
+<img src="./st10-chessCorner/docs/img/chessboard.png" width=25%><img src="./st10-chessCorner/docs/img/chessboard2.png" width=25%><img src="./st10-chessCorner/docs/img/process_muti/chessboard1.png" width=25%><img src="./st10-chessCorner/docs/img/process_muti/chessboard2.png" width=25%>
+
