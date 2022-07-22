@@ -1,5 +1,6 @@
 #include "detector.h"
 #include "artwork/timer/timer.h"
+#include <set>
 
 namespace ns_st10 {
   Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS, ushort refineHWS)
@@ -84,9 +85,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("genChessBoard"));
 #endif
-    if (cbcs.first) {
-      cbcs.second.adjust();
-    }
+
 #ifdef WRITE_PROC_IMG
     if (cbcs.first) {
       cv::imwrite("../img/process/chessboard.png", drawChessBoard(grayImg, cbcs.second));
@@ -99,6 +98,97 @@ namespace ns_st10 {
     }
 #endif
     return cbcs;
+  }
+
+  std::vector<CBCorners>
+  Detector::solveMutiCB(cv::Mat gImg) {
+    this->grayImg = gImg;
+#ifdef TIMING_PROC
+    ns_timer::Timer timer;
+    timer.re_start();
+#endif
+    compute_likehood();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("compute_likehood"));
+#endif
+
+#ifdef WRITE_PROC_IMG
+    cv::imwrite("../img/process_muti/likehood.png", cvt_32FC1_8UC1(likehood));
+#endif
+#ifdef SHOW_PROC_IMG
+    showImg(cvt_32FC1_8UC1(likehood), "likehood");
+    cv::waitKey(0);
+#endif
+
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
+    findCorners();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("findCorners"));
+#endif
+
+#ifdef WRITE_PROC_IMG
+    cv::imwrite("../img/process_muti/findCorners.png", drawMarks(grayImg, corners));
+#endif
+#ifdef SHOW_PROC_IMG
+    showImg(drawMarks(grayImg, corners), "findCorners");
+    cv::waitKey(0);
+#endif
+
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
+    verifyCorners();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("verifyCorners"));
+#endif
+
+#ifdef WRITE_PROC_IMG
+    cv::imwrite("../img/process_muti/oldCorners.png", drawMarks(grayImg, corners));
+    cv::imwrite("../img/process_muti/oldModes.png", drawModes(grayImg, corners, corners_modes));
+#endif
+#ifdef SHOW_PROC_IMG
+    showImg(drawMarks(grayImg, corners), "oldCorners");
+    showImg(drawModes(grayImg, corners, corners_modes), "oldModes");
+    cv::waitKey(0);
+#endif
+
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
+    refineCorners();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("refineCorners"));
+#endif
+
+#ifdef WRITE_PROC_IMG
+    cv::imwrite("../img/process_muti/newCorners.png", drawMarks(grayImg, corners_sp));
+    cv::imwrite("../img/process_muti/newModes.png", drawModes(grayImg, corners_sp, corners_modes));
+#endif
+#ifdef SHOW_PROC_IMG
+    showImg(drawMarks(grayImg, corners_sp), "newCorners");
+    showImg(drawModes(grayImg, corners_sp, corners_modes), "newModes");
+    cv::waitKey(0);
+#endif
+
+#ifdef TIMING_PROC
+    timer.re_start();
+#endif
+    auto cbs = genChessBoard();
+#ifdef TIMING_PROC
+    LOG_INFO(timer.last_elapsed("genChessBoard"));
+#endif
+
+#ifdef WRITE_PROC_IMG
+    cv::imwrite("../img/process_muti/chessboard4.png", drawChessBoard(grayImg, cbs));
+#endif
+#ifdef SHOW_PROC_IMG
+    showImg(drawChessBoard(grayImg, cbs), "chessboard");
+    cv::waitKey(0);
+#endif
+
+    return cbs;
   }
 
   void Detector::compute_likehood() {
@@ -334,7 +424,7 @@ namespace ns_st10 {
   std::pair<bool, CBCorners>
   Detector::genChessBoard(bool computeEach) {
     std::size_t size = corners_sp.size();
-    std::vector<std::pair<float, Detector::ChessBoard>> res;
+    std::vector<std::pair<float, ChessBoard>> res;
     for (int i = 0; i != size; ++i) {
       auto [isVaild, engry, board] = genChessBoardOnce(i);
       if (isVaild) {
@@ -350,17 +440,73 @@ namespace ns_st10 {
     auto iter = std::min_element(res.cbegin(), res.cend(), [](const auto &p1, const auto &p2) {
       return p1.first < p2.first;
     });
-    const auto &board = iter->second;
-    CBCorners cbcs(board.size(), std::vector<cv::Point2f>(board.front().size()));
-    for (int i = 0; i != board.size(); ++i) {
-      for (int j = 0; j != board[0].size(); ++j) {
-        cbcs[i][j] = corners_sp[board[i][j]];
-      }
-    }
-    return {true, cbcs};
+    return {true, iter->second.toCBCorners(corners_sp)};
   }
 
-  std::tuple<bool, float, Detector::ChessBoard>
+  std::vector<CBCorners>
+  Detector::genChessBoard() {
+    std::size_t size = corners_sp.size();
+    std::vector<std::pair<float, ChessBoard>> res;
+    for (int i = 0; i != size; ++i) {
+      auto [isVaild, engry, board] = genChessBoardOnce(i);
+      if (isVaild) {
+        res.push_back({engry, board});
+      }
+    }
+
+    if (res.empty()) {
+      return std::vector<CBCorners>();
+    } else if (res.size() == 1) {
+      return {res.front().second.toCBCorners(corners_sp)};
+    }
+
+    std::sort(res.begin(), res.end(), [](const auto &p1, const auto &p2) { return p1.first < p2.first; });
+
+    auto iter = std::unique(res.begin(), res.end(), [](const auto &p1, const auto &p2) { return std::abs(p1.first - p2.first) < 1E-5; });
+    res.erase(iter, res.end());
+
+    std::vector<std::pair<decltype(res)::iterator, std::set<std::size_t>>> goodCBs;
+
+    for (auto iter = res.begin(); iter != res.end(); ++iter) {
+      const auto &cb = iter->second;
+      const auto &energy = iter->first;
+      int j = 0;
+      for (; j != goodCBs.size(); ++j) {
+        bool intersect = false;
+        for (int k = 0; k != cb.rows(); ++k) {
+          for (int l = 0; l != cb.cols(); ++l) {
+            if (goodCBs[j].second.find(cb[k][l]) == goodCBs[j].second.cend()) {
+              continue;
+            } else {
+              intersect = true;
+              break;
+            }
+          }
+          if (intersect) {
+            break;
+          }
+        }
+        if (intersect) {
+          cb.addToSet(goodCBs[j].second);
+          if (energy < goodCBs[j].first->first) {
+            goodCBs[j].first = iter;
+          }
+          break;
+        }
+      }
+      if (j == goodCBs.size()) {
+        goodCBs.push_back({iter, cb.toSet()});
+      }
+    }
+    std::vector<CBCorners> cbcs;
+    for (const auto &[iter, s] : goodCBs) {
+      cbcs.push_back(iter->second.toCBCorners(corners_sp));
+    }
+
+    return cbcs;
+  }
+
+  std::tuple<bool, float, ChessBoard>
   Detector::genChessBoardOnce(std::size_t idx) {
     auto res = initChessBoard(idx);
     if (!res.first) {
@@ -374,7 +520,7 @@ namespace ns_st10 {
       auto cb_lower = growChessBoard(cb, CBGrowDir::LOWER);
       auto cb_left = growChessBoard(cb, CBGrowDir::LEFT);
       auto cb_right = growChessBoard(cb, CBGrowDir::RIGHT);
-      std::vector<std::pair<float, ns_st10::Detector::ChessBoard>> cbs{cb_top, cb_lower, cb_left, cb_right};
+      std::vector<std::pair<float, ns_st10::ChessBoard>> cbs{cb_top, cb_lower, cb_left, cb_right};
       auto iter = std::min_element(cbs.cbegin(), cbs.cend(), [](const auto &p1, const auto &p2) {
         return p1.first < p2.first;
       });
@@ -396,7 +542,7 @@ namespace ns_st10 {
     return {true, lastEnergy, res.second};
   }
 
-  std::pair<bool, Detector::ChessBoard>
+  std::pair<bool, ChessBoard>
   Detector::initChessBoard(std::size_t idx) {
     const cv::Point2f &cp(corners_sp[idx]);
     const auto &mode = corners_modes[idx];
@@ -405,37 +551,37 @@ namespace ns_st10 {
     float dist[8];
     auto lower = closestCornerInDir(idx, dir1, dist[0]);
     if (!lower.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto top = closestCornerInDir(idx, -dir1, dist[1]);
     if (!top.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto right = closestCornerInDir(idx, dir2, dist[2]);
     if (!right.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto left = closestCornerInDir(idx, -dir2, dist[3]);
     if (!left.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto leftTop = closestCornerInDir(left.second, -dir1, dist[4]);
     if (!leftTop.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto rightTop = closestCornerInDir(right.second, -dir1, dist[5]);
     if (!rightTop.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto leftLower = closestCornerInDir(left.second, dir1, dist[6]);
     if (!leftLower.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
     auto rightLower = closestCornerInDir(right.second, dir1, dist[7]);
     if (!rightLower.first) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     }
-    Detector::ChessBoard board(3, std::deque<size_t>(3));
+    ChessBoard board(3, std::deque<size_t>(3));
     board[0][0] = leftTop.second, board[0][1] = top.second, board[0][2] = rightTop.second;
     board[1][0] = left.second, board[1][1] = idx, board[1][2] = right.second;
     board[2][0] = leftLower.second, board[2][1] = lower.second, board[2][2] = rightLower.second;
@@ -453,7 +599,7 @@ namespace ns_st10 {
     float s = sigma / mean;
 
     if (s > 0.3f || chessBoardEnergy(board) > 0.0f) {
-      return {false, Detector::ChessBoard()};
+      return {false, ChessBoard()};
     } else {
       return {true, board};
     }
@@ -491,9 +637,9 @@ namespace ns_st10 {
     return {true, iter - s.cbegin()};
   }
 
-  float Detector::chessBoardEnergy(const Detector::ChessBoard &cb) {
+  float Detector::chessBoardEnergy(const ChessBoard &cb) {
     float lastEnergy = 0.0f;
-    std::size_t rows = cb.size(), cols = cb.front().size();
+    std::size_t rows = cb.rows(), cols = cb.cols();
     for (int i = 0; i != rows; ++i) {
       for (int j = 1; j != cols - 1; ++j) {
         const cv::Point2f &p1 = corners_sp[cb[i][j - 1]];
@@ -522,15 +668,15 @@ namespace ns_st10 {
     return energy;
   }
 
-  std::pair<float, Detector::ChessBoard>
-  Detector::growChessBoard(const Detector::ChessBoard &cb, CBGrowDir dir) {
+  std::pair<float, ChessBoard>
+  Detector::growChessBoard(const ChessBoard &cb, CBGrowDir dir) {
     std::vector<int> pointIdxKNNSearch(1);
     std::vector<float> pointKNNSquaredDistance(1);
-    Detector::ChessBoard cb_pred = cb;
+    ChessBoard cb_pred = cb;
     switch (dir) {
     case CBGrowDir::TOP: {
-      cb_pred.push_front(std::deque<std::size_t>(cb.front().size()));
-      std::size_t rows = cb_pred.size(), cols = cb_pred.front().size();
+      cb_pred.push_front(std::deque<std::size_t>(cb.cols()));
+      std::size_t rows = cb_pred.rows(), cols = cb_pred.cols();
       for (int i = 0; i != cols; ++i) {
         const cv::Point2f &p1 = corners_sp[cb_pred[2][i]];
         const cv::Point2f &p2 = corners_sp[cb_pred[1][i]];
@@ -540,8 +686,8 @@ namespace ns_st10 {
       }
     } break;
     case CBGrowDir::LOWER: {
-      cb_pred.push_back(std::deque<std::size_t>(cb.front().size()));
-      std::size_t rows = cb_pred.size(), cols = cb_pred.front().size();
+      cb_pred.push_back(std::deque<std::size_t>(cb.cols()));
+      std::size_t rows = cb_pred.rows(), cols = cb_pred.cols();
       for (int i = 0; i != cols; ++i) {
         const cv::Point2f &p1 = corners_sp[cb_pred[rows - 3][i]];
         const cv::Point2f &p2 = corners_sp[cb_pred[rows - 2][i]];
@@ -554,7 +700,7 @@ namespace ns_st10 {
       for (int i = 0; i != cb.size(); ++i) {
         cb_pred[i].push_front(0);
       }
-      std::size_t rows = cb_pred.size(), cols = cb_pred.front().size();
+      std::size_t rows = cb_pred.rows(), cols = cb_pred.cols();
       for (int i = 0; i != rows; ++i) {
         const cv::Point2f &p1 = corners_sp[cb_pred[i][2]];
         const cv::Point2f &p2 = corners_sp[cb_pred[i][1]];
@@ -564,10 +710,10 @@ namespace ns_st10 {
       }
     } break;
     case CBGrowDir::RIGHT: {
-      for (int i = 0; i != cb.size(); ++i) {
+      for (int i = 0; i != cb.rows(); ++i) {
         cb_pred[i].push_back(0);
       }
-      std::size_t rows = cb_pred.size(), cols = cb_pred.front().size();
+      std::size_t rows = cb_pred.rows(), cols = cb_pred.cols();
       for (int i = 0; i != rows; ++i) {
         const cv::Point2f &p1 = corners_sp[cb_pred[i][cols - 3]];
         const cv::Point2f &p2 = corners_sp[cb_pred[i][cols - 2]];

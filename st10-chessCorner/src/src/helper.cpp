@@ -233,8 +233,7 @@ namespace ns_st10 {
     }
   }
 
-  cv::Mat drawChessBoard(cv::Mat grayImg,
-                         const std::deque<std::deque<std::size_t>> &board,
+  cv::Mat drawChessBoard(cv::Mat grayImg, const ChessBoard &board,
                          const std::vector<cv::Point2f> &corner) {
     cv::Mat color;
     cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
@@ -282,12 +281,9 @@ namespace ns_st10 {
     return color;
   }
 
-  cv::Mat drawChessBoard(cv::Mat grayImg,
-                         const std::vector<std::vector<cv::Point2f>> &board) {
-    cv::Mat color;
-    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
-    int size1 = grayImg.cols / 100;
-    int size2 = grayImg.cols / 300;
+  void drawChessBoard_h(cv::Mat color, const CBCorners &board) {
+    int size1 = color.cols / 100;
+    int size2 = color.cols / 300;
     std::size_t rows = board.size();
     std::size_t cols = board.front().size();
 
@@ -329,7 +325,21 @@ namespace ns_st10 {
     cv::circle(color, xp, size1, cv::Scalar(0, 255, 0), size1 * 2);
     // blue [Y]
     cv::circle(color, yp, size1, cv::Scalar(255, 0, 0), size1 * 2);
+  }
 
+  cv::Mat drawChessBoard(cv::Mat grayImg, const CBCorners &board) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    drawChessBoard_h(color, board);
+    return color;
+  }
+
+  cv::Mat drawChessBoard(cv::Mat grayImg, const std::vector<CBCorners> &boards) {
+    cv::Mat color;
+    cv::cvtColor(grayImg, color, cv::COLOR_GRAY2BGR);
+    for (const auto &board : boards) {
+      drawChessBoard_h(color, board);
+    }
     return color;
   }
 } // namespace ns_st10

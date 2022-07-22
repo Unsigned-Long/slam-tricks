@@ -1,5 +1,6 @@
 #include "cbcorners.h"
 #include "eigen3/Eigen/Dense"
+#include <fstream>
 
 namespace ns_st10 {
   void CBCorners::adjust() {

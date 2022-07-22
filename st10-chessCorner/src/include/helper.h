@@ -4,12 +4,15 @@
 #define FORMAT_VECTOR
 #include "artwork/logger/logger.h"
 #include "artwork/timer/timer.h"
+#include "cbcorners.h"
+#include "chessboard.h"
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include <deque>
 
 namespace ns_st10 {
+
   // convert a float image to a gray image
   cv::Mat cvt_32FC1_8UC1(cv::Mat img_f);
 
@@ -46,13 +49,15 @@ namespace ns_st10 {
   std::pair<std::size_t, std::size_t> meanShift(const std::vector<float> &ary);
 
   // daw a chess board in an image
-  cv::Mat drawChessBoard(cv::Mat grayImg,
-                         const std::deque<std::deque<std::size_t>> &board,
+  cv::Mat drawChessBoard(cv::Mat grayImg, const ChessBoard &board,
                          const std::vector<cv::Point2f> &corner);
 
   // daw a chess board in an image
-  cv::Mat drawChessBoard(cv::Mat grayImg,
-                         const std::vector<std::vector<cv::Point2f>> &board);
+  cv::Mat drawChessBoard(cv::Mat grayImg, const CBCorners &board);
+
+  void drawChessBoard_h(cv::Mat colorImg, const CBCorners &board);
+
+  cv::Mat drawChessBoard(cv::Mat grayImg, const std::vector<CBCorners> &boards);
 } // namespace ns_st10
 
 #endif

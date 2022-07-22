@@ -1,7 +1,7 @@
 #ifndef CBCORNER_H
 #define CBCORNER_H
 
-#include "helper.h"
+#include "opencv2/core.hpp"
 
 namespace ns_st10 {
 
@@ -27,7 +27,7 @@ namespace ns_st10 {
     }
 
     // cosl
-    std::size_t cols() const{
+    std::size_t cols() const {
       return this->front().size();
     }
   };
