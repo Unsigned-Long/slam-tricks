@@ -8,11 +8,28 @@ namespace ns_st10 {
   struct CBCorners : public std::vector<std::vector<cv::Point2f>> {
   public:
     using parent_type = std::vector<std::vector<cv::Point2f>>;
+    // using parents' constructors
     using parent_type::parent_type;
 
   public:
+    // adjust the order of current chess board [make it a right-hand coordinate system]
     void adjust();
-    void write(const std::string& filename);
+
+    // write the chess board to file
+    void write(const std::string &filename);
+
+    // load chess board from file
+    static CBCorners read(const std::string &filename);
+
+    // rows
+    std::size_t rows() const {
+      return this->size();
+    }
+
+    // cosl
+    std::size_t cols() const{
+      return this->front().size();
+    }
   };
 } // namespace ns_st10
 

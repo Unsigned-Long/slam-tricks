@@ -3,11 +3,13 @@
 
 namespace ns_st10 {
   cv::Mat cvt_32FC1_8UC1(cv::Mat img_f) {
+    // find min and max values
     double min, max;
     cv::minMaxIdx(img_f, &min, &max);
     cv::Mat gray(img_f.size(), CV_8UC1);
     // 255*(pixel - min)/(max - min)
     float factor = 255.0 / (max - min);
+    // convert
     img_f.convertTo(gray, CV_8UC1, factor, -min * factor);
     return gray;
   }
@@ -25,6 +27,7 @@ namespace ns_st10 {
   }
 
   bool inAngleRange(float angle, float startAng, float endAng) {
+    // make sure each angle is a valid angle
     if (angle < 0.0f) {
       angle += 2.0 * M_PI;
     } else if (angle > 2.0 * M_PI) {
@@ -40,6 +43,7 @@ namespace ns_st10 {
     } else if (endAng > 2.0 * M_PI) {
       endAng -= 2.0 * M_PI;
     }
+    // return result according to the size of the two angles
     if (startAng < endAng) {
       return angle > startAng && angle < endAng;
     } else {
@@ -172,7 +176,8 @@ namespace ns_st10 {
     ary = res;
   }
 
-  std::pair<std::size_t, std::size_t> meanShift(const std::vector<float> &ary) {
+  std::pair<std::size_t, std::size_t>
+  meanShift(const std::vector<float> &ary) {
     float idx1 = 6.0f, idx2 = 16.0f, idx3 = 26.0f;
     const std::size_t hws = 4, size = ary.size();
 
