@@ -3,8 +3,8 @@
 int main(int argc, char const *argv[]) {
   // cv::Mat img = cv::imread("../img/img.png");
   // cv::Mat img = cv::imread("../img/small_1.jpg");
-  // cv::Mat img = cv::imread("../img/small_2.jpg");
-  cv::Mat img = cv::imread("../img/img2.png");
+  cv::Mat img = cv::imread("../img/small_2.jpg");
+  // cv::Mat img = cv::imread("../img/img2.png");
   // cv::Mat img = cv::imread("../img/img2_r.png");
   // cv::Mat img = cv::imread("../img/cb1.jpeg");
   // cv::Mat img = cv::imread("../img/cb2.jpeg");

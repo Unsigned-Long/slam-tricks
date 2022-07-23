@@ -8,11 +8,14 @@ namespace ns_st10 {
 
   std::pair<bool, CBCorners>
   Detector::solve(cv::Mat gImg, bool computeEach) {
+    // assign
     this->grayImg = gImg;
 #ifdef TIMING_PROC
+    // the timer
     ns_timer::Timer timer;
     timer.re_start();
 #endif
+    // compute the likehood image
     compute_likehood();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("compute_likehood"));
@@ -29,6 +32,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // find possible corners
     findCorners();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("findCorners"));
@@ -45,6 +49,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // verify the corners
     verifyCorners();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("verifyCorners"));
@@ -63,6 +68,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // refine the corners
     refineCorners();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("refineCorners"));
@@ -81,6 +87,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // generate chess board
     std::pair<bool, CBCorners> cbcs = genChessBoard(computeEach);
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("genChessBoard"));
@@ -102,11 +109,13 @@ namespace ns_st10 {
 
   std::vector<CBCorners>
   Detector::solveMutiCB(cv::Mat gImg) {
+    // assign
     this->grayImg = gImg;
 #ifdef TIMING_PROC
     ns_timer::Timer timer;
     timer.re_start();
 #endif
+    // compute likehood
     compute_likehood();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("compute_likehood"));
@@ -123,6 +132,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // find possible corners
     findCorners();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("findCorners"));
@@ -139,6 +149,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // verify the corners
     verifyCorners();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("verifyCorners"));
@@ -157,6 +168,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // refine the corners
     refineCorners();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("refineCorners"));
@@ -175,6 +187,7 @@ namespace ns_st10 {
 #ifdef TIMING_PROC
     timer.re_start();
 #endif
+    // generate chess boards
     auto cbs = genChessBoard();
 #ifdef TIMING_PROC
     LOG_INFO(timer.last_elapsed("genChessBoard"));
@@ -192,10 +205,12 @@ namespace ns_st10 {
   }
 
   void Detector::compute_likehood() {
+    // two type prototypes [two directions]
     auto proto1 = ns_st10::ProtoType(PROTO_HWS, 0.0, M_PI_2);
     auto proto2 = ns_st10::ProtoType(PROTO_HWS, M_PI_4, M_PI_4 * 3);
     cv::Mat s_type1, s_type2;
     {
+      // for the first prototype
       cv::Mat fA, fB, fC, fD;
       cv::filter2D(grayImg, fA, CV_32FC1, proto1.A);
       cv::filter2D(grayImg, fB, CV_32FC1, proto1.B);
@@ -209,6 +224,7 @@ namespace ns_st10 {
       s_type1 = cv::max(s1, s2);
     }
     {
+      // for the second prototype
       cv::Mat fA, fB, fC, fD;
       cv::filter2D(grayImg, fA, CV_32FC1, proto2.A);
       cv::filter2D(grayImg, fB, CV_32FC1, proto2.B);
@@ -221,30 +237,39 @@ namespace ns_st10 {
       cv::Mat s2 = cv::min(cv::Mat(minAB - mu), cv::Mat(mu - minCD));
       s_type2 = cv::max(s1, s2);
     }
+    // get the max
     likehood = cv::max(s_type1, s_type2);
+    // make the negative values become zero
     likehood = cv::max(0.0f, likehood);
   }
 
   void Detector::findCorners() {
+    // find the max value
     double maxVal;
     cv::minMaxIdx(likehood, nullptr, &maxVal);
+    // run the non maximum suppression algorithm
     auto corners_t = nms2d(likehood, NMS_HWS);
     for (const auto &pt : corners_t) {
+      // condition
       if (likehood.at<float>(pt) > 0.5 * maxVal &&
           pt.x >= HIST_HWS &&
           pt.y >= HIST_HWS &&
           pt.x < likehood.cols - HIST_HWS &&
           pt.y < likehood.rows - HIST_HWS) {
+        // save the corner
         corners.push_back(pt);
       }
     }
   }
 
   void Detector::verifyCorners() {
+    // rows and colums
     ushort rows = grayImg.rows, cols = grayImg.cols;
+    // using sobel filter to filte the image to get gradX and gradY image
     cv::Sobel(grayImg, gradX, CV_32FC1, 1, 0);
     cv::Sobel(grayImg, gradY, CV_32FC1, 0, 1);
     cv::Mat grad, angle;
+    // compute the total grad image and angle image
     cv::cartToPolar(gradX, gradY, grad, angle);
     const float binSize = M_PI / 32;
     std::vector<cv::Point> corners_new;
@@ -252,7 +277,9 @@ namespace ns_st10 {
     std::vector<std::pair<float, float>> modes_new;
 
     for (const auto &pt : corners) {
+      // for each corner
       int x = pt.x, y = pt.y;
+      // the bin
       std::vector<float> bins(32, 0.0f);
       for (int i = y - HIST_HWS; i != y + HIST_HWS + 1; ++i) {
         auto gradPtr = grad.ptr<float>(i);
@@ -262,12 +289,13 @@ namespace ns_st10 {
           if (a >= M_PI) {
             a -= M_PI;
           }
+          // map into the bin
           bins[int(a / binSize)] += g;
         }
       }
       // gauss filter
       gaussFilter(bins);
-      // mean shift
+      // mean shift to find two main modes
       auto modes = meanShift(bins);
       int m1 = modes.first, m2 = modes.second;
       float m1_f = std::min(m1, m2) / 31.0f * M_PI, m2_f = std::max(m1, m2) / 31.0f * M_PI;
@@ -276,13 +304,15 @@ namespace ns_st10 {
       if (dis > 16) {
         dis = 32 - dis;
       }
+      // condition
       if (dis > 10 && std::abs(v1 - v2) < std::max(v1, v2) * 0.5f) {
-        // compute score
+        // construct the prototype
         auto proto = ProtoType(HIST_HWS, m1_f, m2_f);
         {
           cv::Mat gx, gy;
           cv::Sobel(proto.A, gx, CV_32FC1, 1, 0);
           cv::Sobel(proto.A, gy, CV_32FC1, 0, 1);
+          // proto.A is the grad image, gx is the angle image
           cv::cartToPolar(gx, gy, proto.A, gx);
 
           cv::Sobel(proto.B, gx, CV_32FC1, 1, 0);
@@ -297,12 +327,16 @@ namespace ns_st10 {
           cv::Sobel(proto.D, gy, CV_32FC1, 0, 1);
           cv::cartToPolar(gx, gy, proto.D, gx);
         }
+        // the sub grad image for current corner
         cv::Mat subGrad = grad(cv::Range(y - HIST_HWS, y + HIST_HWS + 1), cv::Range(x - HIST_HWS, x + HIST_HWS + 1));
+        // the sub expect grad image for current corner
         cv::Mat subExpGrad = cv::max(cv::Mat(cv::max(proto.A, proto.B)), cv::Mat(cv::max(proto.C, proto.D)));
+        // the grad score
         float score_grad = subGrad.dot(subExpGrad) / (cv::norm(subGrad) * cv::norm(subExpGrad));
+        // the likehood score
         float score_likehood = likehood.at<float>(pt);
-        // is a good corner
         corners_new.push_back(pt);
+        // the total score
         scores_new.push_back(score_likehood * score_grad);
         modes_new.push_back({m1_f, m2_f});
       }
@@ -320,10 +354,12 @@ namespace ns_st10 {
         // int re = system("/bin/python3 /home/csl/CppWorks/artwork/slam-tricks/st10-chessCorner/pyDrawer/drawer.py");
       }
     }
+    // find the max score
     float score_max = *std::max_element(scores_new.cbegin(), scores_new.cend());
     corners.clear();
     scores.clear();
     for (int i = 0; i != corners_new.size(); ++i) {
+      // condition
       if (scores_new[i] > 0.4f * score_max) {
         corners.push_back(corners_new[i]);
         scores.push_back(scores_new[i]);
@@ -341,6 +377,7 @@ namespace ns_st10 {
         Eigen::Matrix2f H = Eigen::Matrix2f::Zero();
         Eigen::Vector2f g = Eigen::Vector2f::Zero();
 
+        // gauss newton
         for (int i = pt.y - REFINE_HWS; i != pt.y + REFINE_HWS + 1; ++i) {
           auto gradXPtr = gradX.ptr<float>(i);
           auto gradYPtr = gradY.ptr<float>(i);
@@ -368,6 +405,7 @@ namespace ns_st10 {
         Eigen::Vector2f vec2(std::cos(alpha2), std::sin(alpha2));
         std::vector<cv::Point2f> grad_alpha1, grad_alpha2;
 
+        // find corners
         for (int i = int(pt.y) - REFINE_HWS; i != int(pt.y) + REFINE_HWS + 1; ++i) {
           auto gradXPtr = gradX.ptr<float>(i);
           auto gradYPtr = gradY.ptr<float>(i);
@@ -385,6 +423,7 @@ namespace ns_st10 {
         }
 
         {
+          // using SVD method to solve problem
           Eigen::MatrixXf A(grad_alpha1.size(), 2);
           for (int i = 0; i != grad_alpha1.size(); ++i) {
             A(i, 0) = grad_alpha1[i].x;
@@ -397,6 +436,7 @@ namespace ns_st10 {
           alpha1 = std::atan2(vy, vx);
         }
         {
+          // using SVD method to solve problem
           Eigen::MatrixXf A(grad_alpha2.size(), 2);
           for (int i = 0; i != grad_alpha2.size(); ++i) {
             A(i, 0) = grad_alpha2[i].x;
@@ -411,7 +451,7 @@ namespace ns_st10 {
       }
     }
 
-    // build kdtree
+    // build kdtree to make search faster
     kdtree = std::make_shared<pcl::KdTreeFLANN<pcl::PointXY>>();
     pcl::PointCloud<pcl::PointXY>::Ptr cloud(new pcl::PointCloud<pcl::PointXY>());
     cloud->points.resize(corners_sp.size());
@@ -426,6 +466,7 @@ namespace ns_st10 {
     std::size_t size = corners_sp.size();
     std::vector<std::pair<float, ChessBoard>> res;
     for (int i = 0; i != size; ++i) {
+      // try generate a chess board started from current corner
       auto [isVaild, engry, board] = genChessBoardOnce(i);
       if (isVaild) {
         res.push_back({engry, board});
@@ -434,9 +475,11 @@ namespace ns_st10 {
         }
       }
     }
+    // if no valid chess board found
     if (res.empty()) {
       return {false, CBCorners()};
     }
+    // return the chess board whose energy is the minimum
     auto iter = std::min_element(res.cbegin(), res.cend(), [](const auto &p1, const auto &p2) {
       return p1.first < p2.first;
     });
@@ -447,6 +490,7 @@ namespace ns_st10 {
   Detector::genChessBoard() {
     std::size_t size = corners_sp.size();
     std::vector<std::pair<float, ChessBoard>> res;
+    // find all chess boards
     for (int i = 0; i != size; ++i) {
       auto [isVaild, engry, board] = genChessBoardOnce(i);
       if (isVaild) {
@@ -460,13 +504,16 @@ namespace ns_st10 {
       return {res.front().second.toCBCorners(corners_sp)};
     }
 
+    // sort the chess board according to their energy
     std::sort(res.begin(), res.end(), [](const auto &p1, const auto &p2) { return p1.first < p2.first; });
 
+    // filte the same chess board
     auto iter = std::unique(res.begin(), res.end(), [](const auto &p1, const auto &p2) { return std::abs(p1.first - p2.first) < 1E-5; });
     res.erase(iter, res.end());
 
     std::vector<std::pair<decltype(res)::iterator, std::set<std::size_t>>> goodCBs;
 
+    // if two chess boards are intersected with each other, then choose the one whoes energy is minimum
     for (auto iter = res.begin(); iter != res.end(); ++iter) {
       const auto &cb = iter->second;
       const auto &energy = iter->first;
@@ -498,6 +545,7 @@ namespace ns_st10 {
         goodCBs.push_back({iter, cb.toSet()});
       }
     }
+    // turn the chess boards into cbcorners
     std::vector<CBCorners> cbcs;
     for (const auto &[iter, s] : goodCBs) {
       cbcs.push_back(iter->second.toCBCorners(corners_sp));
@@ -508,6 +556,7 @@ namespace ns_st10 {
 
   std::tuple<bool, float, ChessBoard>
   Detector::genChessBoardOnce(std::size_t idx) {
+    // initialize a chess board
     auto res = initChessBoard(idx);
     if (!res.first) {
       return {false, 0.0f, ChessBoard()};
@@ -516,10 +565,12 @@ namespace ns_st10 {
     ChessBoard &cb = res.second;
     float lastEnergy = res.first;
     while (true) {
+      // try grow the chess board in four directions
       auto cb_top = growChessBoard(cb, CBGrowDir::TOP);
       auto cb_lower = growChessBoard(cb, CBGrowDir::LOWER);
       auto cb_left = growChessBoard(cb, CBGrowDir::LEFT);
       auto cb_right = growChessBoard(cb, CBGrowDir::RIGHT);
+      // choose the chess board whose energy is minimum
       std::vector<std::pair<float, ns_st10::ChessBoard>> cbs{cb_top, cb_lower, cb_left, cb_right};
       auto iter = std::min_element(cbs.cbegin(), cbs.cend(), [](const auto &p1, const auto &p2) {
         return p1.first < p2.first;
@@ -530,6 +581,7 @@ namespace ns_st10 {
       showImg(drawChessBoard(grayImg, iter->second, corners_sp), "try once [best]");
       cv::waitKey(0);
 #endif
+      // condition
       if (iter->first < lastEnergy) {
         // grow success
         lastEnergy = iter->first;
@@ -546,9 +598,12 @@ namespace ns_st10 {
   Detector::initChessBoard(std::size_t idx) {
     const cv::Point2f &cp(corners_sp[idx]);
     const auto &mode = corners_modes[idx];
+    // the first mode
     Eigen::Vector2f dir1(std::cos(mode.first), std::sin(mode.first));
+    // the second mode
     Eigen::Vector2f dir2(std::cos(mode.second), std::sin(mode.second));
     float dist[8];
+    // find the other eight corners
     auto lower = closestCornerInDir(idx, dir1, dist[0]);
     if (!lower.first) {
       return {false, ChessBoard()};
@@ -581,10 +636,12 @@ namespace ns_st10 {
     if (!rightLower.first) {
       return {false, ChessBoard()};
     }
+    // construct the chess board [3x3]
     ChessBoard board(3, std::deque<size_t>(3));
     board[0][0] = leftTop.second, board[0][1] = top.second, board[0][2] = rightTop.second;
     board[1][0] = left.second, board[1][1] = idx, board[1][2] = right.second;
     board[2][0] = leftLower.second, board[2][1] = lower.second, board[2][2] = rightLower.second;
+    // verify
     float mean = 0.0f, sigma = 0.0f;
     {
       for (int i = 0; i != 8; ++i) {
@@ -608,7 +665,9 @@ namespace ns_st10 {
   std::pair<bool, std::size_t>
   Detector::closestCornerInDir(std::size_t cornerIdx, const Eigen::Vector2f &dir, float &dist) {
     std::size_t size = corners_sp.size();
+    // the score
     std::vector<float> s(size, 0.0f);
+    // the corner
     const cv::Point2f &cp(corners_sp[cornerIdx]);
     std::size_t validCount = 0;
     for (int i = 0; i != size; ++i) {
@@ -621,10 +680,12 @@ namespace ns_st10 {
       // dis = cos(theta) * norm(vec)
       float dis = vec.dot(dir);
       float cosTheta = dis / vecNorm;
+      // condition [30 degree]
       if (cosTheta < 0.86) {
         s[i] = MAXFLOAT;
       } else {
         float disEdge = std::sqrt(vecNorm * vecNorm - dis * dis);
+        // score
         s[i] = dis + 5.0f * disEdge;
         ++validCount;
       }
@@ -632,14 +693,17 @@ namespace ns_st10 {
     if (validCount == 0) {
       return {false, 0};
     }
+    // retirn the corner whose score is minimum
     auto iter = std::min_element(s.cbegin(), s.cend());
     dist = *iter;
     return {true, iter - s.cbegin()};
   }
 
   float Detector::chessBoardEnergy(const ChessBoard &cb) {
+    // find the maximum energy of the triple corners
     float lastEnergy = 0.0f;
     std::size_t rows = cb.rows(), cols = cb.cols();
+    // horizontal
     for (int i = 0; i != rows; ++i) {
       for (int j = 1; j != cols - 1; ++j) {
         const cv::Point2f &p1 = corners_sp[cb[i][j - 1]];
@@ -652,6 +716,7 @@ namespace ns_st10 {
         }
       }
     }
+    // vertical
     for (int i = 1; i != rows - 1; ++i) {
       for (int j = 0; j != cols; ++j) {
         const cv::Point2f &p1 = corners_sp[cb[i - 1][j]];
@@ -664,6 +729,7 @@ namespace ns_st10 {
         }
       }
     }
+    // compute the energy
     float energy = (lastEnergy - 1.0f) * rows * cols;
     return energy;
   }
@@ -674,13 +740,16 @@ namespace ns_st10 {
     std::vector<float> pointKNNSquaredDistance(1);
     ChessBoard cb_pred = cb;
     switch (dir) {
+    // four cases
     case CBGrowDir::TOP: {
       cb_pred.push_front(std::deque<std::size_t>(cb.cols()));
       std::size_t rows = cb_pred.rows(), cols = cb_pred.cols();
       for (int i = 0; i != cols; ++i) {
         const cv::Point2f &p1 = corners_sp[cb_pred[2][i]];
         const cv::Point2f &p2 = corners_sp[cb_pred[1][i]];
+        // predict corner
         cv::Point2f predPt = predictCorner(p1, p2);
+        // find the closest corner
         kdtree->nearestKSearch(pcl::PointXY(predPt.x, predPt.y), 1, pointIdxKNNSearch, pointKNNSquaredDistance);
         cb_pred[0][i] = pointIdxKNNSearch[0];
       }
@@ -730,6 +799,7 @@ namespace ns_st10 {
   }
 
   cv::Point2f Detector::predictCorner(const cv::Point2f &p1, const cv::Point2f &p2) {
+    // 0.75 is a experiential factor
     float predX = p2.x + (p2.x - p1.x) * 0.75f;
     float predY = p2.y + (p2.y - p1.y) * 0.75f;
     return cv::Point2f(predX, predY);
