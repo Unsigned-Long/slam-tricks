@@ -179,11 +179,11 @@ namespace ns_st10 {
   std::pair<std::size_t, std::size_t>
   meanShift(const std::vector<float> &ary) {
     float idx1 = 6.0f, idx2 = 16.0f, idx3 = 26.0f;
-    const std::size_t hws = 4, size = ary.size();
+    const std::size_t size = ary.size();
 
-    auto weightFunc = [&ary, &hws, &size](std::size_t idx) -> float {
+    auto weightFunc = [&ary, &size](std::size_t idx, std::size_t halfWinSize) -> float {
       float vec = 0.0f, total = 0.0f;
-      for (int i = idx - hws; i != idx + hws + 1; ++i) {
+      for (int i = idx - halfWinSize; i != idx + halfWinSize + 1; ++i) {
         float val = ary[(i + size) % size];
         vec += (i - float(idx)) * val;
         total += val;
@@ -193,15 +193,34 @@ namespace ns_st10 {
     };
 
     for (int i = 0; i != 10; ++i) {
-      idx1 += weightFunc((int(idx1 + 0.5f) + size) % size);
-      idx2 += weightFunc((int(idx2 + 0.5f) + size) % size);
-      idx3 += weightFunc((int(idx3 + 0.5f) + size) % size);
+      idx1 += weightFunc((int(idx1 + 0.5f) + size) % size, 4);
+      idx2 += weightFunc((int(idx2 + 0.5f) + size) % size, 4);
+      idx3 += weightFunc((int(idx3 + 0.5f) + size) % size, 4);
     }
+
+    for (int i = 0; i != 10; ++i) {
+      idx1 += weightFunc((int(idx1 + 0.5f) + size) % size, 2);
+      idx2 += weightFunc((int(idx2 + 0.5f) + size) % size, 2);
+      idx3 += weightFunc((int(idx3 + 0.5f) + size) % size, 2);
+    }
+
     auto choiceFunc = [&size, &ary](std::size_t idx) -> std::size_t {
+      // get integer index
       int lower = (int(idx) + size) % size;
       int top = (int(idx + 0.5f) + size) % size;
+      int mid;
       if (ary[lower] > ary[top]) {
+        mid = lower;
+      } else {
+        mid = top;
+      }
+      // get the maximum index
+      lower = (mid - 1) % size;
+      top = (mid + 1) % size;
+      if (ary[lower] > ary[mid] && ary[lower] >= ary[top]) {
         return lower;
+      } else if (ary[mid] > ary[lower] && ary[mid] >= ary[top]) {
+        return mid;
       } else {
         return top;
       }

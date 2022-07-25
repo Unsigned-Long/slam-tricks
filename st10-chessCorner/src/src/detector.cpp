@@ -3,8 +3,12 @@
 #include <set>
 
 namespace ns_st10 {
-  Detector::Detector(ushort protoHWS, ushort nmsHWS, ushort histHWS, ushort refineHWS)
-      : PROTO_HWS(protoHWS), NMS_HWS(nmsHWS), HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
+  Detector::Detector(float findCornersThd, float verifyCornersThd,
+                     ushort protoHWS, ushort nmsHWS,
+                     ushort histHWS, ushort refineHWS)
+      : FIND_CORNERS_THD(findCornersThd), VERIFY_CORNERS_THD(verifyCornersThd),
+        PROTO_HWS(protoHWS), NMS_HWS(nmsHWS),
+        HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
 
   std::pair<bool, CBCorners>
   Detector::solve(cv::Mat gImg, bool computeEach) {
@@ -104,6 +108,7 @@ namespace ns_st10 {
       cv::waitKey(0);
     }
 #endif
+    destoryHistory();
     return cbcs;
   }
 
@@ -200,6 +205,7 @@ namespace ns_st10 {
     showImg(drawChessBoard(grayImg, cbs), "chessboard");
     cv::waitKey(0);
 #endif
+    destoryHistory();
 
     return cbs;
   }
@@ -251,7 +257,7 @@ namespace ns_st10 {
     auto corners_t = nms2d(likehood, NMS_HWS);
     for (const auto &pt : corners_t) {
       // condition
-      if (likehood.at<float>(pt) > 0.5 * maxVal &&
+      if (likehood.at<float>(pt) > FIND_CORNERS_THD * maxVal &&
           pt.x >= HIST_HWS &&
           pt.y >= HIST_HWS &&
           pt.x < likehood.cols - HIST_HWS &&
@@ -360,7 +366,7 @@ namespace ns_st10 {
     scores.clear();
     for (int i = 0; i != corners_new.size(); ++i) {
       // condition
-      if (scores_new[i] > 0.4f * score_max) {
+      if (scores_new[i] > VERIFY_CORNERS_THD * score_max) {
         corners.push_back(corners_new[i]);
         scores.push_back(scores_new[i]);
         corners_modes.push_back(modes_new[i]);
@@ -803,5 +809,12 @@ namespace ns_st10 {
     float predX = p2.x + (p2.x - p1.x) * 0.75f;
     float predY = p2.y + (p2.y - p1.y) * 0.75f;
     return cv::Point2f(predX, predY);
+  }
+
+  void Detector::destoryHistory() {
+    this->corners.clear();
+    this->corners_sp.clear();
+    this->scores.clear();
+    this->corners_modes.clear();
   }
 } // namespace ns_st10

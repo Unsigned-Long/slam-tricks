@@ -33,6 +33,9 @@ namespace ns_st10 {
     const ushort HIST_HWS;
     // the half window size for refine corners
     const ushort REFINE_HWS;
+    const float FIND_CORNERS_THD;
+    const float VERIFY_CORNERS_THD;
+
     // the gray image
     cv::Mat grayImg;
     // the likehood image
@@ -64,7 +67,9 @@ namespace ns_st10 {
 
   public:
     // constructor
-    Detector(ushort protoHWS = 10, ushort nmsHWS = 4, ushort histHWS = 10, ushort refineHWS = 5);
+    Detector(float findCornersThd = 0.5f, float verifyCornersThd = 0.4f,
+             ushort protoHWS = 10, ushort nmsHWS = 4,
+             ushort histHWS = 10, ushort refineHWS = 5);
 
     /**
      * @brief the main function to detect chess board in an image
@@ -87,7 +92,7 @@ namespace ns_st10 {
     /**
      * @brief compute the likehood image for the input gray image
      */
-    void compute_likehood();
+   void compute_likehood();
 
     /**
      * @brief find possible corners according to the likehood image
@@ -175,6 +180,8 @@ namespace ns_st10 {
      * @return cv::Point2f the predicted third corner
      */
     cv::Point2f predictCorner(const cv::Point2f &p1, const cv::Point2f &p2);
+
+    void destoryHistory();
   };
 
 } // namespace ns_st10
