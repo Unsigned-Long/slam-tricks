@@ -1,6 +1,7 @@
 #include "cbcorners.h"
 #include "eigen3/Eigen/Dense"
 #include <fstream>
+#include <iomanip>
 
 namespace ns_st10 {
   void CBCorners::adjust() {
@@ -36,6 +37,7 @@ namespace ns_st10 {
     std::fstream file(filename, std::ios::out);
     // write the rows and cols for chess board
     file << rows << ',' << cols << std::endl;
+    file << std::fixed << std::setprecision(3);
     // write each chess board corner
     for (int i = 0; i != rows; ++i) {
       for (int j = 0; j != cols; ++j) {
