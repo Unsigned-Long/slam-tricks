@@ -4,11 +4,9 @@
 
 namespace ns_st10 {
   Detector::Detector(float findCornersThd, float verifyCornersThd,
-                     ushort protoHWS, ushort nmsHWS,
-                     ushort histHWS, ushort refineHWS)
+                     ushort protoHWS, ushort histHWS, ushort refineHWS)
       : FIND_CORNERS_THD(findCornersThd), VERIFY_CORNERS_THD(verifyCornersThd),
-        PROTO_HWS(protoHWS), NMS_HWS(nmsHWS),
-        HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
+        PROTO_HWS(protoHWS), HIST_HWS(histHWS), REFINE_HWS(refineHWS) {}
 
   std::pair<bool, CBCorners>
   Detector::solve(cv::Mat gImg, bool computeEach) {
@@ -254,7 +252,7 @@ namespace ns_st10 {
     double maxVal;
     cv::minMaxIdx(likehood, nullptr, &maxVal);
     // run the non maximum suppression algorithm
-    auto corners_t = nms2d(likehood, NMS_HWS);
+    auto corners_t = nms2d(likehood, (likehood.rows + likehood.cols) / (2.0f * 45.0f));
     for (const auto &pt : corners_t) {
       // condition
       if (likehood.at<float>(pt) > FIND_CORNERS_THD * maxVal &&
@@ -311,7 +309,7 @@ namespace ns_st10 {
         dis = 32 - dis;
       }
       // condition
-      if (dis > 10 && std::abs(v1 - v2) < std::max(v1, v2) * 0.5f) {
+      if (dis > 10 && std::abs(v1 - v2) < std::max(v1, v2) * 0.7f) {
         // construct the prototype
         auto proto = ProtoType(HIST_HWS, m1_f, m2_f);
         {
@@ -806,8 +804,8 @@ namespace ns_st10 {
 
   cv::Point2f Detector::predictCorner(const cv::Point2f &p1, const cv::Point2f &p2) {
     // 0.75 is a experiential factor
-    float predX = p2.x + (p2.x - p1.x) * 0.75f;
-    float predY = p2.y + (p2.y - p1.y) * 0.75f;
+    float predX = p2.x + (p2.x - p1.x) * 0.85f;
+    float predY = p2.y + (p2.y - p1.y) * 0.85f;
     return cv::Point2f(predX, predY);
   }
 

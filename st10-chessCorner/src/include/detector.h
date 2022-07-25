@@ -27,8 +27,6 @@ namespace ns_st10 {
   private:
     // the half window size for prototypes
     const ushort PROTO_HWS;
-    // the half window size for non maximum suppression algorithm
-    const ushort NMS_HWS;
     // the half window size for histogram of statistical pixel gradient
     const ushort HIST_HWS;
     // the half window size for refine corners
@@ -67,9 +65,8 @@ namespace ns_st10 {
 
   public:
     // constructor
-    Detector(float findCornersThd = 0.5f, float verifyCornersThd = 0.4f,
-             ushort protoHWS = 10, ushort nmsHWS = 4,
-             ushort histHWS = 10, ushort refineHWS = 5);
+    Detector(float findCornersThd = 0.4f, float verifyCornersThd = 0.5f,
+             ushort protoHWS = 10, ushort histHWS = 10, ushort refineHWS = 5);
 
     /**
      * @brief the main function to detect chess board in an image
@@ -92,7 +89,7 @@ namespace ns_st10 {
     /**
      * @brief compute the likehood image for the input gray image
      */
-   void compute_likehood();
+    void compute_likehood();
 
     /**
      * @brief find possible corners according to the likehood image

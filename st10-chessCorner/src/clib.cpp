@@ -11,18 +11,21 @@ std::vector<std::string> filesInDir(const std::string &directory) {
 }
 
 int main(int argc, char const *argv[]) {
-  auto solver = ns_st10::Detector();
+  auto solver = ns_st10::Detector(0.2f, 0.15f);
   auto imgs = filesInDir("../img/clib");
+
   for (const auto &imgPath : imgs) {
+    auto p1 = imgPath.find_last_of('/');
+    auto p2 = imgPath.find_last_of('.');
+    auto imgName = imgPath.substr(p1 + 1, p2 - p1 - 1);
     cv::Mat img = cv::imread(imgPath);
     cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
     auto res = solver.solve(img, true);
     if (res.first) {
-      auto p1 = imgPath.find_last_of('/');
-      auto p2 = imgPath.find_last_of('.');
-      res.second.write("../output/clib/" + imgPath.substr(p1 + 1, p2 - p1 - 1) + ".txt");
+      res.second.write("../output/clib/" + imgName + ".txt");
     }
-    cv::destroyAllWindows();
+    ns_st10::showImg(ns_st10::drawChessBoard(img, res.second));
+    cv::waitKey(1);
   }
   return 0;
 }
