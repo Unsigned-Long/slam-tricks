@@ -65,7 +65,7 @@ namespace ns_st10 {
 
   public:
     // constructor
-    Detector(float findCornersThd = 0.4f, float verifyCornersThd = 0.5f,
+    Detector(float findCornersThd = 0.4f, float verifyCornersThd = 0.4f,
              ushort protoHWS = 10, ushort histHWS = 10, ushort refineHWS = 5);
 
     /**

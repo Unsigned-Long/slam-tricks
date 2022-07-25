@@ -11,7 +11,7 @@ int main(int argc, char const *argv[]) {
   // cv::Mat img = cv::imread("../img/cb3.jpeg");
   // cv::Mat img = cv::imread("../img/cb4.jpeg");
   cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
-  auto solver = ns_st10::Detector(0.4, 0.4);
+  auto solver = ns_st10::Detector();
   auto res = solver.solve(img, true);
   if (res.first) {
     res.second.write("../output/corners.txt");
