@@ -4,6 +4,7 @@
 #include "cbcorners.h"
 #include "eigen3/Eigen/Dense"
 #include "helper.h"
+#include "pcl-1.12/pcl/visualization/cloud_viewer.h"
 #include "sophus/se3.hpp"
 
 namespace ns_st3 {
@@ -38,6 +39,8 @@ namespace ns_st3 {
     void reconstructIntriMat();
 
     void reconstructExtriMat();
+
+    void visualization();
 
   protected:
     Eigen::Matrix3d computeHomoMat(const CBPtsVec &imgPts, const CBPtsVec &objPts);

@@ -33,6 +33,8 @@ namespace ns_st3 {
     reconstructIntriMat();
 
     reconstructExtriMat();
+
+    visualization();
   }
 
   void CalibSolver::computeHomoMats() {
@@ -165,4 +167,7 @@ namespace ns_st3 {
       imgPos[i] = Sophus::SE3d(rotMat, t);
     }
   }
+
+  void CalibSolver::visualization() {
+    }
 } // namespace ns_st3
