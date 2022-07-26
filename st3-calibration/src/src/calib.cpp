@@ -31,6 +31,8 @@ namespace ns_st3 {
     computeHomoMats();
 
     reconstructIntriMat();
+
+    reconstructExtriMat();
   }
 
   void CalibSolver::computeHomoMats() {
@@ -120,7 +122,47 @@ namespace ns_st3 {
     gamma = -b12 * alpha * alpha * beta / lambda;
     u0 = gamma * v0 / beta - b13 * alpha * alpha / lambda;
 
-    LOG_VAR(u0, v0, alpha, beta, gamma);
+    intriMat.setZero();
+    intriMat(0, 0) = alpha;
+    intriMat(0, 1) = gamma;
+    intriMat(0, 2) = u0;
+    intriMat(1, 1) = beta;
+    intriMat(1, 2) = v0;
+    intriMat(2, 2) = 1.0;
   }
 
+  void CalibSolver::reconstructExtriMat() {
+    std::size_t size = HomoMats.size();
+    Eigen::Matrix3d intriMatInv = intriMat.inverse();
+
+    imgPos.resize(size);
+
+    for (int i = 0; i != size; ++i) {
+      Eigen::Vector3d r1 = intriMatInv * HomoMats[i].col(0);
+      Eigen::Vector3d r2 = intriMatInv * HomoMats[i].col(1);
+      double lambda = 1.0 / (2.0 * r1.norm()) + 1.0 / (2.0 * r2.norm());
+      // get r2
+      r1.normalize(), r2.normalize();
+      // get r3
+      Eigen::Vector3d r3 = r1.cross(r2);
+      // get r1
+      r1 = r2.cross(r3);
+      // get t
+      Eigen::Vector3d t = lambda * intriMatInv * HomoMats[i].col(2);
+      Eigen::Matrix3d rotMat;
+      rotMat.col(0) = r1;
+      rotMat.col(1) = r2;
+      rotMat.col(2) = r3;
+      int idx = 0;
+      while (!Sophus::isOrthogonal(rotMat)) {
+        if (idx % 2 == 0) {
+          rotMat = adjustRotMat(rotMat.transpose()).transpose();
+        } else {
+          rotMat = adjustRotMat(rotMat);
+        }
+        ++idx;
+      }
+      imgPos[i] = Sophus::SE3d(rotMat, t);
+    }
+  }
 } // namespace ns_st3

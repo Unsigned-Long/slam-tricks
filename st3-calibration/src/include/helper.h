@@ -24,6 +24,8 @@ namespace ns_st3 {
 
   Eigen::Vector3d toHomoCoordVec(const cv::Point2d& pt);
 
+  Eigen::Matrix3d adjustRotMat(const Eigen::Matrix3d &rotMat);
+
 } // namespace ns_st3
 
 #endif

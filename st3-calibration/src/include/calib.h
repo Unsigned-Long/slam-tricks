@@ -4,6 +4,7 @@
 #include "cbcorners.h"
 #include "eigen3/Eigen/Dense"
 #include "helper.h"
+#include "sophus/se3.hpp"
 
 namespace ns_st3 {
   class CalibSolver {
@@ -12,11 +13,11 @@ namespace ns_st3 {
     std::vector<CBPtsVec> cbsObjPts;
 
     std::vector<Eigen::Matrix3d> HomoMats;
-    double alpha;
-    double beta;
-    double gamma;
-    double u0;
-    double v0;
+    double alpha, beta, gamma;
+    double u0, v0;
+    Eigen::Matrix3d intriMat;
+
+    std::vector<Sophus::SE3d> imgPos;
 
   public:
     /**
@@ -35,6 +36,8 @@ namespace ns_st3 {
     void computeHomoMats();
 
     void reconstructIntriMat();
+
+    void reconstructExtriMat();
 
   protected:
     Eigen::Matrix3d computeHomoMat(const CBPtsVec &imgPts, const CBPtsVec &objPts);
