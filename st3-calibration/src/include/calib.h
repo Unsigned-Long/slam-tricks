@@ -14,6 +14,7 @@ namespace ns_st3 {
     std::vector<Eigen::Matrix3d> HomoMats;
     double alpha;
     double beta;
+    double gamma;
     double u0;
     double v0;
 

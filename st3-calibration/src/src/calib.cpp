@@ -81,50 +81,46 @@ namespace ns_st3 {
 
   void CalibSolver::reconstructIntriMat() {
     std::size_t size = HomoMats.size();
-    Eigen::MatrixXd C(size * 2, 5);
+    Eigen::MatrixXd C(size * 2, 6);
 
     auto cofFunc = [](const Eigen::Matrix3d &hMat, std::size_t i, std::size_t j)
-        -> Eigen::Matrix<double, 1, 5> {
+        -> Eigen::Matrix<double, 1, 6> {
       Eigen::Vector3d hi = hMat.col(i);
       Eigen::Vector3d hj = hMat.col(j);
-      Eigen::Matrix<double, 1, 5> cofMat;
+      Eigen::Matrix<double, 1, 6> cofMat;
       cofMat(0, 0) = hi(0) * hj(0);
-      cofMat(0, 1) = hi(2) * hj(0) + hi(0) * hj(2);
-      cofMat(0, 2) = hi(1) * hj(1);
-      cofMat(0, 3) = hi(2) * hj(1) + hi(1) * hj(2);
-      cofMat(0, 4) = hi(2) * hj(2);
+      cofMat(0, 1) = hi(1) * hj(0) + hi(0) * hj(1);
+      cofMat(0, 2) = hi(2) * hj(0) + hi(0) * hj(2);
+      cofMat(0, 3) = hi(1) * hj(1);
+      cofMat(0, 4) = hi(2) * hj(1) + hi(1) * hj(2);
+      cofMat(0, 5) = hi(2) * hj(2);
       return cofMat;
     };
 
     for (int i = 0; i != size; ++i) {
-      Eigen::Matrix<double, 1, 5> cof12 = cofFunc(HomoMats[i], 0, 1);
-      Eigen::Matrix<double, 1, 5> cof11 = cofFunc(HomoMats[i], 0, 0);
-      Eigen::Matrix<double, 1, 5> cof22 = cofFunc(HomoMats[i], 1, 1);
+      Eigen::Matrix<double, 1, 6> cof12 = cofFunc(HomoMats[i], 0, 1);
+      Eigen::Matrix<double, 1, 6> cof11 = cofFunc(HomoMats[i], 0, 0);
+      Eigen::Matrix<double, 1, 6> cof22 = cofFunc(HomoMats[i], 1, 1);
 
-      C.block(i * 2 + 0, 0, 1, 5) = cof12;
-      C.block(i * 2 + 1, 0, 1, 5) = cof11 - cof22;
+      C.block(i * 2 + 0, 0, 1, 6) = cof12;
+      C.block(i * 2 + 1, 0, 1, 6) = cof11 - cof22;
     }
 
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(C, Eigen::ComputeFullV);
-    Eigen::Matrix<double, 5, 5> vMatrix = svd.matrixV();
-    Eigen::Vector<double, 5> param = vMatrix.col(4);
+    Eigen::Matrix<double, 6, 6> vMatrix = svd.matrixV();
+    Eigen::Vector<double, 6> param = vMatrix.col(5);
 
-    double b11 = param(0), b13 = param(1);
-    double b22 = param(2), b23 = param(3), b33 = param(4);
+    double b11 = param(0), b12 = param(1), b13 = param(2);
+    double b22 = param(3), b23 = param(4), b33 = param(5);
 
-    // Eigen::Matrix3d BMat;
-    // BMat(0, 0) = b11, BMat(0, 1) = b12, BMat(0, 2) = b13;
-    // BMat(1, 0) = b12, BMat(1, 1) = b22, BMat(1, 2) = b23;
-    // BMat(2, 0) = b13, BMat(2, 1) = b23, BMat(2, 2) = b33;
-    // LOG_VAR(BMat);
-
-    v0 = -b23 / b22;
-    double lambda = b33 - (b13 * b13 - v0 * b11 * b23) / b11;
+    v0 = (b12 * b13 - b11 * b23) / (b11 * b22 - b12 * b12);
+    double lambda = b33 - (b13 * b13 + v0 * (b12 * b13 - b11 * b23)) / b11;
     alpha = std::sqrt(lambda / b11);
-    beta = std::sqrt(lambda / b22);
-    u0 = -b13 * alpha * alpha / lambda;
+    beta = std::sqrt(lambda * b11 / (b11 * b22 - b12 * b12));
+    gamma = -b12 * alpha * alpha * beta / lambda;
+    u0 = gamma * v0 / beta - b13 * alpha * alpha / lambda;
 
-    LOG_VAR(alpha, beta, u0, v0);
+    LOG_VAR(u0, v0, alpha, beta, gamma);
   }
 
 } // namespace ns_st3
