@@ -5,7 +5,9 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/local/include/pcl-1.12",
-                "/usr/local/include/vtk-7.1"
+                "/usr/local/include/vtk-7.1",
+                "/home/csl/CppWorks/artwork/slam-tricks/st1-undistort/src/include",
+                "/home/csl/CppWorks/artwork/slam-tricks/st0-core/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

@@ -22,7 +22,7 @@ namespace ns_st3 {
 
   double homoError(const CBPtsVec &imgPts, const CBPtsVec &objPts, const Eigen::Matrix3d &hMat);
 
-  Eigen::Vector3d toHomoCoordVec(const cv::Point2d& pt);
+  Eigen::Vector3d toHomoCoordVec(const cv::Point2d &pt);
 
   Eigen::Matrix3d adjustRotMat(const Eigen::Matrix3d &rotMat);
 

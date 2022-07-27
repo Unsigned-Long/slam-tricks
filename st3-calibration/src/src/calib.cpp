@@ -1,5 +1,9 @@
 #include "calib.h"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
 #include "pcl-1.12/pcl/visualization/pcl_visualizer.h"
+#include "struct_def.hpp"
+#include "undistort_img.hpp"
 #include <chrono>
 #include <thread>
 
@@ -37,6 +41,8 @@ namespace ns_st3 {
     reconstructIntriMat();
 
     reconstructExtriMat();
+
+    totalOptimization();
 
     visualization();
   }
@@ -89,52 +95,51 @@ namespace ns_st3 {
 
   void CalibSolver::reconstructIntriMat() {
     std::size_t size = HomoMats.size();
-    Eigen::MatrixXd C(size * 2, 6);
+    Eigen::MatrixXd C(size * 2, 5);
 
     auto cofFunc = [](const Eigen::Matrix3d &hMat, std::size_t i, std::size_t j)
-        -> Eigen::Matrix<double, 1, 6> {
+        -> Eigen::Matrix<double, 1, 5> {
       Eigen::Vector3d hi = hMat.col(i);
       Eigen::Vector3d hj = hMat.col(j);
-      Eigen::Matrix<double, 1, 6> cofMat;
+      Eigen::Matrix<double, 1, 5> cofMat;
       cofMat(0, 0) = hi(0) * hj(0);
-      cofMat(0, 1) = hi(1) * hj(0) + hi(0) * hj(1);
-      cofMat(0, 2) = hi(2) * hj(0) + hi(0) * hj(2);
-      cofMat(0, 3) = hi(1) * hj(1);
-      cofMat(0, 4) = hi(2) * hj(1) + hi(1) * hj(2);
-      cofMat(0, 5) = hi(2) * hj(2);
+      cofMat(0, 1) = hi(2) * hj(0) + hi(0) * hj(2);
+      cofMat(0, 2) = hi(1) * hj(1);
+      cofMat(0, 3) = hi(2) * hj(1) + hi(1) * hj(2);
+      cofMat(0, 4) = hi(2) * hj(2);
       return cofMat;
     };
 
     for (int i = 0; i != size; ++i) {
-      Eigen::Matrix<double, 1, 6> cof12 = cofFunc(HomoMats[i], 0, 1);
-      Eigen::Matrix<double, 1, 6> cof11 = cofFunc(HomoMats[i], 0, 0);
-      Eigen::Matrix<double, 1, 6> cof22 = cofFunc(HomoMats[i], 1, 1);
+      Eigen::Matrix<double, 1, 5> cof12 = cofFunc(HomoMats[i], 0, 1);
+      Eigen::Matrix<double, 1, 5> cof11 = cofFunc(HomoMats[i], 0, 0);
+      Eigen::Matrix<double, 1, 5> cof22 = cofFunc(HomoMats[i], 1, 1);
 
-      C.block(i * 2 + 0, 0, 1, 6) = cof12;
-      C.block(i * 2 + 1, 0, 1, 6) = cof11 - cof22;
+      C.block(i * 2 + 0, 0, 1, 5) = cof12;
+      C.block(i * 2 + 1, 0, 1, 5) = cof11 - cof22;
     }
 
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(C, Eigen::ComputeFullV);
-    Eigen::Matrix<double, 6, 6> vMatrix = svd.matrixV();
-    Eigen::Vector<double, 6> param = vMatrix.col(5);
+    Eigen::Matrix<double, 5, 5> vMatrix = svd.matrixV();
+    Eigen::Vector<double, 5> param = vMatrix.col(4);
 
-    double b11 = param(0), b12 = param(1), b13 = param(2);
-    double b22 = param(3), b23 = param(4), b33 = param(5);
+    double b11 = param(0), b13 = param(1);
+    double b22 = param(2), b23 = param(3), b33 = param(4);
 
-    v0 = (b12 * b13 - b11 * b23) / (b11 * b22 - b12 * b12);
-    double lambda = b33 - (b13 * b13 + v0 * (b12 * b13 - b11 * b23)) / b11;
+    v0 = -b23 / b22;
+    double lambda = b33 - (b13 * b13 - v0 * b11 * b23) / b11;
     alpha = std::sqrt(lambda / b11);
-    beta = std::sqrt(lambda * b11 / (b11 * b22 - b12 * b12));
-    gamma = -b12 * alpha * alpha * beta / lambda;
-    u0 = gamma * v0 / beta - b13 * alpha * alpha / lambda;
+    beta = std::sqrt(lambda / b22);
+    u0 = -b13 * alpha * alpha / lambda;
 
     intriMat.setZero();
     intriMat(0, 0) = alpha;
-    intriMat(0, 1) = gamma;
     intriMat(0, 2) = u0;
     intriMat(1, 1) = beta;
     intriMat(1, 2) = v0;
     intriMat(2, 2) = 1.0;
+
+    LOG_VAR(alpha, beta, u0, v0);
   }
 
   void CalibSolver::reconstructExtriMat() {
@@ -236,5 +241,49 @@ namespace ns_st3 {
       viewer.spinOnce();
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+  }
+
+  cv::Point2d CalibSolver::imgPt2NormPt(const cv::Point2d &imgPt) {
+    double ny = (imgPt.y - v0) / beta;
+    double nx = (imgPt.x - u0) / alpha;
+    return cv::Point2d(nx, ny);
+  }
+
+  cv::Point2d CalibSolver::normPt2ImgPt(const cv::Point2d &normPt) {
+    double x = normPt.x, y = normPt.y;
+    double u = alpha * x + u0;
+    double v = beta * y + v0;
+    return cv::Point2d(u, v);
+  }
+
+  cv::Point2d CalibSolver::distortNormPt(const cv::Point2d &npt_undist) {
+    double x = npt_undist.x, y = npt_undist.y;
+    double r2 = x * x + y * y, r4 = r2 * r2, r6 = r4 * r2;
+    double x_dist = x * (1.0 + k1 * r2 + k2 * r4 + k3 * r6) +
+                    2.0 * p1 * x * y + p2 * (r2 + 2.0 * x * x);
+    double y_dist = y * (1.0 + k1 * r2 + k2 * r4 + k3 * r6) +
+                    2.0 * p2 * x * y + p1 * (r2 + 2.0 * y * y);
+    return cv::Point2d(x_dist, y_dist);
+  }
+
+  void CalibSolver::testUndistortImg(const std::string &imgName) {
+    // structures for camera parameters
+    ns_st0::CameraInnerParam innerParam(alpha, beta, u0, v0);
+    ns_st0::CameraDistCoeff distCoff(k1, k2, k3, p1, p2);
+
+    // read image
+    cv::Mat distortedImg = cv::imread(imgName, cv::IMREAD_GRAYSCALE);
+
+    cv::Mat undistortedImg = ns_st1::undistortImage(distortedImg, innerParam,
+                                                    distCoff, Interpolation::NEAREST_NEIGHBOR);
+
+    cv::namedWindow("distortedImg", cv::WINDOW_FREERATIO);
+    cv::namedWindow("undistortedImg", cv::WINDOW_FREERATIO);
+    cv::imshow("distortedImg", distortedImg);
+    cv::imshow("undistortedImg", undistortedImg);
+    cv::waitKey(0);
+  }
+
+  void CalibSolver::totalOptimization() {
   }
 } // namespace ns_st3

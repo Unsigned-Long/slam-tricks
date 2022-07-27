@@ -43,4 +43,5 @@ namespace ns_st3 {
     newMat.col(2) = r3;
     return newMat;
   }
+
 } // namespace ns_st3

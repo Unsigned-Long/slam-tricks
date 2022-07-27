@@ -20,6 +20,8 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${SOPHUS_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
+  /home/csl/CppWorks/artwork/slam-tricks/st1-undistort/src/include
+  /home/csl/CppWorks/artwork/slam-tricks/st0-core/include
 )
 
 link_directories(${PCL_LIBRARY_DIRS})

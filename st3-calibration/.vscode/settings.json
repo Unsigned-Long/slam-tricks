@@ -68,6 +68,7 @@
     "dense": "cpp",
     "csignal": "cpp",
     "future": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "core": "cpp"
   }
 }

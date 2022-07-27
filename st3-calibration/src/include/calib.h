@@ -16,9 +16,10 @@ namespace ns_st3 {
     std::vector<CBPtsVec> cbsObjPts;
 
     std::vector<Eigen::Matrix3d> HomoMats;
-    double alpha, beta, gamma;
+    double alpha, beta;
     double u0, v0;
     Eigen::Matrix3d intriMat;
+    double k1, k2, k3, p1, p2;
 
     std::vector<Sophus::SE3d> imgPos;
 
@@ -42,10 +43,22 @@ namespace ns_st3 {
 
     void reconstructExtriMat();
 
+    void computeDistCoeff();
+
     void visualization();
+
+    void totalOptimization();
 
   protected:
     Eigen::Matrix3d computeHomoMat(const CBPtsVec &imgPts, const CBPtsVec &objPts);
+
+    cv::Point2d imgPt2NormPt(const cv::Point2d &imgPt);
+
+    cv::Point2d normPt2ImgPt(const cv::Point2d &normPt);
+
+    cv::Point2d distortNormPt(const cv::Point2d &npt_undist);
+
+    void testUndistortImg(const std::string &imgName);
   };
 } // namespace ns_st3
 
