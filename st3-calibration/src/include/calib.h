@@ -4,11 +4,13 @@
 #include "cbcorners.h"
 #include "eigen3/Eigen/Dense"
 #include "helper.h"
-#include "pcl-1.12/pcl/visualization/cloud_viewer.h"
 #include "sophus/se3.hpp"
 
 namespace ns_st3 {
   class CalibSolver {
+    double cbSize;
+    std::size_t rows, cols;
+
     std::size_t cbsCount;
     std::vector<CBPtsVec> cbsImgPts;
     std::vector<CBPtsVec> cbsObjPts;
@@ -32,7 +34,7 @@ namespace ns_st3 {
     void solve();
 
   protected:
-    void init(const std::string &cornerDir, double chessBoardSize);
+    void init(const std::string &cornerDir);
 
     void computeHomoMats();
 

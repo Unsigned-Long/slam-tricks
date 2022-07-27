@@ -1,23 +1,27 @@
 #include "calib.h"
+#include "pcl-1.12/pcl/visualization/pcl_visualizer.h"
+#include <chrono>
+#include <thread>
 
 namespace ns_st3 {
-  CalibSolver::CalibSolver(const std::string &cornerDir, double chessBoardSize) {
-    init(cornerDir, chessBoardSize);
+  CalibSolver::CalibSolver(const std::string &cornerDir, double chessBoardSize)
+      : cbSize(chessBoardSize) {
+    init(cornerDir);
   }
 
-  void CalibSolver::init(const std::string &cornerDir, double chessBoardSize) {
+  void CalibSolver::init(const std::string &cornerDir) {
     auto files = filesInDir(cornerDir);
     for (const auto &file : files) {
       CBCorners cb = CBCorners::read(file);
-      std::size_t rows = cb.rows();
-      std::size_t cols = cb.cols();
+      rows = cb.rows();
+      cols = cb.cols();
       CBPtsVec objPtsVec(rows * cols);
       CBPtsVec imgPtsVec(rows * cols);
       for (int i = 0; i != rows; ++i) {
         for (int j = 0; j != cols; ++j) {
           std::size_t pos = i * cols + j;
           imgPtsVec[pos] = cb[i][j];
-          objPtsVec[pos] = cv::Point2d(j, i) * chessBoardSize;
+          objPtsVec[pos] = cv::Point2d(j, i) * cbSize;
         }
       }
       cbsImgPts.push_back(imgPtsVec);
@@ -169,5 +173,68 @@ namespace ns_st3 {
   }
 
   void CalibSolver::visualization() {
+    pcl::visualization::PCLVisualizer viewer("ViewSpace");
+
+    // viewer.addCube()
+    for (int i = 0; i != rows + 1; ++i) {
+      for (int j = 0; j != cols + 1; ++j) {
+        float gray;
+        (i + j) % 2 == 0 ? gray = 1.0f : gray = 0.0f;
+        viewer.addCube(j * cbSize - cbSize, (j + 1) * cbSize - cbSize,
+                       i * cbSize - cbSize, (i + 1) * cbSize - cbSize,
+                       0.0f, cbSize * 0.1f,
+                       gray, gray, gray,
+                       "Cube" + std::to_string(i) + std::to_string(j));
+      }
     }
+
+    // corners
+    for (int i = 0; i != rows; ++i) {
+      for (int j = 0; j != cols; ++j) {
+        viewer.addSphere(pcl::PointXYZ(j * cbSize, i * cbSize, 0.0), cbSize * 0.1f,
+                         1.0f, 1.0f, 0.0f, "Sphere" + std::to_string(i) + std::to_string(j));
+      }
+    }
+
+    // coordinates
+    viewer.addCoordinateSystem(cbSize, "Origin");
+
+    Eigen::Vector3d center(0.0, 0.0, 0.0);
+    for (int i = 0; i != cbsCount; ++i) {
+      auto Twc = imgPos[i].inverse();
+      auto quat = Twc.unit_quaternion();
+      auto trans = Twc.translation();
+      Eigen::Isometry3d coord(quat);
+      coord.pretranslate(trans);
+      // coordinates
+      viewer.addCoordinateSystem(0.5f * cbSize, Eigen::Affine3f(coord.cast<float>().affine()),
+                                 "Camera" + std::to_string(i));
+      Eigen::Vector3d p1 = Twc * Eigen::Vector3d(0.0, 0.0, 0.0);
+      Eigen::Vector3d p2 = Twc * Eigen::Vector3d(0.0, 0.0, cbSize * 0.5f);
+      center += p1;
+      // Cone
+      pcl::ModelCoefficients cone_coeff;
+      cone_coeff.values.resize(7); // We need 7 values
+      cone_coeff.values[0] = p1(0);
+      cone_coeff.values[1] = p1(1);
+      cone_coeff.values[2] = p1(2);
+      cone_coeff.values[3] = p2(0) - p1(0);
+      cone_coeff.values[4] = p2(1) - p1(1);
+      cone_coeff.values[5] = p2(2) - p1(2);
+      cone_coeff.values[6] = 30.0; // degrees
+      viewer.addCone(cone_coeff, "cone" + std::to_string(i));
+    }
+
+    // viewport
+    center /= cbsCount;
+    center *= 2.5;
+    viewer.setCameraPosition(center(0), center(1), center(2),
+                             cbSize * 0.5 * cols, cbSize * 0.5 * rows, 0.0,
+                             0.0, -1.0, 0.0);
+
+    while (!viewer.wasStopped()) {
+      viewer.spinOnce();
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
 } // namespace ns_st3
