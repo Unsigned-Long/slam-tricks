@@ -43,8 +43,6 @@ namespace ns_st3 {
     reconstructExtriMat();
 
     totalOptimization();
-
-    visualization();
   }
 
   void CalibSolver::computeHomoMats() {
@@ -138,8 +136,6 @@ namespace ns_st3 {
     intriMat(1, 1) = beta;
     intriMat(1, 2) = v0;
     intriMat(2, 2) = 1.0;
-
-    LOG_VAR(alpha, beta, u0, v0);
   }
 
   void CalibSolver::reconstructExtriMat() {
@@ -285,5 +281,150 @@ namespace ns_st3 {
   }
 
   void CalibSolver::totalOptimization() {
+
+    Eigen::VectorXd param(9 + 6 * cbsCount);
+    // initialize
+
+    // intri params
+    param(0) = alpha, param(1) = beta, param(2) = u0, param(3) = v0;
+
+    // dist params
+    param(4) = param(5) = param(6) = param(7) = param(8) = 0.0;
+
+    // pos params
+    for (int i = 0; i != cbsCount; ++i) {
+      param.block(9 + i * 6, 0, 6, 1) = imgPos[i].log();
+    }
+
+    for (int iter = 0; iter != 10; ++iter) {
+      Eigen::VectorXd g(9 + 6 * cbsCount);
+      Eigen::MatrixXd H(9 + 6 * cbsCount, 9 + 6 * cbsCount);
+      g.setZero();
+      H.setZero();
+
+      // intri params
+      alpha = param(0), beta = param(1), u0 = param(2), v0 = param(3);
+
+      // dist params
+      k1 = param(4), k2 = param(5), k3 = param(6);
+      p1 = param(7), p2 = param(8);
+
+      for (int i = 0; i != cbsCount; ++i) {
+        const auto &curImgPts = cbsImgPts[i];
+        const auto &curObjPts = cbsObjPts[i];
+        const auto &curPos = Sophus::SE3d::exp(param.block(9 + i * 6, 0, 6, 1));
+
+        for (int j = 0; j != curImgPts.size(); ++j) {
+          // prepare
+          const double X = curObjPts[j].x, Y = curObjPts[j].y, Z = 0.0;
+
+          const Eigen::Vector3d unNormPt = curPos * Eigen::Vector3d(X, Y, Z);
+          const double X_prime = unNormPt(0), Y_prime = unNormPt(1), Z_prime = unNormPt(2);
+
+          const double xn = X_prime / Z_prime, yn = Y_prime / Z_prime;
+
+          const cv::Point2d normPt_dist = distortNormPt(cv::Point2d(xn, yn));
+
+          const double xd = normPt_dist.x, yd = normPt_dist.y;
+
+          const cv::Point2d imgPt_pred = normPt2ImgPt(cv::Point2d(xd, yd));
+
+          const cv::Point2d imgPt_real = curImgPts[j];
+
+          // error
+          Eigen::Vector2d error(imgPt_pred.x - imgPt_real.x, imgPt_pred.y - imgPt_real.y);
+
+          // intri params
+          Eigen::Matrix<double, 4, 2> J_intri = Eigen::Matrix<double, 4, 2>::Zero();
+          J_intri(0, 0) = xd, J_intri(2, 0) = 1.0;
+          J_intri(1, 1) = yd, J_intri(3, 1) = 1.0;
+
+          // distort params
+          const double r2 = xn * xn + yn * yn, r4 = r2 * r2, r6 = r4 * r2;
+          Eigen::Matrix<double, 5, 2> J_dist = Eigen::Matrix<double, 5, 2>::Zero();
+          J_dist(0, 0) = alpha * xn * r2, J_dist(0, 1) = beta * yn * r2;
+          J_dist(1, 0) = alpha * xn * r4, J_dist(1, 1) = beta * yn * r4;
+          J_dist(2, 0) = alpha * xn * r6, J_dist(2, 1) = beta * yn * r6;
+          J_dist(3, 0) = 2.0 * alpha * xn * yn, J_dist(3, 1) = beta * (r2 + 2.0 * yn * yn);
+          J_dist(4, 0) = alpha * (r2 + 2.0 * xn * xn), J_dist(4, 1) = 2.0 * beta * xn * yn;
+
+          // pos param
+          // [1]
+          Eigen::Matrix2d ei_pd = Eigen::Matrix2d::Zero();
+          ei_pd(0, 0) = alpha, ei_pd(1, 1) = beta;
+          // [2]
+          Eigen::Matrix2d pd_pn;
+          pd_pn(0, 0) = (1.0 + k1 * r2 + k2 * r4 + k3 * r6) +
+                        xn * (2.0 * k1 * xn + 4.0 * k2 * r2 * xn + 6.0 * k3 * r4 * xn) +
+                        2.0 * p1 * yn + 6.0 * p2 * xn;
+          pd_pn(0, 1) = 2.0 * p1 * xn;
+          pd_pn(1, 0) = 2.0 * p2 * yn;
+          pd_pn(1, 1) = (1.0 + k1 * r2 + k2 * r4 + k3 * r6) +
+                        yn * (2.0 * k1 * yn + 4.0 * k2 * r2 * yn + 6.0 * k3 * r4 * yn) +
+                        2.0 * p2 * xn + 6.0 * p1 * yn;
+          // [3]
+          Eigen::Matrix<double, 2, 3> pn_PPrime;
+          const double Z_prime_inv = 1.0 / Z_prime, Z_prime_inv2 = Z_prime_inv * Z_prime_inv;
+          pn_PPrime(0, 0) = Z_prime_inv;
+          pn_PPrime(0, 1) = 0.0;
+          pn_PPrime(0, 2) = -X_prime * Z_prime_inv2;
+          pn_PPrime(1, 0) = 0.0;
+          pn_PPrime(1, 1) = Z_prime_inv;
+          pn_PPrime(1, 2) = -Y_prime * Z_prime_inv2;
+          // [4]
+          Eigen::Matrix<double, 3, 6> PPrime_pos;
+          PPrime_pos.block(0, 0, 3, 3).setIdentity();
+          PPrime_pos.block(0, 3, 3, 3) = -Sophus::SO3d::hat(unNormPt);
+          // total [1, 2, 3, 4]
+          Eigen::Matrix<double, 6, 2> J_pos = (ei_pd * pd_pn * pn_PPrime * PPrime_pos).transpose();
+
+          // jacobian
+          Eigen::MatrixXd J(9 + 6 * cbsCount, 2);
+          J.setZero();
+          J.block(0, 0, 4, 2) = J_intri;
+          J.block(4, 0, 5, 2) = J_dist;
+          J.block(9 + i * 6, 0, 6, 2) = J_pos;
+          H += J * J.transpose();
+          g -= J * error;
+        }
+      }
+
+      Eigen::VectorXd update = H.ldlt().solve(g);
+      param.block(0, 0, 9, 1) += update.block(0, 0, 9, 1);
+
+      // pos update
+      for (int i = 0; i != cbsCount; ++i) {
+        param.block(9 + i * 6, 0, 6, 1) =
+            (Sophus::SE3d::exp(update.block(9 + i * 6, 0, 6, 1)) *
+             Sophus::SE3d::exp(param.block(9 + i * 6, 0, 6, 1)))
+                .log();
+      }
+
+      if (update.norm() < 1E-8) {
+        break;
+      }
+    }
+
+    // assign
+
+    // intri params
+    alpha = param(0), beta = param(1), u0 = param(2), v0 = param(3);
+
+    // dist params
+    k1 = param(4), k2 = param(5), k3 = param(6);
+    p1 = param(7), p2 = param(8);
+
+    // pos params
+    for (int i = 0; i != cbsCount; ++i) {
+      imgPos[i] = Sophus::SE3d::exp(param.block(9 + i * 6, 0, 6, 1));
+    }
+  }
+
+  std::ostream &operator<<(std::ostream &os, const CalibSolver &solver) {
+    os << "{'alpha(fx)': " << solver.alpha << ", 'beta(fy)': " << solver.beta;
+    os << ", 'u0(cx)': " << solver.u0 << ", 'v0(cy)': " << solver.v0;
+    os << ", 'k1': " << solver.k1 << ", 'k2': " << solver.k2 << ", 'k3': " << solver.k3;
+    os << ", 'p1': " << solver.p1 << ", 'p2': " << solver.p2 << "}";
+    return os;
   }
 } // namespace ns_st3

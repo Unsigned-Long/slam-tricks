@@ -16,6 +16,8 @@ namespace ns_st3 {
     std::vector<CBPtsVec> cbsObjPts;
 
     std::vector<Eigen::Matrix3d> HomoMats;
+
+  public:
     double alpha, beta;
     double u0, v0;
     Eigen::Matrix3d intriMat;
@@ -34,6 +36,10 @@ namespace ns_st3 {
 
     void solve();
 
+    void visualization();
+
+    void testUndistortImg(const std::string &imgName);
+
   protected:
     void init(const std::string &cornerDir);
 
@@ -45,8 +51,6 @@ namespace ns_st3 {
 
     void computeDistCoeff();
 
-    void visualization();
-
     void totalOptimization();
 
   protected:
@@ -57,9 +61,9 @@ namespace ns_st3 {
     cv::Point2d normPt2ImgPt(const cv::Point2d &normPt);
 
     cv::Point2d distortNormPt(const cv::Point2d &npt_undist);
-
-    void testUndistortImg(const std::string &imgName);
   };
+
+  std::ostream &operator<<(std::ostream &os, const CalibSolver &solver);
 } // namespace ns_st3
 
 #endif
