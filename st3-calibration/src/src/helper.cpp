@@ -28,20 +28,4 @@ namespace ns_st3 {
     return error;
   }
 
-  Eigen::Matrix3d adjustRotMat(const Eigen::Matrix3d &rotMat) {
-    Eigen::Vector3d r1 = rotMat.col(0);
-    Eigen::Vector3d r2 = rotMat.col(1);
-    // get r2
-    r1.normalize(), r2.normalize();
-    // get r3
-    Eigen::Vector3d r3 = r1.cross(r2);
-    // get r1
-    r1 = r2.cross(r3);
-    Eigen::Matrix3d newMat;
-    newMat.col(0) = r1;
-    newMat.col(1) = r2;
-    newMat.col(2) = r3;
-    return newMat;
-  }
-
 } // namespace ns_st3

@@ -160,15 +160,13 @@ namespace ns_st3 {
       rotMat.col(0) = r1;
       rotMat.col(1) = r2;
       rotMat.col(2) = r3;
-      int idx = 0;
-      while (!Sophus::isOrthogonal(rotMat)) {
-        if (idx % 2 == 0) {
-          rotMat = adjustRotMat(rotMat.transpose()).transpose();
-        } else {
-          rotMat = adjustRotMat(rotMat);
-        }
-        ++idx;
-      }
+
+      // adjust
+      Eigen::JacobiSVD<Eigen::Matrix3d> svd(rotMat, Eigen::ComputeFullV | Eigen::ComputeFullU);
+      Eigen::Matrix3d vMatrix = svd.matrixV();
+      Eigen::Matrix3d uMatrix = svd.matrixU();
+      rotMat = uMatrix * vMatrix.transpose();
+      
       imgPos[i] = Sophus::SE3d(rotMat, t);
     }
   }
