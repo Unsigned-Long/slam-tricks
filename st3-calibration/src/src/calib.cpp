@@ -43,6 +43,7 @@ namespace ns_st3 {
     reconstructExtriMat();
 
     totalOptimization();
+
   }
 
   void CalibSolver::computeHomoMats() {
@@ -166,7 +167,7 @@ namespace ns_st3 {
       Eigen::Matrix3d vMatrix = svd.matrixV();
       Eigen::Matrix3d uMatrix = svd.matrixU();
       rotMat = uMatrix * vMatrix.transpose();
-      
+
       imgPos[i] = Sophus::SE3d(rotMat, t);
     }
   }
@@ -355,8 +356,10 @@ namespace ns_st3 {
           pd_pn(0, 0) = (1.0 + k1 * r2 + k2 * r4 + k3 * r6) +
                         xn * (2.0 * k1 * xn + 4.0 * k2 * r2 * xn + 6.0 * k3 * r4 * xn) +
                         2.0 * p1 * yn + 6.0 * p2 * xn;
-          pd_pn(0, 1) = 2.0 * p1 * xn;
-          pd_pn(1, 0) = 2.0 * p2 * yn;
+          pd_pn(0, 1) = xn * (2.0 * k1 * yn + 4.0 * k2 * r2 * yn + 6.0 * k3 * r4 * yn) +
+                        2.0 * p1 * xn + 2.0 * p2 * yn;
+          pd_pn(1, 0) = yn * (2.0 * k1 * xn + 4.0 * k2 * r2 * xn + 6.0 * k3 * r4 * xn) +
+                        2.0 * p1 * xn + 2.0 * p2 * yn;
           pd_pn(1, 1) = (1.0 + k1 * r2 + k2 * r4 + k3 * r6) +
                         yn * (2.0 * k1 * yn + 4.0 * k2 * r2 * yn + 6.0 * k3 * r4 * yn) +
                         2.0 * p2 * xn + 6.0 * p1 * yn;
