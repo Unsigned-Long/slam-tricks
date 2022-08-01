@@ -13,7 +13,7 @@
 // #define WRITE_PROC_IMG
 
 // macro for displaying the image during processing
-#define SHOW_PROC_IMG
+// #define SHOW_PROC_IMG
 
 // macro for display the growing chessboard during processing
 // #define SHOW_GROW_CB
