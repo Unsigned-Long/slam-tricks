@@ -1,6 +1,7 @@
 #include "panorama.h"
 #include "feature.h"
 #include "help.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/core/eigen.hpp"
 #include "projective.h"
 
@@ -10,7 +11,7 @@ namespace ns_st11 {
     std::size_t size = imgNames.size();
     std::vector<cv::Mat> imgs(size);
     for (int i = 0; i != size; ++i) {
-      imgs[i] = cv::imread(imgNames[i], cv::IMREAD_GRAYSCALE);
+      imgs[i] = cv::imread(imgNames[i]);
     }
     return panorama(imgs);
   }
@@ -72,16 +73,15 @@ namespace ns_st11 {
         pc2[j] = kps2[match.trainIdx].pt;
       }
 
-      const float errorThd = 4;
-      homoMats[i][i + 1] = solveHomoMatByRANSAC(pc2, pc1, errorThd);
+      const float errorThd = 3.0;
 
-      LOG_VAR(homoMats[i][i + 1]);
+      const auto mat = cv::findHomography(pc2, pc1, cv::RANSAC, errorThd);
+      cv::cv2eigen(mat, homoMats[i][i + 1]);
 
       {
         // display
         const auto &img1 = images[i];
         const auto &img2 = images[i + 1];
-        showImg(drawPairs(img1, img2, pc1, pc2), "before");
 
         pc1.clear(), pc2.clear();
         for (int j = 0; j != matches.size(); ++j) {
@@ -97,7 +97,9 @@ namespace ns_st11 {
             pc1.push_back(p1), pc2.push_back(p2);
           }
         }
-        showImg(drawPairs(img1, img2, pc1, pc2), "after");
+        cv::Mat pairMat = drawPairs(img1, img2, pc1, pc2);
+        cv::imwrite("../imgs/output/pairMat" + std::to_string(i) + std::to_string(i + 1) + ".png",
+                    pairMat);
       }
     }
 
@@ -115,8 +117,8 @@ namespace ns_st11 {
       }
     }
 
+    LOG_PROCESS("finding board values");
     int targetIdx = images.size() / 2;
-
     double xMin = 0.0, yMin = 0.0, xMax = 0.0, yMax = 0.0;
     for (int curIdx = 0; curIdx != size; ++curIdx) {
       int rows = images[curIdx].rows, cols = images[curIdx].cols;
@@ -135,15 +137,18 @@ namespace ns_st11 {
     Eigen::Matrix3d bias = Eigen::Matrix3d::Identity();
     bias(0, 2) = -xMin, bias(1, 2) = -yMin;
 
+    LOG_PROCESS("warping images");
+    cv::Size dSize(xMax - xMin, yMax - yMin);
+    cv::Mat dst;
     for (int i = 0; i != size; ++i) {
-      cv::Mat dst, hMat;
+      cv::Mat hMat;
       Eigen::Matrix3d finalHMat = bias * homoMats[targetIdx][i];
       cv::eigen2cv(finalHMat, hMat);
-      cv::Size dSize(xMax - xMin, yMax - yMin);
-      cv::warpPerspective(images[i], dst, hMat, dSize);
+      cv::warpPerspective(images[i], dst, hMat, dSize, 1, cv::BorderTypes::BORDER_TRANSPARENT);
       showImg(dst);
     }
+    cv::imwrite("../imgs/output/dst.png", dst);
 
-    return cv::Mat();
+    return dst;
   }
 } // namespace ns_st11
