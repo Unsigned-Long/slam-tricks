@@ -2,9 +2,11 @@
 #define HELP_HPP
 
 #include "artwork/logger/logger.h"
+#include "eigen3/Eigen/Dense"
 #include "opencv2/features2d.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
+#include "projective.h"
 #include <filesystem>
 #include <random>
 
@@ -148,6 +150,7 @@ namespace ns_st11 {
 
     return drawMatches(img1, img2, tempPC1, tempPC2, tempMatches);
   }
+
 } // namespace ns_st11
 
 #endif
