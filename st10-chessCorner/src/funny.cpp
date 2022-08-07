@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
   // open the default camera using default API
   // cap.open(0);
   // OR advance usage: select any API backend
-  int deviceID = 0;        // 0 = open default camera
+  int deviceID = 2;        // 0 = open default camera
   int apiID = cv::CAP_ANY; // 0 = autodetect default API
   // open selected camera using selected API
   cap.open(deviceID, apiID);
@@ -37,13 +37,21 @@ int main(int argc, char const *argv[]) {
 
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
     // auto res = solver.solve(frame, true);
-    auto res = solver.solveMutiCB(frame);
-    if (!res.empty()) {
-      ns_st10::showImg(ns_st10::drawChessBoard(frame, res));
-      LOG_PROCESS("success");
+
+    try {
+      auto res = solver.solveMutiCB(frame);
+      if (!res.empty()) {
+        ns_st10::showImg(ns_st10::drawChessBoard(frame, res));
+        LOG_PROCESS("success");
+      } else {
+        ns_st10::showImg(frame);
+        LOG_VAR("failed");
+      }
       waitKey(5);
-    } else {
-      LOG_VAR("failed");
+    } catch (const std::exception &e) {
+      LOG_FATAL("unknow error happened");
+      cv::imwrite("../img/frame.png", frame);
+      break;
     }
   }
   // the camera will be deinitialized automatically in VideoCapture destructor

@@ -370,6 +370,7 @@ namespace ns_st10 {
         corners_modes.push_back(modes_new[i]);
       }
     }
+    LOG_PLAINTEXT("verifyCorners: " + std::to_string(corners.size()));
   }
 
   void Detector::refineCorners() {
@@ -397,7 +398,6 @@ namespace ns_st10 {
 
         corners_sp.push_back(cv::Point2f(c(0), c(1)));
       }
-
       // angle
       for (int k = 0; k != 2; ++k) {
 
@@ -426,7 +426,7 @@ namespace ns_st10 {
           }
         }
 
-        {
+        if (grad_alpha1.size() > 0) {
           // using SVD method to solve problem
           Eigen::MatrixXf A(grad_alpha1.size(), 2);
           for (int i = 0; i != grad_alpha1.size(); ++i) {
@@ -439,7 +439,7 @@ namespace ns_st10 {
           float vy = vMatrix.col(vMatrix.cols() - 1)(1);
           alpha1 = std::atan2(vy, vx);
         }
-        {
+        if (grad_alpha2.size() > 0) {
           // using SVD method to solve problem
           Eigen::MatrixXf A(grad_alpha2.size(), 2);
           for (int i = 0; i != grad_alpha2.size(); ++i) {
@@ -468,6 +468,9 @@ namespace ns_st10 {
   std::pair<bool, CBCorners>
   Detector::genChessBoard(bool computeEach) {
     std::size_t size = corners_sp.size();
+    if (size < 9) {
+      return {false, CBCorners()};
+    }
     std::vector<std::pair<float, ChessBoard>> res;
     for (int i = 0; i != size; ++i) {
       // try generate a chess board started from current corner
@@ -493,6 +496,9 @@ namespace ns_st10 {
   std::vector<CBCorners>
   Detector::genChessBoard() {
     std::size_t size = corners_sp.size();
+    if (size < 9) {
+      return std::vector<CBCorners>();
+    }
     std::vector<std::pair<float, ChessBoard>> res;
     // find all chess boards
     for (int i = 0; i != size; ++i) {
