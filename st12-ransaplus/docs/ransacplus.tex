@@ -1,0 +1,231 @@
+\documentclass[12pt, twocolumn]{article}
+
+% 引入相关的包
+\usepackage{amsmath, listings, fontspec, geometry, graphicx, ctex, color, subfigure}
+
+% 设定页面的尺寸和比例
+\geometry{left = 1.5cm, right = 1.5cm, top = 1.5cm, bottom = 1.5cm}
+
+% 设定两栏之间的间距
+\setlength\columnsep{1cm}
+
+% 设定字体，为代码的插入作准备
+\newfontfamily\ubuntu{Ubuntu Mono}
+
+% 头部信息
+\title{\normf{这是标题}}
+\author{\normf{陈烁龙}}
+\date{\normf{\today}}
+
+% 代码块的风格设定
+\lstset{
+	language=C++,
+	basicstyle=\scriptsize\ubuntu,
+	keywordstyle=\textbf,
+	stringstyle=\itshape,
+	commentstyle=\itshape,
+	numberstyle=\scriptsize\ubuntu,
+	showstringspaces=false,
+	numbers=left,
+	numbersep=8pt,
+	tabsize=2,
+	frame=single,
+	framerule=1pt,
+	columns=fullflexible,
+	breaklines,
+	frame=shadowbox, 
+	backgroundcolor=\color[rgb]{0.97,0.97,0.97}
+}
+
+% 字体族的定义
+\newcommand{\normf}{\kaishu}
+\newcommand{\boldf}{\heiti}
+\newcommand\keywords[1]{\boldf{关键词：} \normf #1}
+
+\begin{document}
+	
+	% 插入头部信息
+	\maketitle
+	% 换页
+	\thispagestyle{empty}
+	\clearpage
+	
+	% 插入目录、图、表并换页
+	\tableofcontents
+	\listoffigures
+	\listoftables
+	\setcounter{page}{1}
+	% 罗马字母形式的页码
+	\pagenumbering{roman}
+	\clearpage
+	% 从该页开始计数
+	\setcounter{page}{1}
+	% 阿拉伯数字形式的页码
+	\pagenumbering{arabic}
+	
+	\begin{abstract}
+		\normf
+		本文档演示了在\LaTeX 排版系统中一些常用的方法。当然，一些地方仍然没有比较好的解决方式，如图片、表格的跨栏插入等。另外，在后续的使用中，会基于新的需求进行新内容的引入。
+		
+		
+	\end{abstract}
+	
+	\noindent\keywords{\LaTeX，模板，参考，初体验}
+	
+	\section{\normf{代码块的使用}}
+	\normf
+	
+	接下来进行代码块的演示：
+	\lstinputlisting[firstline = 12, lastline=20, caption=\normf{某个代码块},label=code1]{./code/main.cpp}
+	
+	代码块\ref{code1} 是一个和线程\footnote{\normf{是操作系统能够进行运算调度的最小单位。}}有关的代码块。列表\ref{code1}演示的是通过文件进行代码的插入，当然，也可以直接通过在\LaTeX 源代码中插入代码直接进行展示。如代码列表\ref{code2}所示：
+	\begin{lstlisting}[label=code2,caption={\normf 直接插入源代码}]
+	#include <iostream>
+	
+	int main() {
+	// print some message to the console
+	std::cout << "hello, world!" << std::endl;
+	return 0;
+	}
+	\end{lstlisting}
+	
+	
+	\section{\normf{数学公式的表达}}
+	\normf
+	
+	设直角三角形的三边长度分别为$a,b,c$，其中$c$为直角边，则根据\textit{勾股定理}有：
+	\begin{equation}
+	a^2+b^2=c^2
+	\end{equation}
+	推广到任意三角形，有：
+	\begin{equation}
+	a^2+b^2-c^2=2ab\cos{C}
+	\end{equation}
+	其中$\angle C$是直角边$c$所对的角。
+	
+	来一个比较长一点的数学公式，如下公式所示：
+	\begin{equation}
+	% 为了让长公式能在一个栏里完全显示，所以需要对公式进行换行
+	\begin{aligned}
+	f(x)&=\sum_{i=0}^{n}\frac{1}{2}\kappa (e_{i}(\alpha_{j}))\\&=\sum_{i=0}^{n} 
+	\frac{1}{2}\kappa(\hat{g_{i}}(\alpha_{j})-g_{i}(\alpha_{j}))	
+	\end{aligned}
+	\end{equation}
+	
+	其中$\kappa(x)$为核函数，用于对优化过程中的异常值造成的影响进行限制。
+	
+	当然，我们也可以输入方程组，比如如下的方程组描述了相机的径向畸变模型：
+		\begin{equation}
+	\begin{cases}
+	x_{dist}=x(1+k_{1}r^{2}+k_{2}r^{4}+k_{3}r^{6}) \\
+	y_{dist}=y(1+k_{1}r^{2}+k_{2}r^{4}+k_{3}r^{6}) 
+	\end{cases}
+	\end{equation}
+	
+	\section{\normf{图片的使用}}
+	\normf
+	
+	下图\ref{fig:pic}为图片的插入演示。其中图\ref{fig:pic:android}为安卓操作系统的图标，图\ref{fig:pic:duo}为漫画作品“哆啦A梦”中的人物。而图\ref{fig:pic:ball}为旋转$90^{\circ}$后的热气球图片。
+	\begin{figure}[htbp]
+		\centering
+		
+		\subfigure[\normf{安卓图标}]{
+			\centering
+			\includegraphics[width=0.45\linewidth]{img/android.png}
+			\label{fig:pic:android}
+		}
+		\subfigure[\normf{多拉A梦}]{
+			\centering
+			\includegraphics[width=0.45\linewidth]{img/duo.jpeg}
+			\label{fig:pic:duo}
+		}
+		\subfigure[\normf{热气球}]{
+			\centering
+			\includegraphics[height=0.9\linewidth, angle=90]{img/ball.jpeg}
+			\label{fig:pic:ball}
+		}
+		
+		\caption{\normf{某组图片}}
+		
+		\label{fig:pic}
+	\end{figure}
+	
+	\section{\normf{脚注}}
+	\normf
+	脚注其实非常简单。这\footnote{\normf{这是一个脚注}}就是一个简简单单、朴实无华的脚注。
+	
+	\section{\normf{列表的使用}}
+	\normf
+	列表可以分为“有序列表”和“无序列表”，下面进行演示：
+	\begin{enumerate}
+		\item 有序列表
+		
+		接下来要做的事情有：
+		\begin{enumerate}
+			\item 吃饭
+			
+			吃是一种文化，民以食为天，一般一日三餐，分吃早饭、午饭和晚饭，发展到现在，在许多大中城市，许多人形成了吃夜宵的习惯；
+			\item 去图书馆
+			
+			图书馆，是搜集、整理、收藏图书资料以供人阅览、参考的机构；
+			\item 跑步
+			
+			指陆生动物使用足部移动；
+			\item 洗澡
+			
+			能清除汗垢油污、消除疲劳、舒筋活血、改善睡眠、提高皮肤新陈代谢功能和抗病力；
+			\item 睡觉
+			
+			一般是指人类睡眠，是人类不可缺少的一种生理现象。
+		\end{enumerate}
+		\item 无序列表
+		
+		我会的编程语言有：
+		\begin{itemize}
+			\item $CPP$
+			
+			$C++$是一种计算机高级程序设计语言，由$C$语言扩展升级而产生；
+			\item $Python$
+			
+			$Python$由荷兰数学和计算机科学研究学会的吉多·范罗苏姆 于$1990$年代初设计，作为一门叫做$ABC$语言的替代品；
+			\item $Java$
+			
+			$Java$是一门面向对象的编程语言，不仅吸收了$C++$语言的各种优点，还摒弃了$C++$里难以理解的多继承、指针等概念，因此$Java$语言具有功能强大和简单易用两个特征
+			
+			\item $\cdots$
+		\end{itemize}
+	\end{enumerate}
+	
+	\section{\normf{论文的引用}}
+	\normf
+	众所周知，$ORB-SLAM$\cite{ref:orb}算法基于关键帧构建共视图，并在共视图的基础上构建了本质图。它们在重定位、回环检测等处都有重要的作用。
+	
+	\section{\normf{表格的使用}}
+	\normf
+	表格\ref{tab:tab}为示例的表格。这可以从下面的网站：$$https://www.tablesgenerator.com$$可直接获得源代码。
+	
+	%由于跨栏表格会跑到下一页，所以可以在上一页的地方提前插入一个表格
+	\begin{table*}[htbp]
+		\centering
+		\begin{tabular}{ccl}
+			\hline
+			\textbf{\normf{名称}}     & \textbf{\normf{版本号}}&\textbf{\normf{地址}} \\ \hline
+			\textit{libflags} & \textit{1.0.0}  &\textit{https://github.com/Unsigned-Long/flags.git}\\ 
+			\textit{libcsv} & \textit{1.0.0}  &\textit{https://github.com/Unsigned-Long/CSV-Handler.git}\\ 
+			\textit{libangle} & \textit{1.0.0}  &\textit{https://github.com/Unsigned-Long/Angle.git}\\ \hline
+		\end{tabular}
+		\caption{\normf{这是一个表格}}
+		\label{tab:tab}
+	\end{table*}
+	
+	\section{\normf{说明}}
+	\normf
+	本模板\footnote{\normf{或者说是一种参考文档}}，是针对中文论文、笔记或报告的，但是同样适用于英文的排版布局。
+	
+	\begin{thebibliography}{99}
+		\bibitem{ref:orb}Mur-Artal, Raul, Jose Maria Martinez Montiel, and Juan D. Tardos. "ORB-SLAM: a versatile and accurate monocular SLAM system." IEEE transactions on robotics 31.5 (2015): 1147-1163.
+		\bibitem{ref:latex}Kopka, H., and P. W. Daly. "A Guide to \LaTeX--Document." (1995).
+	\end{thebibliography}
+	
+\end{document}
+

@@ -1,0 +1,10 @@
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
+find_package(Eigen3 REQUIRED)
+
+add_executable(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+  ${EIGEN3_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
