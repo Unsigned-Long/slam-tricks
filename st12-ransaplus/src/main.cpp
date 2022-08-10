@@ -22,9 +22,9 @@ void genPts() {
   ptsInliers.write("../data/pts.txt", std::ios::out | std::ios::app);
 }
 
-class RansacPosition : public ns_st12::Ransca<ns_geo::Point2d, 2, 1> {
+class RansacPosition : public ns_st12::Ransac<ns_geo::Point2d, 2, 1> {
 public:
-  using parent_type = ns_st12::Ransca<ns_geo::Point2d, 2, 1>;
+  using parent_type = ns_st12::Ransac<ns_geo::Point2d, 2, 1>;
   using parent_type::parent_type;
 
 protected:
@@ -52,7 +52,7 @@ void ransacCase() {
   RansacPosition solver;
   Eigen::Vector2d modelParams;
   double modelAvgResiual;
-  if (solver.solve(pts, modelParams, modelAvgResiual, 3, 50, 0.1)) {
+  if (solver.solve(pts, modelParams, modelAvgResiual, 3, 0.3)) {
     LOG_VAR(modelParams, modelAvgResiual);
     ns_geo::PointSet2d{{modelParams(0), modelParams(1)}}.write("../data/ransac.txt", std::ios::out);
   }
@@ -76,7 +76,7 @@ void ransacWithMeanShiftCase() {
   RansacPosition solver;
   Eigen::Vector2d modelParams;
   double modelAvgResiual;
-  if (solver.solveWithMeanShift(pts, modelParams, modelAvgResiual, 3, 50, 0.1)) {
+  if (solver.solveWithMeanShift(pts, modelParams, modelAvgResiual, 3, 0.3)) {
     LOG_VAR(modelParams, modelAvgResiual);
     ns_geo::PointSet2d{{modelParams(0), modelParams(1)}}.write("../data/ransac_ms.txt", std::ios::out);
   }

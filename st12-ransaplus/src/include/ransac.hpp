@@ -8,26 +8,48 @@
 
 namespace ns_st12 {
 
-  template <typename ElemType, int EigenVecSize, int SubsetSize>
-  class Ransca {
+  /**
+   * @brief virtual class to solve ransac problem
+   *
+   * @tparam ElemType the element type
+   * @tparam EigenParamVecSize the param size [for 'eigen' vector]
+   * @tparam SubsetSize the minimum data set to fit the model
+   */
+  template <typename ElemType, int EigenParamVecSize, int SubsetSize>
+  class Ransac {
   public:
-    Ransca() = default;
+    // the default constructor
+    Ransac() = default;
 
   public:
+    /**
+     * @brief solve a ransac problem with mean shift
+     *
+     * @param data the dataset
+     * @param modelParams the params for the final model ['eigen' vector type]
+     * @param modelAvgResiual the average resiual for the final model
+     * @param inlierResidualThd to decide an element is an outlier or an inlier
+     * @param inliersRate the rate for inliners in the total dataset
+     * @param iterCount the loop count for ransac
+     * @return true if the result is good
+     * @return false if some error happened when solving the ransac problem
+     */
     bool solveWithMeanShift(const std::vector<ElemType> &data,
-                            Eigen::Vector<double, EigenVecSize> &modelParams,
+                            Eigen::Vector<double, EigenParamVecSize> &modelParams,
                             double &modelAvgResiual,
                             const double inlierResidualThd,
-                            const std::size_t ransacIterCount = 20,
-                            const double validModelInliersCountThd = 0.3) {
+                            const double inliersRate = 0.3,
+                            const std::size_t ransacIterCount = 20) {
+      // initialize the model
       if (!solve(data, modelParams, modelAvgResiual, inlierResidualThd,
-                 ransacIterCount, validModelInliersCountThd)) {
+                 inliersRate, ransacIterCount)) {
         return false;
       }
       bool state = true;
       bool initialized = false;
       double lastAvgResiual;
       while (true) {
+        // find the matching data in all data according to the current model
         std::vector<ElemType> inliers;
         for (const auto &elem : data) {
           double residual_t;
@@ -42,10 +64,12 @@ namespace ns_st12 {
         if (!state) {
           break;
         }
+        // fit the model again according to the coincidence point
         if (!fit(inliers, modelParams)) {
           state = false;
           break;
         }
+        // compute the average resiual
         double avgResiual = 0.0;
         for (const auto &elem : inliers) {
           double residual_t;
@@ -59,12 +83,12 @@ namespace ns_st12 {
           break;
         }
         avgResiual /= inliers.size();
+        // update
         if (!initialized) {
           lastAvgResiual = avgResiual;
           initialized = true;
           continue;
         }
-        LOG_VAR(avgResiual);
         double delta = std::abs(lastAvgResiual - avgResiual);
         if (delta < 1E-8) {
           lastAvgResiual;
@@ -77,23 +101,43 @@ namespace ns_st12 {
       return state && initialized;
     }
 
+    /**
+     * @brief solve a ransac problem
+     *
+     * @param data the dataset
+     * @param modelParams the params for the final model ['eigen' vector type]
+     * @param modelAvgResiual the average resiual for the final model
+     * @param inlierResidualThd to decide an element is an outlier or an inlier
+     * @param inliersRate the rate for inliners in the total dataset
+     * @param iterCount the loop count for ransac
+     * @return true if the result is good
+     * @return false if some error happened when solving the ransac problem
+     */
     bool solve(const std::vector<ElemType> &data,
-               Eigen::Vector<double, EigenVecSize> &modelParams,
+               Eigen::Vector<double, EigenParamVecSize> &modelParams,
                double &modelAvgResiual,
                const double inlierResidualThd,
-               const std::size_t iterCount = 20,
-               const double validModelInliersCountThd = 0.3) {
+               const double inliersRate = 0.3,
+               const std::size_t iterCount = 20) {
+      // the variable for indicate the solving state
       bool state = true;
+      // the random engine
       std::default_random_engine engine;
+      // the variable for indicate whether the solver is initialized
       bool initialized = false;
-      std::size_t inliersThd = data.size() * validModelInliersCountThd;
+      // the threshold [condition] for 'not bad' model
+      std::size_t inliersThd = data.size() * inliersRate * 0.5;
+      // start iteration
       for (int i = 0; i != iterCount; ++i) {
+        // sampling the data of the smallest subset
         std::vector<ElemType> subset = samplingWoutReplace2(engine, data, SubsetSize);
-        Eigen::Vector<double, EigenVecSize> params;
+        // fit model
+        Eigen::Vector<double, EigenParamVecSize> params;
         if (!fit(subset, params)) {
           state = false;
           break;
         }
+        // find the matching data in all data according to the current model
         std::vector<ElemType> inliers;
         for (const auto &elem : data) {
           double residual_t;
@@ -108,13 +152,16 @@ namespace ns_st12 {
         if (!state) {
           break;
         }
+        // check whether the current model is not too bad
         if (inliers.size() < inliersThd) {
           continue;
         }
+        // fit the model again according to the coincidence point
         if (!fit(inliers, params)) {
           state = false;
           break;
         }
+        // compute the average resiual
         double avgResiual = 0.0;
         for (const auto &elem : inliers) {
           double residual_t;
@@ -128,6 +175,7 @@ namespace ns_st12 {
           break;
         }
         avgResiual /= inliers.size();
+        // update the model
         if (!initialized || avgResiual < modelAvgResiual) {
           modelParams = params;
           modelAvgResiual = avgResiual;
@@ -139,9 +187,9 @@ namespace ns_st12 {
 
   protected:
     virtual bool fit(const std::vector<ElemType> &subset,
-                     Eigen::Vector<double, EigenVecSize> &params) const = 0;
+                     Eigen::Vector<double, EigenParamVecSize> &params) const = 0;
 
-    virtual bool residual(const Eigen::Vector<double, EigenVecSize> &params,
+    virtual bool residual(const Eigen::Vector<double, EigenParamVecSize> &params,
                           const ElemType &inlier,
                           double &resiual) const = 0;
 
