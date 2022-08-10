@@ -20,6 +20,7 @@ def readPts(filename):
 (x, y) = readPts("./data/pts.txt")
 (xRansac, yRansac) = readPts("./data/ransac.txt")
 (xLsq, yLsq) = readPts("./data/lsq.txt")
+(xMS, yMS) = readPts("./data/ransac_ms.txt")
 
 
 plt.scatter(x, y,  label='points',
@@ -29,6 +30,8 @@ plt.scatter(xRansac, yRansac, label='ransac',
             c='orange', alpha=0.75, marker='X', s=80, edgecolors='black')
 plt.scatter(xLsq, yLsq, label='LSQ',
             c='red', alpha=0.75, marker='X', s=80, edgecolors='black')
+plt.scatter(xMS, yMS, label='ransac With MeanShift',
+            c='green', alpha=0.75, marker='X', s=80, edgecolors='black')
 
 plt.legend()
 plt.xlabel('x(m)')

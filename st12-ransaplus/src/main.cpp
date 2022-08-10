@@ -70,9 +70,22 @@ void lsqCase() {
   ns_geo::PointSet2d{{x, y}}.write("../data/lsq.txt", std::ios::out);
 }
 
+void ransacWithMeanShiftCase() {
+  ns_geo::PointSet2d pts;
+  pts.read("../data/pts.txt", std::ios::in);
+  RansacPosition solver;
+  Eigen::Vector2d modelParams;
+  double modelAvgResiual;
+  if (solver.solveWithMeanShift(pts, modelParams, modelAvgResiual, 3, 50, 0.1)) {
+    LOG_VAR(modelParams, modelAvgResiual);
+    ns_geo::PointSet2d{{modelParams(0), modelParams(1)}}.write("../data/ransac_ms.txt", std::ios::out);
+  }
+}
+
 int main(int argc, char const *argv[]) {
   genPts();
   ransacCase();
   lsqCase();
+  ransacWithMeanShiftCase();
   return 0;
 }

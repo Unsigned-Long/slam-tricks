@@ -14,9 +14,73 @@ namespace ns_st12 {
     Ransca() = default;
 
   public:
+    bool solveWithMeanShift(const std::vector<ElemType> &data,
+                            Eigen::Vector<double, EigenVecSize> &modelParams,
+                            double &modelAvgResiual,
+                            const double inlierResidualThd,
+                            const std::size_t ransacIterCount = 20,
+                            const double validModelInliersCountThd = 0.3) {
+      if (!solve(data, modelParams, modelAvgResiual, inlierResidualThd,
+                 ransacIterCount, validModelInliersCountThd)) {
+        return false;
+      }
+      bool state = true;
+      bool initialized = false;
+      double lastAvgResiual;
+      while (true) {
+        std::vector<ElemType> inliers;
+        for (const auto &elem : data) {
+          double residual_t;
+          if (!residual(modelParams, elem, residual_t)) {
+            state = false;
+            break;
+          }
+          if (residual_t < inlierResidualThd) {
+            inliers.push_back(elem);
+          }
+        }
+        if (!state) {
+          break;
+        }
+        if (!fit(inliers, modelParams)) {
+          state = false;
+          break;
+        }
+        double avgResiual = 0.0;
+        for (const auto &elem : inliers) {
+          double residual_t;
+          if (!residual(modelParams, elem, residual_t)) {
+            state = false;
+            break;
+          }
+          avgResiual += residual_t;
+        }
+        if (!state) {
+          break;
+        }
+        avgResiual /= inliers.size();
+        if (!initialized) {
+          lastAvgResiual = avgResiual;
+          initialized = true;
+          continue;
+        }
+        LOG_VAR(avgResiual);
+        double delta = std::abs(lastAvgResiual - avgResiual);
+        if (delta < 1E-8) {
+          lastAvgResiual;
+          break;
+        } else {
+          lastAvgResiual = avgResiual;
+        }
+      }
+      modelAvgResiual = lastAvgResiual;
+      return state && initialized;
+    }
+
     bool solve(const std::vector<ElemType> &data,
                Eigen::Vector<double, EigenVecSize> &modelParams,
-               double &modelAvgResiual, const double inlierResidualThd,
+               double &modelAvgResiual,
+               const double inlierResidualThd,
                const std::size_t iterCount = 20,
                const double validModelInliersCountThd = 0.3) {
       bool state = true;
