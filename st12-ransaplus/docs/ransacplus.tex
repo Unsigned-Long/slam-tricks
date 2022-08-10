@@ -63,169 +63,161 @@
 	% 阿拉伯数字形式的页码
 	\pagenumbering{arabic}
 	
-	\begin{abstract}
-		\normf
-		本文档演示了在\LaTeX 排版系统中一些常用的方法。当然，一些地方仍然没有比较好的解决方式，如图片、表格的跨栏插入等。另外，在后续的使用中，会基于新的需求进行新内容的引入。
-		
-		
-	\end{abstract}
-	
-	\noindent\keywords{\LaTeX，模板，参考，初体验}
-	
-	\section{\normf{代码块的使用}}
+	\section{\normf{RANSCA}}
 	\normf
-	
-	接下来进行代码块的演示：
-	\lstinputlisting[firstline = 12, lastline=20, caption=\normf{某个代码块},label=code1]{./code/main.cpp}
-	
-	代码块\ref{code1} 是一个和线程\footnote{\normf{是操作系统能够进行运算调度的最小单位。}}有关的代码块。列表\ref{code1}演示的是通过文件进行代码的插入，当然，也可以直接通过在\LaTeX 源代码中插入代码直接进行展示。如代码列表\ref{code2}所示：
-	\begin{lstlisting}[label=code2,caption={\normf 直接插入源代码}]
-	#include <iostream>
-	
-	int main() {
-	// print some message to the console
-	std::cout << "hello, world!" << std::endl;
-	return 0;
-	}
+	RANSAC算法假设数据中包含正确数据和异常数据(或称为噪声)。该算法核心思想就是随机性和假设性，随机性是根据正确数据出现概率去随机选取抽样数据，根据大数定律，随机性模拟可以近似得到正确结果。假设性是假设选取出的抽样数据都是正确数据，然后用这些正确数据通过问题满足的模型，去计算其他点，然后对这次结果进行一个评分。
+	该算法的步骤表述为：
+	\begin{enumerate}
+		\item 给出迭代次数和容许的误差阈值。容许的误差阈值即我们可以接受的，点到拟合的曲线的容许偏差。该值需要根据具体问题给出；
+		\item 根据要拟合的模型，随机选择最少的拟合数据集，拟合出一个初始的模型；
+		\item 根据当前拟合得到的模型和容许误差，选择出符合点(inliers)。如果符合点比较少，那么抛弃掉当前的模型；
+		\item 基于满足容许误差的数据点，再次拟合模型；
+		\item 基于新的模型，计算每个符合点的残差。而后计算平均残差和作为该模型的衡量数值(越小越好)；
+		\item 重复迭代。迭代完成后，返回平均残差和最小的模型。
+	\end{enumerate}
+
+当然，为了结果更优，可以加入均值漂移算法。具体来说：
+
+	\begin{enumerate}
+		\item 基于RANSAC算法拟合的模型，选择出符合点(inliers)；
+		\item 基于满足容许误差的数据点，再次拟合模型；
+		\item 基于新的模型，计算每个符合点的残差；
+		\item 当相邻迭代之间的模型残差不再变化时，结束迭代；
+	\end{enumerate}
+	\section{\normf{代码框架}}
+	本次基于RANSAC算法，给出了一般问题的代码框架。用户只需要继承虚拟类并且重载一些纯虚函数即可。具体的代码如下所示：
+		\begin{lstlisting}[label=code2,caption={\normf RANSAC虚拟类}]
+/**
+* @brief virtual class to solve ransac problem
+*
+* @tparam ElemType the element type
+* @tparam EigenParamVecSize the param size [for 'eigen' vector]
+* @tparam SubsetSize the minimum data set to fit the model
+*/
+template <typename ElemType, int EigenParamVecSize, int SubsetSize>
+class Ransac {
+public:
+// the default constructor
+Ransac() = default;
+
+public:
+/**
+* @brief solve a ransac problem with mean shift
+*
+* @param data the dataset
+* @param modelParams the params for the final model ['eigen' vector type]
+* @param modelAvgResiual the average resiual for the final model
+* @param inlierResidualThd to decide an element is an outlier or an inlier
+* @param inliersRate the rate for inliners in the total dataset
+* @param iterCount the loop count for ransac
+* @return true if the result is good
+* @return false if some error happened when solving the ransac problem
+*/
+bool solveWithMeanShift(const std::vector<ElemType> &data,
+Eigen::Vector<double, EigenParamVecSize> &modelParams,
+double &modelAvgResiual,
+const double inlierResidualThd,
+const double inliersRate = 0.3,
+const std::size_t ransacIterCount = 20);
+
+/**
+* @brief solve a ransac problem
+*
+* @param data the dataset
+* @param modelParams the params for the final model ['eigen' vector type]
+* @param modelAvgResiual the average resiual for the final model
+* @param inlierResidualThd to decide an element is an outlier or an inlier
+* @param inliersRate the rate for inliners in the total dataset
+* @param iterCount the loop count for ransac
+* @return true if the result is good
+* @return false if some error happened when solving the ransac problem
+*/
+bool solve(const std::vector<ElemType> &data,
+Eigen::Vector<double, EigenParamVecSize> &modelParams,
+double &modelAvgResiual,
+const double inlierResidualThd,
+const double inliersRate = 0.3,
+const std::size_t iterCount = 20);
+
+protected:
+virtual bool fit(const std::vector<ElemType> &subset,
+Eigen::Vector<double, EigenParamVecSize> &params) const = 0;
+
+virtual bool residual(const Eigen::Vector<double, EigenParamVecSize> &params,
+const ElemType &inlier,
+double &resiual) const = 0;
+
+private:
+// ...
+};
 	\end{lstlisting}
 	
-	
-	\section{\normf{数学公式的表达}}
-	\normf
-	
-	设直角三角形的三边长度分别为$a,b,c$，其中$c$为直角边，则根据\textit{勾股定理}有：
-	\begin{equation}
-	a^2+b^2=c^2
-	\end{equation}
-	推广到任意三角形，有：
-	\begin{equation}
-	a^2+b^2-c^2=2ab\cos{C}
-	\end{equation}
-	其中$\angle C$是直角边$c$所对的角。
-	
-	来一个比较长一点的数学公式，如下公式所示：
-	\begin{equation}
-	% 为了让长公式能在一个栏里完全显示，所以需要对公式进行换行
-	\begin{aligned}
-	f(x)&=\sum_{i=0}^{n}\frac{1}{2}\kappa (e_{i}(\alpha_{j}))\\&=\sum_{i=0}^{n} 
-	\frac{1}{2}\kappa(\hat{g_{i}}(\alpha_{j})-g_{i}(\alpha_{j}))	
-	\end{aligned}
-	\end{equation}
-	
-	其中$\kappa(x)$为核函数，用于对优化过程中的异常值造成的影响进行限制。
-	
-	当然，我们也可以输入方程组，比如如下的方程组描述了相机的径向畸变模型：
-		\begin{equation}
-	\begin{cases}
-	x_{dist}=x(1+k_{1}r^{2}+k_{2}r^{4}+k_{3}r^{6}) \\
-	y_{dist}=y(1+k_{1}r^{2}+k_{2}r^{4}+k_{3}r^{6}) 
-	\end{cases}
-	\end{equation}
-	
-	\section{\normf{图片的使用}}
-	\normf
-	
-	下图\ref{fig:pic}为图片的插入演示。其中图\ref{fig:pic:android}为安卓操作系统的图标，图\ref{fig:pic:duo}为漫画作品“哆啦A梦”中的人物。而图\ref{fig:pic:ball}为旋转$90^{\circ}$后的热气球图片。
+	注意：纯虚函数一共有两个。一个用于计算残差，一个用来拟合模型。该两个纯虚函数会在解算函数solve(...)和solveWithMeanShift(...)中使用。在对于具体问题时，用户只要继承该基类，并且实现该两个纯虚函数即可。
+	\section{\normf{案例问题}}
+	现在，使用GPS进行单点定位，基于具体的定位算法，在同一个点位多次进行平面位置的确定。由于误差的存在，当不存在粗差时，会呈现正态分布。但是，如果在定位的时候，有多路径效应，导致了巨大的系统误差，如下图所示。
 	\begin{figure}[htbp]
 		\centering
-		
-		\subfigure[\normf{安卓图标}]{
 			\centering
-			\includegraphics[width=0.45\linewidth]{img/android.png}
-			\label{fig:pic:android}
-		}
-		\subfigure[\normf{多拉A梦}]{
+			\includegraphics[width=0.95\linewidth]{../img/data.png}
+
+		\caption{\normf{原始数据}}
+	\end{figure}
+	其中，绿色的是没有粗差时的测量点位，红色的点是存在粗差时的测量点位。现根据当前数据，给出所测点位的平面坐标平差结果。
+	
+	为使用我们之前的RANSAC类，我们需要继承它，然后实现相应的算法。
+	
+	首先是拟合算法。我们使用最小二乘法。假设我们用$p^i(x^i,y^i)$表示点集中的第$i$个测得的点，用$p(x,y)$表示点位真值。那么，误差函数为：
+	\begin{equation*}
+	\begin{cases}
+	e_x^i=x-x^i\\
+	e_y^i=y-y^i\\
+	\end{cases}
+	\end{equation*}
+	即：
+	\begin{equation*}
+	\begin{pmatrix}
+	e_x^i\\e_y^i
+	\end{pmatrix}=\begin{pmatrix}
+	1&0\\0&1
+	\end{pmatrix}\begin{pmatrix}
+	x\\y
+	\end{pmatrix}-\begin{pmatrix}
+	x^i\\y^i
+	\end{pmatrix}
+	\end{equation*}
+	\begin{equation*}
+	\to V^i=B^ix-l^i
+	\end{equation*}
+	我们基于$min(V^TV)$进行最小二乘法，那么有：
+	\begin{equation*}
+	\begin{aligned}
+	\begin{pmatrix}
+	\hat{x}\\\hat{y}
+	\end{pmatrix}=&(B^TB)^{-1}B^Tl\\
+	=&\frac{1}{n}B^Tl\\
+	=&\frac{1}{n}\sum_{i=1}^{n}\begin{pmatrix}
+	 x^i\\  y^i
+	\end{pmatrix}
+	\end{aligned}
+	\end{equation*}
+	也就是说，所有点的重点即为最小二乘的平差结果。
+	
+	其次是每一个点的残差，我们直接用拟合平差结果和实际数据点的距离作为残差(模型不符值)。即：
+	\begin{equation*}
+	e^i=\sqrt{(x^i-\hat{x})^2+(y^i-\hat{y})^2}
+	\end{equation*}
+	
+	\section{\normf{测试}}
+	我们使用了三种方法进行测试，即：直接最小二乘法、最小二乘法+RANSAC、最小二乘法+RANSAC+MeanShift。结果如下图所示。
+	\begin{figure}[htbp]
+		\centering
+
 			\centering
-			\includegraphics[width=0.45\linewidth]{img/duo.jpeg}
-			\label{fig:pic:duo}
-		}
-		\subfigure[\normf{热气球}]{
-			\centering
-			\includegraphics[height=0.9\linewidth, angle=90]{img/ball.jpeg}
-			\label{fig:pic:ball}
-		}
-		
-		\caption{\normf{某组图片}}
-		
-		\label{fig:pic}
+			\includegraphics[width=0.95\linewidth]{../img/result.png}
+		\caption{\normf{解算结果}}
 	\end{figure}
 	
-	\section{\normf{脚注}}
-	\normf
-	脚注其实非常简单。这\footnote{\normf{这是一个脚注}}就是一个简简单单、朴实无华的脚注。
-	
-	\section{\normf{列表的使用}}
-	\normf
-	列表可以分为“有序列表”和“无序列表”，下面进行演示：
-	\begin{enumerate}
-		\item 有序列表
-		
-		接下来要做的事情有：
-		\begin{enumerate}
-			\item 吃饭
-			
-			吃是一种文化，民以食为天，一般一日三餐，分吃早饭、午饭和晚饭，发展到现在，在许多大中城市，许多人形成了吃夜宵的习惯；
-			\item 去图书馆
-			
-			图书馆，是搜集、整理、收藏图书资料以供人阅览、参考的机构；
-			\item 跑步
-			
-			指陆生动物使用足部移动；
-			\item 洗澡
-			
-			能清除汗垢油污、消除疲劳、舒筋活血、改善睡眠、提高皮肤新陈代谢功能和抗病力；
-			\item 睡觉
-			
-			一般是指人类睡眠，是人类不可缺少的一种生理现象。
-		\end{enumerate}
-		\item 无序列表
-		
-		我会的编程语言有：
-		\begin{itemize}
-			\item $CPP$
-			
-			$C++$是一种计算机高级程序设计语言，由$C$语言扩展升级而产生；
-			\item $Python$
-			
-			$Python$由荷兰数学和计算机科学研究学会的吉多·范罗苏姆 于$1990$年代初设计，作为一门叫做$ABC$语言的替代品；
-			\item $Java$
-			
-			$Java$是一门面向对象的编程语言，不仅吸收了$C++$语言的各种优点，还摒弃了$C++$里难以理解的多继承、指针等概念，因此$Java$语言具有功能强大和简单易用两个特征
-			
-			\item $\cdots$
-		\end{itemize}
-	\end{enumerate}
-	
-	\section{\normf{论文的引用}}
-	\normf
-	众所周知，$ORB-SLAM$\cite{ref:orb}算法基于关键帧构建共视图，并在共视图的基础上构建了本质图。它们在重定位、回环检测等处都有重要的作用。
-	
-	\section{\normf{表格的使用}}
-	\normf
-	表格\ref{tab:tab}为示例的表格。这可以从下面的网站：$$https://www.tablesgenerator.com$$可直接获得源代码。
-	
-	%由于跨栏表格会跑到下一页，所以可以在上一页的地方提前插入一个表格
-	\begin{table*}[htbp]
-		\centering
-		\begin{tabular}{ccl}
-			\hline
-			\textbf{\normf{名称}}     & \textbf{\normf{版本号}}&\textbf{\normf{地址}} \\ \hline
-			\textit{libflags} & \textit{1.0.0}  &\textit{https://github.com/Unsigned-Long/flags.git}\\ 
-			\textit{libcsv} & \textit{1.0.0}  &\textit{https://github.com/Unsigned-Long/CSV-Handler.git}\\ 
-			\textit{libangle} & \textit{1.0.0}  &\textit{https://github.com/Unsigned-Long/Angle.git}\\ \hline
-		\end{tabular}
-		\caption{\normf{这是一个表格}}
-		\label{tab:tab}
-	\end{table*}
-	
-	\section{\normf{说明}}
-	\normf
-	本模板\footnote{\normf{或者说是一种参考文档}}，是针对中文论文、笔记或报告的，但是同样适用于英文的排版布局。
-	
-	\begin{thebibliography}{99}
-		\bibitem{ref:orb}Mur-Artal, Raul, Jose Maria Martinez Montiel, and Juan D. Tardos. "ORB-SLAM: a versatile and accurate monocular SLAM system." IEEE transactions on robotics 31.5 (2015): 1147-1163.
-		\bibitem{ref:latex}Kopka, H., and P. W. Daly. "A Guide to \LaTeX--Document." (1995).
-	\end{thebibliography}
+	可见，当数据中存在粗差时，直接最小二乘法的结果是错误的。而最小二乘法+RANSAC很大程度上改善了结果。而最小二乘法+RANSAC+MeanShift结果是最优的。
 	
 \end{document}
 
