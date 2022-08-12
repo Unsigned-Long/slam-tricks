@@ -54,15 +54,11 @@ namespace ns_st12 {
         for (const auto &elem : data) {
           double residual_t;
           if (!residual(modelParams, elem, residual_t)) {
-            state = false;
-            break;
+            continue;
           }
           if (residual_t < inlierResidualThd) {
             inliers.push_back(elem);
           }
-        }
-        if (!state) {
-          break;
         }
         // fit the model again according to the coincidence point
         if (!fit(inliers, modelParams)) {
@@ -74,13 +70,9 @@ namespace ns_st12 {
         for (const auto &elem : inliers) {
           double residual_t;
           if (!residual(modelParams, elem, residual_t)) {
-            state = false;
-            break;
+            continue;
           }
           avgResiual += residual_t;
-        }
-        if (!state) {
-          break;
         }
         avgResiual /= inliers.size();
         // update
@@ -119,8 +111,6 @@ namespace ns_st12 {
                const double inlierResidualThd,
                const double inliersRate = 0.3,
                const std::size_t iterCount = 20) {
-      // the variable for indicate the solving state
-      bool state = true;
       // the random engine
       std::default_random_engine engine;
       // the variable for indicate whether the solver is initialized
@@ -134,23 +124,18 @@ namespace ns_st12 {
         // fit model
         Eigen::Vector<double, EigenParamVecSize> params;
         if (!fit(subset, params)) {
-          state = false;
-          break;
+          continue;
         }
         // find the matching data in all data according to the current model
         std::vector<ElemType> inliers;
         for (const auto &elem : data) {
           double residual_t;
           if (!residual(params, elem, residual_t)) {
-            state = false;
-            break;
+            continue;
           }
           if (residual_t < inlierResidualThd) {
             inliers.push_back(elem);
           }
-        }
-        if (!state) {
-          break;
         }
         // check whether the current model is not too bad
         if (inliers.size() < inliersThd) {
@@ -158,21 +143,16 @@ namespace ns_st12 {
         }
         // fit the model again according to the coincidence point
         if (!fit(inliers, params)) {
-          state = false;
-          break;
+          continue;
         }
         // compute the average resiual
         double avgResiual = 0.0;
         for (const auto &elem : inliers) {
           double residual_t;
           if (!residual(params, elem, residual_t)) {
-            state = false;
-            break;
+            continue;
           }
           avgResiual += residual_t;
-        }
-        if (!state) {
-          break;
         }
         avgResiual /= inliers.size();
         // update the model
@@ -182,7 +162,7 @@ namespace ns_st12 {
           initialized = true;
         }
       }
-      return state && initialized;
+      return initialized;
     }
 
   protected:
