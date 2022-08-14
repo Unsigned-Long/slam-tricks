@@ -1,0 +1,9 @@
+/build
+/,gitignore
+/docs/direct.aux
+/docs/direct.synctex.gz
+/docs/direct.toc
+/docs/direct.tex
+/docs/direct.lot
+/docs/direct.log
+/docs/direct.lof
