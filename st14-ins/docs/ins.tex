@@ -1,0 +1,71 @@
+\documentclass[12pt, twocolumn]{article}
+
+% 引入相关的包
+\usepackage{amsmath, listings, fontspec, geometry, graphicx, ctex, color, subfigure}
+
+% 设定页面的尺寸和比例
+\geometry{left = 1.5cm, right = 1.5cm, top = 1.5cm, bottom = 1.5cm}
+
+% 设定两栏之间的间距
+\setlength\columnsep{1cm}
+
+% 设定字体，为代码的插入作准备
+\newfontfamily\ubuntu{Ubuntu Mono}
+
+% 头部信息
+\title{\normf{这是标题}}
+\author{\normf{陈烁龙}}
+\date{\normf{\today}}
+
+% 代码块的风格设定
+\lstset{
+	language=C++,
+	basicstyle=\scriptsize\ubuntu,
+	keywordstyle=\textbf,
+	stringstyle=\itshape,
+	commentstyle=\itshape,
+	numberstyle=\scriptsize\ubuntu,
+	showstringspaces=false,
+	numbers=left,
+	numbersep=8pt,
+	tabsize=2,
+	frame=single,
+	framerule=1pt,
+	columns=fullflexible,
+	breaklines,
+	frame=shadowbox, 
+	backgroundcolor=\color[rgb]{0.97,0.97,0.97}
+}
+
+% 字体族的定义
+\newcommand{\normf}{\kaishu}
+\newcommand{\boldf}{\heiti}
+\newcommand\keywords[1]{\boldf{关键词：} \normf #1}
+
+\begin{document}
+	
+	% 插入头部信息
+	\maketitle
+	% 换页
+	\thispagestyle{empty}
+	\clearpage
+	
+	% 插入目录、图、表并换页
+	\tableofcontents
+	\listoffigures
+	\listoftables
+	\setcounter{page}{1}
+	% 罗马字母形式的页码
+	\pagenumbering{roman}
+	\clearpage
+	% 从该页开始计数
+	\setcounter{page}{1}
+	% 阿拉伯数字形式的页码
+	\pagenumbering{arabic}
+	
+	\section{\normf{前言}}
+	\normf
+	记录惯导课程的学习！
+	
+\end{document}
+
