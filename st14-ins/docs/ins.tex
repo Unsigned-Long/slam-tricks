@@ -66,6 +66,195 @@
 	\section{\normf{前言}}
 	\normf
 	记录惯导课程的学习！
+	\section{\normf{惯性导航和惯性器件}}
+	导航是指：运动物体随时间变化的位置(Position)、速度(Velocity)和姿态(Attitude)，这三者构成了导航姿态(PVA)。导航主要有两种原理：
+	\begin{enumerate}
+		\item 航位推算(Dead Reckoning)：通过推断连续帧间导航状态的变换量得到航迹，如视觉里程计(VO)、惯导(INS)；
+		\item 直接定位(Direct Fixing)：直接获得运动物体在参考坐标系下的导航状态，如卫导(GNSS)。
+	\end{enumerate}
 	
+	对于惯导而言，借助加速度计和陀螺仪测定载体相对于惯性空间的加速度和角速度。具体来说：
+	
+	\begin{enumerate}
+		\item 加速度计(Accelerometer)：
+		测量相对于惯性参考系的加速度(即比力)的传感器。公式：
+		\begin{eqnarray*}
+			f=a-g
+		\end{eqnarray*}
+	其中：$f$即为比力，为加速度计的直接输出；$a$为载体相对于惯性参考空间的运动加速度；$g$为万有引力加速度\footnote{\normf{注意：加速度计的直接输出是物体运动加速度减去万有引力加速度，是减号，不是加号。}}；
+		
+		\item 陀螺仪(Gyroscope)：测量相对于惯性参考系的角速率的传感器。是惯导系统中最为关键的器件。
+		
+		
+	\end{enumerate}
+	将二者结合在一起，就得到了惯性测量单元(IMU)，其是由一个三轴加速度计和一个三轴陀螺构成。将惯性导航算法与IMU结合，就得到了惯性导航系统(INS)。
+	
+	惯性导航系统有两类：平台式系统和捷联式系统。前者通过闭环的控制系统感知IMU中陀螺仪的输出变化来保证IMU中的加速度计的朝向始终保持一致。此种系统对于算法要求较低，精度较高，但是十分昂贵，一般只使用到高精度的场景下。而后者则通过复杂的算法来计算运动物体的导航状态，而不在要求要保证IMU中的加速度计的朝向始终保持一致。该类系统价格便宜，精度可行但不及平台式系统，但是应用广泛。
+	
+	\section{\normf{惯性器件的误差和标定}}
+	考虑这样一个场景：假设有一辆车在地表行驶，海拔高为$h$，其载体里的IMU坐标系统$xyz$与当地的导航坐标系$NED$对齐。该辆小车的北向速度为$v_N$，东向速度为$v_E$，则该小车上的IMU输出为多少？
+	
+	很明显，由于：
+	\begin{eqnarray*}
+		\begin{aligned}
+			&\to\dot{\varphi}=\frac{v_N}{R+h}\\
+			&\to\dot{\lambda}=\frac{v_E}{(R+h)\cos\varphi}
+		\end{aligned}
+	\end{eqnarray*}
+	所以，陀螺仪的输出为：
+	\begin{eqnarray*}
+	\begin{aligned}
+	\to \omega_E&=-\dot{\varphi}=-\frac{v_N}{R+h}\\
+	\to\omega_N&=\dot{\lambda}\cos\varphi+\omega_e\cos\varphi\\
+	&=\frac{v_E}{R+h}+\omega_e\cos\varphi\\
+	\to\omega_D&=-\dot{\lambda}\sin\varphi-\omega_e\sin\varphi\\
+	&=-\frac{v_E}{R+h}\tan\varphi-omega_e\sin\varphi
+	\end{aligned}
+	\end{eqnarray*}
+
+	接下来介绍常用的坐标系：
+	\begin{enumerate}
+		\item 惯性坐标系(i-frame)：原点为地球质心，z轴沿地球自转轴指向协议地极，x轴指向春分点；
+		\item 地固坐标系(e-frame)：和地球固连在一起，x轴指向赤道与本初子午线的交点；
+		\item 导航坐标系(n-frame)：x轴沿参考椭球北向，y轴沿参考参考椭球东向，z轴沿椭球法线向下；
+		\item IMU坐标系(载体坐标系b-frame)：原点为IMU中心，x轴为陀螺正前方，y轴为陀螺右方，z轴为陀螺下方，即"xyz"对应"前右下"。
+		
+	\end{enumerate}
+
+	陀螺的测量值为：
+	\begin{equation*}
+		\widetilde{\omega}=\omega+b_\omega+S_\omega+N\omega+\varepsilon_\omega
+	\end{equation*}
+	其中：$\widetilde{\omega}$为实际陀螺的输出，$\omega$为真实的角速度，$b_\omega$为陀螺的零偏，$S$为陀螺的比例因子误差矩阵，$N$为陀螺交轴耦合误差矩阵，$\varepsilon_\omega$为陀螺噪声矢量。且有：
+	\begin{equation*}
+		b_\omega=\begin{pmatrix}
+			b_{\omega,x}\\
+			b_{\omega,y}\\
+			b_{\omega,z}
+		\end{pmatrix},
+			S=\begin{pmatrix}
+		S_x&0&0\\
+		0&S_y&0\\
+		0&0&S_z
+		\end{pmatrix}
+	\end{equation*}
+	
+	\begin{equation*}
+				N=\begin{pmatrix}
+			0&\gamma_{xy}&\gamma_{xz}\\
+			\gamma_{yx}&0&\gamma_{yz}\\
+			\gamma_{zx}&\gamma_{zy}&0
+		\end{pmatrix}
+	\end{equation*}
+	
+	加速度计的测量值为：
+	\begin{equation*}
+		\widetilde{f}=f+b_f+S_1f+S_2f^2+Nf+\delta g+\varepsilon_f
+	\end{equation*}
+	其中：$\widetilde{f}$为实际加速度计的输出，$f$为真实的角速度，$b_f$为加速度计的零偏，$S_1$为加速度计的线性比例因子误差矩阵，$S_2$为加速度计的非线性比例因子误差矩阵，$N$为加速度计交轴耦合误差矩阵，$\delta g$为重力异常，$\varepsilon_f$为加速度计噪声矢量。
+	
+	\section{\normf{姿态更新}}
+	以四元素为例，问题为已知：
+	\begin{enumerate}
+		\item $\boldsymbol{q}_b^n(t_{k-1})$，前一时刻b系相对于n系的姿态；
+		\item $\Delta \boldsymbol{\theta}_k$，$\Delta \boldsymbol{\theta}_{k-1}$，当前时刻和前一时刻的陀螺角增量输出，即：
+		\begin{equation*}
+			\Delta \boldsymbol{\theta}_k=\int_{t_{k-1}}^{t_k}\boldsymbol{\omega}_{ib}^b(t)dt
+		\end{equation*}
+		\item $\boldsymbol{\omega}_{ie}^n$，地球自转角速率在n系下的投影，$\boldsymbol{\omega}_{en}^n$，n系相对于e系的角速率在n系下的投影：
+		\begin{equation*}
+			\to\boldsymbol{\omega}_{ie}^n=\begin{pmatrix}
+				 \omega_e\cos\varphi&0&-\omega_e\sin\varphi
+			\end{pmatrix}^T
+		\end{equation*}
+		\begin{equation*}
+			\to\boldsymbol{\omega}_{en}^n=\begin{pmatrix}
+				 \frac{v_E}{R_N+h}&-\frac{v_N}{R_M+h}&-\frac{v_E\tan\varphi}{R_N+h}
+			\end{pmatrix}^T
+		\end{equation*}
+	\end{enumerate}
+	求解：
+	\begin{enumerate}
+		\item $\boldsymbol{q}_b^n(t_k)$，当前时刻b系相对于n系的姿态。
+	\end{enumerate}
+
+	以四元素为例：姿态递推计算的运算式子为：
+	\begin{equation*}
+		\boldsymbol{q}_b^n(t_k)=\boldsymbol{q}_{n(k-1)}^{n(k)}\otimes \boldsymbol{q}_{b(k-1)}^{n(k-1)}\otimes \boldsymbol{q}_{b(k)}^{b(k-1)}
+	\end{equation*}
+	其中：
+	\begin{enumerate}
+		\item 使用等效旋转矢量更新b系从$t_{k-1}$到$t_k$时刻的姿态变换(最后一项)：
+		\begin{equation*}
+			\to \boldsymbol{\phi}_k=\Delta \boldsymbol{\theta}_k+\frac{1}{12}\Delta \boldsymbol{\theta}_{k-1}\times \Delta\boldsymbol{\theta}_k
+		\end{equation*}
+		\begin{equation*}
+			\to \boldsymbol{q}_{b(k)}^{b(k-1)}=\begin{pmatrix}
+				\cos{\Vert\frac{1}{2}\boldsymbol{\phi}_k\Vert}\\
+				\sin{\Vert\frac{1}{2}\boldsymbol{\phi}_k\Vert}\frac{\boldsymbol{\phi}_k}{\Vert\boldsymbol{\phi}_k\Vert}
+			\end{pmatrix}
+		\end{equation*}
+		\item 使用等效旋转矢量更新n系从$t_{k-1}$到$t_k$时刻的姿态变换(第一项)：
+		\begin{equation*}
+			\to\boldsymbol{\zeta}_k=[\boldsymbol{\omega}_{ie}^n(t_{k-1})+\boldsymbol{\omega}_{en}^n(t_{k-1})]\Delta t
+		\end{equation*}
+			\begin{equation*}
+		\to \boldsymbol{q}_{n(k)}^{n(k-1)}=\begin{pmatrix}
+			\cos{\Vert\frac{1}{2}\boldsymbol{\zeta}_k\Vert}\\
+			\sin{\Vert\frac{1}{2}\boldsymbol{\zeta}_k\Vert}\frac{\boldsymbol{\zeta}_k}{\Vert\boldsymbol{\zeta}_k\Vert}
+		\end{pmatrix}
+	\end{equation*}
+	\item 带入公式进行递推，最后对得到的结果姿态四元素进行归一化。
+	\end{enumerate}
+
+	\section{\normf{速度更新算法}}
+	总的速度更新算法公式：
+	\begin{equation*}
+		\boldsymbol{v}_k^n=\boldsymbol{v}_{k-1}^n+\Delta\boldsymbol{v}_{f,k}^n+\Delta\boldsymbol{v}_{g/cor,k}^n
+	\end{equation*}
+	其中公式左边为当前时刻载体在n系的速度，公式右边第一项为上一时刻载体在n系的速度，中间项为比力积分项，最后一项为重力/哥氏积分项。
+	\begin{enumerate}
+		\item 计算重力/哥氏积分项：
+		\begin{equation*}
+			\begin{aligned}
+			&\Delta\boldsymbol{v}_{g/cor,k}^n=\\&
+			[\boldsymbol{g}_l^n-(2\boldsymbol{\omega}_{ie}^n+\boldsymbol{\omega}_{en}^n)\times\boldsymbol{v}_e^n]_{t_{k-1/2}}(t_{k}-t_{k-1})	
+			\end{aligned}
+		\end{equation*}
+	其中，$\boldsymbol{g}_l^n$为当地重力加速度在导航系下的投影。
+	\item 计算比力积分项：
+	\begin{equation*}
+		\Delta\boldsymbol{v}_{f,k}^n=[\boldsymbol{I}-(\frac{1}{2}\boldsymbol{\zeta}_{k-1,k}\times)]\boldsymbol{C}_{b(k-1)}^{n(k-1)}\Delta \boldsymbol{v}_{f,k}^{b(k-1)}
+	\end{equation*}
+	\begin{equation*}
+		\boldsymbol{\zeta}_{k-1,k}=[\boldsymbol{\omega}_{en}^n(t_{k-1/2})+\boldsymbol{\omega}_{ie}^n(t_{k-1/2})](t_k-t_{k-1})
+	\end{equation*}
+	\begin{equation*}
+		\begin{aligned}
+				\Delta \boldsymbol{v}_{f,k}^{b(k-1)}=&\Delta\boldsymbol{v}_k+\frac{1}{2}\Delta\boldsymbol{\theta}_k\times\Delta\boldsymbol{v}_k+\\
+				&\frac{1}{12}(\Delta\boldsymbol{\theta}_{k-1}\times\Delta\boldsymbol{v}_k+\Delta\boldsymbol{v}_{k-1}\times\Delta\boldsymbol{\theta}_k)
+		\end{aligned}
+	\end{equation*}
+	需要注意的是，我们求解当前时刻的速度向量时，用到了上一时刻和当前时刻的速度来求解中间量(求解重力/哥氏积分项和计算比力积分项当中都出现了)。对于这种，我们使用线性递推即可(即使用$t_{k-2}$和$t_{k-1}$的状态来推测$t_k$的状态，线性递推是最简单的方式)。
+	\end{enumerate}
+	\section{\normf{位置更新}}
+	如果令：
+	\begin{equation*}
+		\begin{aligned}
+			\bar{h}&=\frac{1}{2}(h_k+h_{k-1})\\
+			\bar{\varphi}&=\frac{1}{2}(\varphi_k+\varphi_{k-1})\\
+			v_{N,k-1/2}&=\frac{1}{2}(v_{N,k}+v_{N,k-1})\\
+			v_{E,k-1/2}&=\frac{1}{2}(v_{E,k}+v_{E,k-1})\\
+			v_{D,k-1/2}&=\frac{1}{2}(v_{D,k}+v_{D,k-1})
+		\end{aligned}
+	\end{equation*}
+	那么位置更新的公式为：
+	\begin{equation*}
+		\begin{aligned}
+			\to h_k&=h_{k-1}-v_{D,k-1/2}(t_k-t_{k-1})\\
+			\to \varphi_k&=\varphi_{k-1}+\frac{v_{N,k-1/2}}{R_{M,k-1/2}+\bar{h}}(t_k-t_{k-1})\\
+			\to \lambda_k&=\lambda_{k-1}+\frac{v_{E,k-1/2}}{(R_{N,k-1/2}+\bar{h})\cos\bar{\varphi}}(t_k-t_{k-1})
+		\end{aligned}
+	\end{equation*}
 \end{document}
 
