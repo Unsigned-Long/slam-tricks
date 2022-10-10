@@ -256,5 +256,29 @@
 			\to \lambda_k&=\lambda_{k-1}+\frac{v_{E,k-1/2}}{(R_{N,k-1/2}+\bar{h})\cos\bar{\varphi}}(t_k-t_{k-1})
 		\end{aligned}
 	\end{equation*}
+
+	\section{\normf{误差模型}}
+	速度的误差模型为：
+	\begin{equation*}
+		\begin{aligned}
+					\delta \boldsymbol{\dot{v}}^n_{eb}&=\boldsymbol{C}_b^n\delta\boldsymbol{f}^b+\boldsymbol{f}^n\times\delta\boldsymbol{\phi}_{b}^n\\
+					&-(2\boldsymbol{\omega}_{ie}^n+\boldsymbol{\omega}_{en}^n)\times\delta\boldsymbol{v}^n_{eb}\\
+					&+\boldsymbol{v}^n_{eb}\times(2\delta\boldsymbol{\omega}_{ie}^n+\delta\boldsymbol{\omega}_{en}^n)+\delta\boldsymbol{g}_p^n
+		\end{aligned}
+	\end{equation*}
+	
+	位置的误差模型为：
+	\begin{equation*}
+		\begin{aligned}
+			\delta\boldsymbol{\dot{r}}^n_{eb}=-\boldsymbol{\omega}^n_{en}\times+\delta\boldsymbol{r}^n_{eb}+\delta\boldsymbol{\phi}^n_b\times\boldsymbol{v}^n_{eb}+\delta\boldsymbol{v}^n_{eb}
+		\end{aligned}
+	\end{equation*}
+	
+	姿态的误差模型为：
+	\begin{equation*}
+		\begin{aligned}
+			\delta\boldsymbol{\dot{\phi}}_b^n=-\boldsymbol{\omega}_{in}^n\times\delta\boldsymbol{\phi}_b^n+\delta\boldsymbol{\omega}_{in}^n-\delta\boldsymbol{\omega}_{ib}^n
+		\end{aligned}
+	\end{equation*}
 \end{document}
 
