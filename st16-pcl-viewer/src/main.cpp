@@ -7,6 +7,8 @@ int main(int argc, char **argv) {
     try {
         using namespace ns_st16;
         ns_log::ns_priv::stdCoutLogger.setPrecision(9);
+
+        LOG_INFO("adjust the parameters and press 'Alter' key to save the current scene.")
         // ---------
         // read data
         // ---------

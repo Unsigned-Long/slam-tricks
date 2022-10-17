@@ -14,6 +14,7 @@
 #include "colour.hpp"
 #include "pose.hpp"
 #include "logger.h"
+#include "functional"
 
 namespace ns_st16 {
     struct CubePlane {
@@ -25,18 +26,12 @@ namespace ns_st16 {
         float _ySpan;
         float _zSpan;
         Colour _color;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr _features;
 
         CubePlane(float roll, float pitch, float yaw,
                   float dx, float dy, float dz,
                   float width, float height = 4.5f, float thickness = 0.1f,
-                  const Colour &color = CubePlane::_colourWheel.GetUniqueColour())
-                : _xSpan(thickness), _ySpan(width), _zSpan(height), _color(color) {
-            auto y = Eigen::AngleAxisd(DegreeToRadian(yaw), Eigen::Vector3d(0.0, 0.0, 1.0));
-            auto p = Eigen::AngleAxisd(DegreeToRadian(pitch), Eigen::Vector3d(1.0, 0.0, 0.0));
-            auto r = Eigen::AngleAxisd(DegreeToRadian(roll), Eigen::Vector3d(0.0, 1.0, 0.0));
-            auto angleAxis = r * p * y;
-            _pose = Posed::fromRt(angleAxis.matrix(), Eigen::Vector3d(dx, dy, dz));
-        }
+                  int featureNum = 5, const Colour &color = CubePlane::_colourWheel.GetUniqueColour());
 
     protected:
         static float DegreeToRadian(float deg) {
@@ -60,6 +55,9 @@ namespace ns_st16 {
             if (addOriginCoord) {
                 _viewer->addCoordinateSystem(1.0, "Origin");
             }
+            // shot
+            using std::placeholders::_1;
+            _viewer->registerKeyboardCallback(std::bind(&Scene::KeyBoardCallBack, this, _1));
         }
 
         void RunSingleThread();
@@ -77,6 +75,7 @@ namespace ns_st16 {
         static std::vector<std::string>
         Split(const std::string &str, char splitor, bool ignoreEmpty = true);
 
+        void KeyBoardCallBack(const pcl::visualization::KeyboardEvent &ev);
     };
 }
 

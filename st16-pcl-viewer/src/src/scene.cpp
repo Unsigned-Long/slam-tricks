@@ -9,6 +9,48 @@ namespace ns_st16 {
 
     ColourWheel CubePlane::_colourWheel = ColourWheel(1.0f);
 
+    CubePlane::CubePlane(float roll, float pitch, float yaw, float dx, float dy, float dz, float width, float height,
+                         float thickness, int featureNum, const Colour &color)
+            : _xSpan(thickness), _ySpan(width), _zSpan(height), _color(color),
+              _features(new pcl::PointCloud<pcl::PointXYZRGB>) {
+        // compute ths plane pose
+        auto y = Eigen::AngleAxisd(DegreeToRadian(yaw), Eigen::Vector3d(0.0, 0.0, 1.0));
+        auto p = Eigen::AngleAxisd(DegreeToRadian(pitch), Eigen::Vector3d(1.0, 0.0, 0.0));
+        auto r = Eigen::AngleAxisd(DegreeToRadian(roll), Eigen::Vector3d(0.0, 1.0, 0.0));
+        auto angleAxis = r * p * y;
+        _pose = Posed::fromRt(angleAxis.matrix(), Eigen::Vector3d(dx, dy, dz));
+
+        // generate random feature
+        std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+
+        std::uniform_real_distribution<float> uy(-0.5f * _ySpan, 0.5f * _ySpan);
+        std::uniform_real_distribution<float> uz(-0.5f * _zSpan, 0.5f * _zSpan);
+
+        // generate feature
+        if (featureNum > 0) {
+            _features->resize(featureNum * 2);
+            for (int i = 0; i < featureNum; ++i) {
+                {
+                    auto &pt = _features->at(i);
+                    pt.r = pt.g = pt.b = 0.0f;
+
+                    Eigen::Vector3f pos(0.5f * _xSpan, uy(engine), uz(engine));
+                    Eigen::Vector3f result = _pose.se3().cast<float>() * pos;
+                    pt.x = result(0), pt.y = result(1), pt.z = result(2);
+                }
+                {
+                    auto &pt = _features->at(i * 2 + 1);
+                    pt.r = pt.g = pt.b = 0.0f;
+
+                    Eigen::Vector3f pos(-0.5f * _xSpan, uy(engine), uz(engine));
+                    Eigen::Vector3f result = _pose.se3().cast<float>() * pos;
+                    pt.x = result(0), pt.y = result(1), pt.z = result(2);
+                }
+
+            }
+        }
+    }
+
     void Scene::RunSingleThread() {
         while (!_viewer->wasStopped()) {
             // ms
@@ -132,6 +174,23 @@ namespace ns_st16 {
                     pcl::visualization::RenderingProperties::PCL_VISUALIZER_COLOR,
                     color.r, color.g, color.b, "CubePlane-" + std::to_string(i)
             );
+
+            // feature
+            _viewer->addPointCloud(plane._features, "Feature-" + std::to_string(i));
+            _viewer->setPointCloudRenderingProperties(
+                    pcl::visualization::RenderingProperties::PCL_VISUALIZER_POINT_SIZE, 6.0f,
+                    "Feature-" + std::to_string(i)
+            );
+        }
+
+    }
+
+    void Scene::KeyBoardCallBack(const pcl::visualization::KeyboardEvent &ev) {
+        if (ev.isAltPressed()) {
+            std::int64_t curTimeStamp = std::chrono::system_clock::now().time_since_epoch().count();
+            const std::string filename = "../scene/" + std::to_string(curTimeStamp) + ".png";
+            _viewer->saveScreenshot(filename);
+            LOG_INFO("the scene shot is saved to path: '", filename, "'.");
         }
     }
 
