@@ -26,9 +26,26 @@ namespace ns_st16 {
         float _zSpan;
         Colour _color;
 
-        CubePlane(Posed pose, float xSpan, float ySpan, float zSpan,
+        CubePlane(float roll, float pitch, float yaw,
+                  float dx, float dy, float dz,
+                  float width, float height = 4.5f, float thickness = 0.1f,
                   const Colour &color = CubePlane::_colourWheel.GetUniqueColour())
-                : _pose(std::move(pose)), _xSpan(xSpan), _ySpan(ySpan), _zSpan(zSpan), _color(color) {}
+                : _xSpan(thickness), _ySpan(width), _zSpan(height), _color(color) {
+            auto y = Eigen::AngleAxisd(DegreeToRadian(yaw), Eigen::Vector3d(0.0, 0.0, 1.0));
+            auto p = Eigen::AngleAxisd(DegreeToRadian(pitch), Eigen::Vector3d(1.0, 0.0, 0.0));
+            auto r = Eigen::AngleAxisd(DegreeToRadian(roll), Eigen::Vector3d(0.0, 1.0, 0.0));
+            auto angleAxis = r * p * y;
+            _pose = Posed::fromRt(angleAxis.matrix(), Eigen::Vector3d(dx, dy, dz));
+        }
+
+    protected:
+        static float DegreeToRadian(float deg) {
+            static const float factor = M_PI / 180.0;
+            return factor * deg;
+        }
+
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 
     class Scene {

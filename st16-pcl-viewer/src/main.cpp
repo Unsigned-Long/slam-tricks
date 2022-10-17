@@ -17,18 +17,56 @@ int main(int argc, char **argv) {
         // ----
         // show
         // ----
+        // important param:
+        // [0] background: the background color of this scene
+        // [1] addOriginCoord : Whether to add the reference coordinate system
         Scene scene(Colour(1.0, 1.0, 1.0), true);
 
         // pose sequence
         // scene.AddPoseSeq("odomIMU", odomIMU, 10, 0.3f);
         // scene.AddPoseSeq("odomLiDAR", odomLiDAR);
+        // important param:
+        // [0] downSample: If the coordinate system identities is too dense, use this parameter
+        // [1] size: the size(or scale) of the coordinate system identity
         scene.AddPoseSeq("odomVicon", odomVicon, 2, 0.3f);
 
         // cube plane sequence
+        // important param:
+        // [0] lineMode: Whether to use line drawing
+        // [1]  opacity: transparency
         scene.AddCubes(
                 {
-                        CubePlane(Posed(), 1.0, 1.0, 1.0)
-                }, false, 0.5f
+                        CubePlane(0.0f, 0.0f, 0.0f, 0.0f, -3.0f, 0.0f, 1.4f),
+                        CubePlane(0.0f, 0.0f, 90.0f, 0.7f, -3.7f, 0.0f, 1.4f),
+
+                        CubePlane(0.0f, 0.0f, 0.0f, 0.0f - 2.0f, -3.0f, 0.0f, 1.4f),
+                        CubePlane(0.0f, 0.0f, 90.0f, 0.7f - 2.0f, -3.7f, 0.0f, 1.4f),
+
+                        CubePlane(0.0f, 0.0f, 0.0f, 0.0f - 4.0f, -3.0f, 0.0f, 1.4f),
+                        CubePlane(0.0f, 0.0f, 90.0f, 0.7f - 4.0f, -3.7f, 0.0f, 1.4f),
+
+                        CubePlane(0.0f, 0.0f, 0.0f, 0.0f - 6.0f, -3.0f, 0.0f, 1.4f),
+                        CubePlane(0.0f, 0.0f, 90.0f, 0.7f - 6.0f, -3.7f, 0.0f, 1.4f),
+
+                        CubePlane(0.0f, 0.0f, 45.0f, -6.0f, 0.0f, 0.0f, 2.5f),
+
+                        CubePlane(0.0f, 0.0f, 0.0f, -6.0f, 2.5f, 0.0f, 1.6f),
+                        CubePlane(0.0f, 0.0f, 0.0f, -6.0f, 4.0f, 0.0f, 0.8f),
+                        CubePlane(0.0f, 0.0f, 90.0f, -6.0f + 0.4f, 4.0f + 0.4f, 0.0f, 0.8f),
+
+                        CubePlane(0.0f, 0.0f, 0.0f, -4.0f, 2.5f, 0.0f, 1.6f),
+                        CubePlane(0.0f, 0.0f, 0.0f, -4.0f, 4.0f, 0.0f, 0.8f),
+                        CubePlane(0.0f, 0.0f, 90.0f, -4.0f + 0.4f, 4.0f + 0.4f, 0.0f, 0.8f),
+
+                        CubePlane(0.0f, 0.0f, 60.0f, 0.0f, 4.0f, 0.0f, 3.0f),
+
+                        CubePlane(0.0f, 0.0f, 0.0f, 2.0f, 0.0f + 0.5f, 0.0f, 10.0f),
+                        CubePlane(0.0f, 0.0f, 90.0f, -3.0f, 5.0f + 0.5f, 0.0f, 10.0f),
+                        CubePlane(0.0f, 0.0f, 0.0f, -8.0f, 0.0f + 0.5f, 0.0f, 10.0f),
+                        CubePlane(0.0f, 0.0f, 90.0f, -3.0f, -5.0f + 0.5f, 0.0f, 10.0f),
+
+                        CubePlane(90.0f, 0.0f, 0.0f, -3.0f, 0.5f, -2.25f, 10.0f, 10.0f)
+                }, false, 1.0f
         );
 
         // ---

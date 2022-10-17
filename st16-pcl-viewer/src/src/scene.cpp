@@ -7,7 +7,7 @@
 
 namespace ns_st16 {
 
-    ColourWheel CubePlane::_colourWheel = {};
+    ColourWheel CubePlane::_colourWheel = ColourWheel(1.0f);
 
     void Scene::RunSingleThread() {
         while (!_viewer->wasStopped()) {
@@ -116,6 +116,10 @@ namespace ns_st16 {
                         pcl::visualization::RenderingProperties::PCL_VISUALIZER_REPRESENTATION,
                         pcl::visualization::RenderingRepresentationProperties::PCL_VISUALIZER_REPRESENTATION_WIREFRAME,
                         "CubePlane-" + std::to_string(i)
+                );
+                _viewer->setShapeRenderingProperties(
+                        pcl::visualization::RenderingProperties::PCL_VISUALIZER_LINE_WIDTH,
+                        4.0, "CubePlane-" + std::to_string(i)
                 );
             } else {
                 _viewer->setShapeRenderingProperties(
