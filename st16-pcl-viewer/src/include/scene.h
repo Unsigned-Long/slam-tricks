@@ -58,6 +58,10 @@ namespace ns_st16 {
             // shot
             using std::placeholders::_1;
             _viewer->registerKeyboardCallback(std::bind(&Scene::KeyBoardCallBack, this, _1));
+
+            _viewer->setCameraPosition(-3.0f, 0.0f, 20.0f, -3.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+            // _viewer->setCameraPosition(3.0f, 0.0f, 0.0f, -3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+            // _viewer->setCameraPosition(3.0f, 0.0f, 3.0f, -3.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
         }
 
         void RunSingleThread();

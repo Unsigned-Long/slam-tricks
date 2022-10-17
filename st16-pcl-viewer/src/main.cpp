@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
                         CubePlane(0.0f, 0.0f, 90.0f, -3.0f, -5.0f + 0.5f, 0.0f, 10.0f),
 
                         CubePlane(90.0f, 0.0f, 0.0f, -3.0f, 0.5f, -2.25f, 10.0f, 10.0f)
-                }, false, 1.0f
+                }, true, 1.0f
         );
 
         // ---
