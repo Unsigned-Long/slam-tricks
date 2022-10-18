@@ -11,7 +11,6 @@
 
 using namespace ns_st17;
 
-
 std::pair<Posed, Posed> CameraPose() {
     Posed real, init;
     {
@@ -30,7 +29,7 @@ std::pair<Posed, Posed> CameraPose() {
         auto r = Eigen::AngleAxisd(DegreeToRadian(roll), Eigen::Vector3d(0.0, 1.0, 0.0));
         // world to camera
         auto angleAxis = r * p * y;
-        init = Posed::fromRt(angleAxis.inverse().matrix(), Eigen::Vector3d(2.0, 0.0, 0.0));
+        init = Posed::fromRt(angleAxis.inverse().matrix(), Eigen::Vector3d(2.5, 0.0, 0.0));
     }
     return {real, init};
 }

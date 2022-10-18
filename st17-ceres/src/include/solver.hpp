@@ -150,7 +150,10 @@ namespace ns_st17 {
     static Sophus::SE3d SolvePnPWithDAutoDiff(const std::vector<CorrPair> &data,
                                               const Sophus::SO3d &initSO3,
                                               const Sophus::Vector3d &initPOS,
-                                              Scene *scene)
+                                              Scene *scene) {
+        // TODO: ...
+        return {};
+    }
 }
 
 #endif //PNP_SOLVER_HPP
