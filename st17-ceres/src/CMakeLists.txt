@@ -2,6 +2,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 find_package(PCL REQUIRED)
 find_package(Sophus)
+find_package(Ceres)
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src SRC_FILES)
 
@@ -12,6 +13,7 @@ target_include_directories(
         PRIVATE
         ${PCL_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CERES_INCLUDE_DIRS}
 )
 
 target_link_libraries(
@@ -19,4 +21,5 @@ target_link_libraries(
         PRIVATE
         ${PCL_LIBRARIES}
         Sophus::Sophus
+        ${CERES_LIBRARIES}
 )

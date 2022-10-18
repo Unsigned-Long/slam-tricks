@@ -27,7 +27,7 @@ namespace ns_st17 {
 
         // generate feature
         if (featureNum > 0) {
-            _features->resize(featureNum * 2);
+            _features->resize(featureNum);
             for (int i = 0; i < featureNum; ++i) {
                 {
                     auto &pt = _features->at(i);
@@ -54,7 +54,7 @@ namespace ns_st17 {
         Eigen::Isometry3d CtoW(pose.so3.unit_quaternion());
         CtoW.pretranslate(pose.t);
         _viewer->addCoordinateSystem(
-                size,
+                0.4,
                 Eigen::Affine3f(CtoW.cast<float>().affine()),
                 name
         );
@@ -93,13 +93,13 @@ namespace ns_st17 {
                 auto result = CtoW * Eigen::Vector3d(p.x, p.y, p.z);
                 p.x = result(0), p.y = result(1), p.z = result(2);
             }
-            _viewer->addPolygon<pcl::PointXYZ>(item.second, r, g, b, item.first);
+            _viewer->addPolygon<pcl::PointXYZ>(item.second, r, g, b, name + item.first);
             _viewer->setShapeRenderingProperties(
-                    pcl::visualization::RenderingProperties::PCL_VISUALIZER_LINE_WIDTH, lineWidth, item.first
+                    pcl::visualization::RenderingProperties::PCL_VISUALIZER_LINE_WIDTH, lineWidth, name + item.first
             );
             _viewer->setShapeRenderingProperties(
                     pcl::visualization::RenderingProperties::PCL_VISUALIZER_OPACITY,
-                    opacity, item.first
+                    opacity, name + item.first
             );
         }
     }
