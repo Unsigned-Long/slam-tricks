@@ -88,6 +88,20 @@ namespace ns_st17 {
         }
     };
 
+    struct VisualCallBack : public ceres::IterationCallback {
+        const Sophus::SO3d *_initSO3;
+        const Sophus::Vector3d *_initPOS;
+
+        VisualCallBack(const Sophus::SO3d &initSO3, const Sophus::Vector3d &initPOS)
+                : _initSO3(&initSO3), _initPOS(&initPOS) {}
+
+        ceres::CallbackReturnType operator()(const ceres::IterationSummary &summary) override {
+            LOG_VAR(Posed(*_initSO3, *_initPOS));
+            return ceres::SOLVER_CONTINUE;
+        }
+
+    };
+
     static Sophus::SE3d SolvePnPWithDynamicAutoDiff(const std::vector<CorrPair> &data,
                                                     const Sophus::SO3d &initSO3,
                                                     const Sophus::Vector3d &initPOS) {
@@ -107,12 +121,16 @@ namespace ns_st17 {
             // local param
             problem.AddParameterBlock(SO3_CtoW.data(), 4, localParameterization);
         }
-        ceres::Solver::Summary summary;
         ceres::Solver::Options options;
 
+        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW);
+        options.callbacks.push_back(callBack);
+        options.update_state_every_iteration = true;
         options.minimizer_progress_to_stdout = true;
         options.num_threads = 5;
         options.linear_solver_type = ceres::DENSE_QR;
+
+        ceres::Solver::Summary summary;
 
         ceres::Solve(options, &problem, &summary);
         LOG_INFO(summary.BriefReport())
