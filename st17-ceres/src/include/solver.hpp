@@ -146,6 +146,11 @@ namespace ns_st17 {
 
         return {SO3_CtoW, POS_CtoW};
     }
+
+    static Sophus::SE3d SolvePnPWithDAutoDiff(const std::vector<CorrPair> &data,
+                                              const Sophus::SO3d &initSO3,
+                                              const Sophus::Vector3d &initPOS,
+                                              Scene *scene)
 }
 
 #endif //PNP_SOLVER_HPP
