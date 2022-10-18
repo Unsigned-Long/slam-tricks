@@ -68,6 +68,8 @@ namespace ns_st17 {
 
         void AddLine(const pcl::PointXYZ &p1, const pcl::PointXYZ &p2, const std::string &name);
 
+        pcl::visualization::PCLVisualizer::Ptr &GetViewer();
+
     protected:
 
         void KeyBoardCallBack(const pcl::visualization::KeyboardEvent &ev);

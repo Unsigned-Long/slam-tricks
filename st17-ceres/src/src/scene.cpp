@@ -165,4 +165,8 @@ namespace ns_st17 {
                 0.3, name
         );
     }
+
+    pcl::visualization::PCLVisualizer::Ptr &Scene::GetViewer() {
+        return _viewer;
+    }
 }

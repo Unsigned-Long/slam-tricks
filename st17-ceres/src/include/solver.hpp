@@ -9,8 +9,11 @@
 #include "sophus/se3.hpp"
 #include "ceres/ceres.h"
 #include "Eigen/Dense"
+#include "thread"
 
 namespace ns_st17 {
+    std::mutex mt;
+
     struct CorrPair {
         Eigen::Vector3d point;
         Eigen::Vector2d feature;
@@ -20,7 +23,6 @@ namespace ns_st17 {
 
         CorrPair() = default;
     };
-
 
     /// @brief Local parametrization for ceres that can be used with Sophus Lie
     /// group implementations.
@@ -89,14 +91,20 @@ namespace ns_st17 {
     };
 
     struct VisualCallBack : public ceres::IterationCallback {
-        const Sophus::SO3d *_initSO3;
-        const Sophus::Vector3d *_initPOS;
+        const Sophus::SO3d *_curSO3;
+        const Sophus::Vector3d *_curPOS;
+        Scene *_scene;
 
-        VisualCallBack(const Sophus::SO3d &initSO3, const Sophus::Vector3d &initPOS)
-                : _initSO3(&initSO3), _initPOS(&initPOS) {}
+        VisualCallBack(const Sophus::SO3d &SO3, const Sophus::Vector3d &POS, Scene *scene)
+                : _curSO3(&SO3), _curPOS(&POS), _scene(scene) {}
 
         ceres::CallbackReturnType operator()(const ceres::IterationSummary &summary) override {
-            LOG_VAR(Posed(*_initSO3, *_initPOS));
+            std::lock_guard<std::mutex> lock(mt);
+            _scene->AddCamera(
+                    std::to_string(std::chrono::system_clock::now().time_since_epoch().count()),
+                    Posed(*_curSO3, *_curPOS), 1.0, 0.0, 0.0, 2.0, 0.5
+            );
+            std::this_thread::sleep_for(std::chrono::seconds(1));
             return ceres::SOLVER_CONTINUE;
         }
 
@@ -104,7 +112,8 @@ namespace ns_st17 {
 
     static Sophus::SE3d SolvePnPWithDynamicAutoDiff(const std::vector<CorrPair> &data,
                                                     const Sophus::SO3d &initSO3,
-                                                    const Sophus::Vector3d &initPOS) {
+                                                    const Sophus::Vector3d &initPOS,
+                                                    Scene *scene) {
         Sophus::SO3d SO3_CtoW = initSO3;
         Sophus::Vector3d POS_CtoW = initPOS;
         ceres::LocalParameterization *localParameterization = new LieLocalParameterization<Sophus::SO3d>();
@@ -123,7 +132,7 @@ namespace ns_st17 {
         }
         ceres::Solver::Options options;
 
-        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW);
+        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
         options.callbacks.push_back(callBack);
         options.update_state_every_iteration = true;
         options.minimizer_progress_to_stdout = true;

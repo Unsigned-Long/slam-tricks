@@ -7,6 +7,7 @@
 
 #include "scene.h"
 #include "solver.hpp"
+#include "thread"
 
 using namespace ns_st17;
 
@@ -23,13 +24,13 @@ std::pair<Posed, Posed> CameraPose() {
         real = Posed::fromRt(angleAxis.inverse().matrix(), Eigen::Vector3d(3, 2, 1));
     }
     {
-        constexpr float yaw = -90.0, pitch = 100.0, roll = 10.0;
+        constexpr float yaw = -90.0, pitch = 90.0, roll = 10.0;
         auto y = Eigen::AngleAxisd(DegreeToRadian(yaw), Eigen::Vector3d(0.0, 0.0, 1.0));
         auto p = Eigen::AngleAxisd(DegreeToRadian(pitch), Eigen::Vector3d(1.0, 0.0, 0.0));
         auto r = Eigen::AngleAxisd(DegreeToRadian(roll), Eigen::Vector3d(0.0, 1.0, 0.0));
         // world to camera
         auto angleAxis = r * p * y;
-        init = Posed::fromRt(angleAxis.inverse().matrix(), Eigen::Vector3d(3.5, 0.0, 0.0));
+        init = Posed::fromRt(angleAxis.inverse().matrix(), Eigen::Vector3d(2.0, 0.0, 0.0));
     }
     return {real, init};
 }
@@ -90,15 +91,19 @@ int main(int argc, char **argv) {
         LOG_INFO("the real pose: ", CtoW_REAL)
         LOG_INFO("the init pose: ", CtoW_INIT)
 
+        std::thread visualThread([&scene]() {
+            scene.RunSingleThread();
+        });
+
         {
-            auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t);
+            auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
             auto pose = Posed::fromSE3(result);
             LOG_INFO("the opt pose: ", pose)
         }
         // ---
         // run
         // ---
-        scene.RunSingleThread();
+        visualThread.join();
 
     } catch (const std::exception &e) {
         LOG_ERROR(e.what());
