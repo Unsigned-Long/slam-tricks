@@ -115,6 +115,9 @@
 		\end{cases}
 	\end{equation*}
 	
+	\section{\normf{Ceres局部参数化}}
+	对于位姿优化而言，要仔细处理，因为迭代更新的时候，不是简单的相加。另外，如果使用单位正交阵或者四元素进行优化的时候，有另外的约束。这时，需要在优化问题中对参数进行约束，以及指定迭代更新策略。可以通过继承$\boldsymbol{ceres::LocalParameterization}$，并重载$\boldsymbol{ Plus}$和$\boldsymbol{ ComputeJacobian}$虚函数来实现。
+	
 	\section{\normf{四元素姿态与优化}}
 	\normf
 	对于轴角\footnote{\normf{李代数so3在$R^3$下的表示。}}$\boldsymbol{\theta}=\left[ \theta_x ,\theta_y,\theta_z\right]^T $，其四元素表示为：
