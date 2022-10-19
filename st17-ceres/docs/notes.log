@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999991 (TeX Live 2019/Debian) (preloaded format=xelatex 2022.10.8)  19 OCT 2022 11:30
+This is XeTeX, Version 3.14159265-2.6-0.999991 (TeX Live 2019/Debian) (preloaded format=xelatex 2022.10.8)  19 OCT 2022 13:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -591,18 +591,18 @@ LaTeX Font Warning: Font shape `TU/FandolKai-Regular(0)/b/n' undefined
 
 ] [1
 
-] (./notes.aux)
+] [2] (./notes.aux)
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
  ) 
 Here is how much of TeX's memory you used:
- 9398 strings out of 479819
- 231568 string characters out of 5895846
- 717214 words of memory out of 5000000
- 26353 multiletter control sequences out of 15000+600000
- 540270 words of font info for 87 fonts, out of 8000000 for 9000
+ 9416 strings out of 479819
+ 232560 string characters out of 5895846
+ 723214 words of memory out of 5000000
+ 26368 multiletter control sequences out of 15000+600000
+ 540513 words of font info for 90 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 56i,19n,72p,345b,388s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 56i,24n,72p,345b,388s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on notes.pdf (3 pages).
+Output written on notes.pdf (4 pages).

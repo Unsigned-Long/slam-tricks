@@ -101,8 +101,44 @@
 		\end{aligned}
 	\end{cases}
 	\end{equation*}
+	使用高斯-牛顿法求解迭代量：
+	\begin{equation*}
+		\begin{cases}
+			\begin{aligned}
+			    \boldsymbol{J}_i&=\begin{bmatrix}
+			    \frac{\partial \boldsymbol{e}}{ \delta^{W}_{C}\boldsymbol{R}}&\frac{\partial \boldsymbol{e}}{\partial ^{W}\boldsymbol{t}_C}
+			    \end{bmatrix}_{2\times 6} \\
+				\boldsymbol{H}_{6\times 6}&=\sum\boldsymbol{J}_i^T\boldsymbol{J}_i\\
+				\boldsymbol{g}_{6\times 1}&=\sum- \boldsymbol{J}_i^T\boldsymbol{e}\\
+				\boldsymbol{H} \Delta\boldsymbol{x}&=\boldsymbol{g}
+			\end{aligned}
+		\end{cases}
+	\end{equation*}
 	
+	\section{\normf{四元素姿态与优化}}
+	\normf
+	对于轴角\footnote{\normf{李代数so3在$R^3$下的表示。}}$\boldsymbol{\theta}=\left[ \theta_x ,\theta_y,\theta_z\right]^T $，其四元素表示为：
+	\begin{equation*}
+		\boldsymbol{q}=	\frac{\boldsymbol{\theta}}{\theta}\sin\frac{\theta}{2}+\cos\frac{\theta}{2}=\begin{bmatrix}
+		q_x&q_y&q_z&q_w
+		\end{bmatrix}^T\quad \theta=\sqrt{\theta_x^2+\theta_y^2+\theta_z^2}
+	\end{equation*}
 	
+	那么四元素对轴角的导数为有：
+	\begin{equation*}
+		\begin{cases}
+		\begin{aligned}
+			c_0&=q_w/2\quad c_1=q_z/2 \quad c_2=-c_1\\
+			c_3&=q_y/2\quad c_4=q_x/2 \quad c_5=-c_4\\
+			c_6&=-c_3
+		\end{aligned}
+		\end{cases}
+	\end{equation*}
+	\begin{equation*}
+	\frac{\partial \boldsymbol{q}}{\partial\boldsymbol{ \theta}}=\boldsymbol{J}=\begin{bmatrix}
+	c_0&c_2&c_3\\c_1&c_0&c_5\\c_6&c_4&c_0\\c_5&c_6&c_2
+	\end{bmatrix}
+	\end{equation*}
 	
 	
 	

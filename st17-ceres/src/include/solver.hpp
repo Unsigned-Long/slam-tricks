@@ -78,6 +78,7 @@ namespace ns_st17 {
 
         bool ComputeJacobian(const double *x, double *j) const override {
             Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> jacobian(j);
+            // D{this * x}{x}|(x = 0)
             jacobian = Eigen::Matrix3d::Identity();
             return true;
         }
@@ -178,7 +179,7 @@ namespace ns_st17 {
             Eigen::Map<Sophus::Vector2d> residualsMap(residuals);
             residualsMap = normP - _corrPair.feature;
 
-            if (jacobians != nullptr) {
+            if (jacobians != nullptr && jacobians[0] != nullptr && jacobians[1] != nullptr) {
                 const double X_C = pInC(0), Y_C = pInC(1), Z_C = pInC(2), Z_C_INV = 1.0 / Z_C;
                 Sophus::SO3d SO3_WtoC = SO3_CtoW.inverse();
 
@@ -190,21 +191,20 @@ namespace ns_st17 {
                 pn_pc(1, 0) = 0.0, pn_pc(1, 1) = Z_C_INV, pn_pc(1, 2) = -Y_C * Z_C_INV * Z_C_INV;
 
                 // the SO3
-                Mat23d e_R =
-                        pn_pc * (-SO3_WtoC.matrix() * Sophus::SO3d::hat(_corrPair.point)) * (-SO3_CtoW.matrix());
+                Mat23d e_R = pn_pc * (-SO3_WtoC.matrix() * Sophus::SO3d::hat(_corrPair.point)) * (-SO3_CtoW.matrix());
 
                 // the POS
                 Mat23d e_t = pn_pc * (-SO3_WtoC.matrix());
 
                 // organize
-                Mat26d j;
-                j.block<2, 3>(0, 0) = e_R;
-                j.block<2, 3>(0, 3) = e_t;
-                for (int r = 0; r != 2; ++r) {
-                    for (int c = 0; c != 6; ++c) {
-                        jacobians[r][c] = j(r, c);
-                    }
-                }
+                Eigen::Map<Sophus::Vector6d> SO3Jacobians(jacobians[0]);
+                SO3Jacobians.block<3, 1>(0, 0) = e_R.block<1, 3>(0, 0).transpose();
+                SO3Jacobians.block<3, 1>(3, 0) = e_R.block<1, 3>(1, 0).transpose();
+
+                Eigen::Map<Sophus::Vector6d> POSJacobians(jacobians[1]);
+                POSJacobians.block<3, 1>(0, 0) = e_t.block<1, 3>(0, 0).transpose();
+                POSJacobians.block<3, 1>(3, 0) = e_t.block<1, 3>(1, 0).transpose();
+
             }
 
             return true;
@@ -212,19 +212,31 @@ namespace ns_st17 {
     };
 
     struct VisualCallBack : public ceres::IterationCallback {
-        const Sophus::SO3d *_curSO3;
+        const Sophus::SO3d *_curSO3{};
         const Sophus::Vector3d *_curPOS;
+        const Eigen::Vector3d *_curSO3Log{};
         Scene *_scene;
+        bool _flag;
 
         VisualCallBack(const Sophus::SO3d &SO3, const Sophus::Vector3d &POS, Scene *scene)
-                : _curSO3(&SO3), _curPOS(&POS), _scene(scene) {}
+                : _curSO3(&SO3), _curPOS(&POS), _scene(scene), _flag(true) {}
+
+        VisualCallBack(const Sophus::Vector3d &SO3, const Sophus::Vector3d &POS, Scene *scene)
+                : _curSO3Log(&SO3), _curPOS(&POS), _scene(scene), _flag(false) {}
 
         ceres::CallbackReturnType operator()(const ceres::IterationSummary &summary) override {
             std::lock_guard<std::mutex> lock(mt);
-            _scene->AddCamera(
-                    std::to_string(std::chrono::system_clock::now().time_since_epoch().count()),
-                    Posed(*_curSO3, *_curPOS), 1.0, 0.0, 0.0, 2.0, 0.5
-            );
+            if (_flag) {
+                _scene->AddCamera(
+                        std::to_string(std::chrono::system_clock::now().time_since_epoch().count()),
+                        Posed(*_curSO3, *_curPOS), 1.0, 0.0, 0.0, 2.0, 0.5
+                );
+            } else {
+                _scene->AddCamera(
+                        std::to_string(std::chrono::system_clock::now().time_since_epoch().count()),
+                        Posed(Sophus::SO3d::exp(*_curSO3Log), *_curPOS), 1.0, 0.0, 0.0, 2.0, 0.5
+                );
+            }
             std::this_thread::sleep_for(std::chrono::seconds(1));
             return ceres::SOLVER_CONTINUE;
         }
@@ -322,9 +334,9 @@ namespace ns_st17 {
         }
         ceres::Solver::Options options;
 
-//        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
-//        options.callbacks.push_back(callBack);
-//        options.update_state_every_iteration = true;
+        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
+        options.callbacks.push_back(callBack);
+        options.update_state_every_iteration = true;
         options.minimizer_progress_to_stdout = true;
         options.num_threads = 5;
         options.linear_solver_type = ceres::DENSE_QR;
