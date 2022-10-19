@@ -100,9 +100,19 @@ int main(int argc, char **argv) {
             // LOG_INFO("the opt pose: ", pose)
         }
         {
-            auto result = SolvePnPWithDAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
+            // auto result = SolvePnPWithAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
+            // auto pose = Posed::fromSE3(result);
+            // LOG_INFO("the opt pose: ", pose)
+        }
+        {
+            auto result = SolvePnPWithSizedCostFunction(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
             auto pose = Posed::fromSE3(result);
             LOG_INFO("the opt pose: ", pose)
+        }
+        {
+            // auto result = SelfGaussNewton(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
+            // auto pose = Posed::fromSE3(result);
+            // LOG_INFO("the opt pose: ", pose)
         }
         // ---
         // run

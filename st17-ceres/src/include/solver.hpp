@@ -46,8 +46,7 @@ namespace ns_st17 {
         ///@brief Jacobian of plus operation for Ceres
         bool ComputeJacobian(double const *T_raw, double *jacobian_raw) const override {
             Eigen::Map<Groupd const> T(T_raw);
-            Eigen::Map<Eigen::Matrix<double, Groupd::num_parameters, Groupd::DoF,
-                    Eigen::RowMajor>>
+            Eigen::Map<Eigen::Matrix<double, Groupd::num_parameters, Groupd::DoF, Eigen::RowMajor>>
                     jacobian(jacobian_raw);
             jacobian = T.Dx_this_mul_exp_x_at_0();
             return true;
@@ -58,6 +57,38 @@ namespace ns_st17 {
 
         ///@brief Local size
         [[nodiscard]] int LocalSize() const override { return Groupd::DoF; }
+    };
+
+    class LieR3LocalParameterization : public ceres::LocalParameterization {
+    public:
+        ~LieR3LocalParameterization() override = default;
+
+        bool Plus(const double *x, const double *delta, double *x_plus_delta) const override {
+            Eigen::Map<Eigen::Vector3d const> xVec(x);
+            Sophus::SO3d SO3 = Sophus::SO3d::exp(xVec);
+
+            Eigen::Map<Eigen::Vector3d const> deltaVec(delta);
+            Sophus::SO3d deltaSO3 = Sophus::SO3d::exp(deltaVec);
+
+            Eigen::Map<Eigen::Vector3d> plusDeltaVec(x_plus_delta);
+            plusDeltaVec = (SO3 * deltaSO3).log();
+
+            return true;
+        }
+
+        bool ComputeJacobian(const double *x, double *j) const override {
+            Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> jacobian(j);
+            jacobian = Eigen::Matrix3d::Identity();
+            return true;
+        }
+
+        [[nodiscard]] int GlobalSize() const override {
+            return 3;
+        }
+
+        [[nodiscard]] int LocalSize() const override {
+            return 3;
+        }
     };
 
     struct PnPDynamicAutoDiffFunctor {
@@ -121,6 +152,65 @@ namespace ns_st17 {
         }
     };
 
+    struct PnPSizedCostFunction : public ceres::SizedCostFunction<2, 3, 3> {
+    private:
+        CorrPair _corrPair;
+
+    public:
+        explicit PnPSizedCostFunction(CorrPair corrPair) : _corrPair(std::move(corrPair)) {}
+
+        static auto Create(const CorrPair &corrPair) {
+            return new PnPSizedCostFunction(corrPair);
+        }
+
+        bool Evaluate(const double *const *parameters, double *residuals, double **jacobians) const override {
+            // get params
+            Sophus::Vector3d so3_CtoW(parameters[0]);
+            Sophus::SO3d SO3_CtoW = Sophus::SO3d::exp(so3_CtoW);
+            Eigen::Map<const Sophus::Vector3d> POS_CtoW(parameters[1]);
+
+            // trans
+            Sophus::SE3d SE3_CtoW(SO3_CtoW, POS_CtoW);
+            Sophus::Vector3d pInC = SE3_CtoW.inverse() * _corrPair.point;
+            Sophus::Vector2d normP(pInC(0) / pInC(2), pInC(1) / pInC(2));
+
+            // compute residuals
+            Eigen::Map<Sophus::Vector2d> residualsMap(residuals);
+            residualsMap = normP - _corrPair.feature;
+
+            if (jacobians != nullptr) {
+                const double X_C = pInC(0), Y_C = pInC(1), Z_C = pInC(2), Z_C_INV = 1.0 / Z_C;
+                Sophus::SO3d SO3_WtoC = SO3_CtoW.inverse();
+
+                using Mat23d = Eigen::Matrix<double, 2, 3>;
+                using Mat26d = Eigen::Matrix<double, 2, 6>;
+
+                Mat23d pn_pc;
+                pn_pc(0, 0) = Z_C_INV, pn_pc(0, 1) = 0.0, pn_pc(0, 2) = -X_C * Z_C_INV * Z_C_INV;
+                pn_pc(1, 0) = 0.0, pn_pc(1, 1) = Z_C_INV, pn_pc(1, 2) = -Y_C * Z_C_INV * Z_C_INV;
+
+                // the SO3
+                Mat23d e_R =
+                        pn_pc * (-SO3_WtoC.matrix() * Sophus::SO3d::hat(_corrPair.point)) * (-SO3_CtoW.matrix());
+
+                // the POS
+                Mat23d e_t = pn_pc * (-SO3_WtoC.matrix());
+
+                // organize
+                Mat26d j;
+                j.block<2, 3>(0, 0) = e_R;
+                j.block<2, 3>(0, 3) = e_t;
+                for (int r = 0; r != 2; ++r) {
+                    for (int c = 0; c != 6; ++c) {
+                        jacobians[r][c] = j(r, c);
+                    }
+                }
+            }
+
+            return true;
+        }
+    };
+
     struct VisualCallBack : public ceres::IterationCallback {
         const Sophus::SO3d *_curSO3;
         const Sophus::Vector3d *_curPOS;
@@ -178,10 +268,10 @@ namespace ns_st17 {
         return {SO3_CtoW, POS_CtoW};
     }
 
-    static Sophus::SE3d SolvePnPWithDAutoDiff(const std::vector<CorrPair> &data,
-                                              const Sophus::SO3d &initSO3,
-                                              const Sophus::Vector3d &initPOS,
-                                              Scene *scene) {
+    static Sophus::SE3d SolvePnPWithAutoDiff(const std::vector<CorrPair> &data,
+                                             const Sophus::SO3d &initSO3,
+                                             const Sophus::Vector3d &initPOS,
+                                             Scene *scene) {
         Sophus::SO3d SO3_CtoW = initSO3;
         Sophus::Vector3d POS_CtoW = initPOS;
         ceres::LocalParameterization *localParameterization = new LieLocalParameterization<Sophus::SO3d>();
@@ -208,6 +298,108 @@ namespace ns_st17 {
 
         ceres::Solve(options, &problem, &summary);
         LOG_INFO(summary.BriefReport())
+
+        return {SO3_CtoW, POS_CtoW};
+    }
+
+    static Sophus::SE3d SolvePnPWithSizedCostFunction(const std::vector<CorrPair> &data,
+                                                      const Sophus::SO3d &initSO3,
+                                                      const Sophus::Vector3d &initPOS,
+                                                      Scene *scene) {
+        Sophus::Vector3d SO3_CtoW = initSO3.log();
+        Sophus::Vector3d POS_CtoW = initPOS;
+        ceres::LocalParameterization *localParameterization = new LieR3LocalParameterization();
+
+        ceres::Problem problem;
+        for (const auto &item: data) {
+            auto costFunc = PnPSizedCostFunction::Create(item);
+
+            problem.AddResidualBlock(costFunc, nullptr, {SO3_CtoW.data(), POS_CtoW.data()});
+
+            // local param
+            problem.AddParameterBlock(SO3_CtoW.data(), 3, localParameterization);
+
+        }
+        ceres::Solver::Options options;
+
+//        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
+//        options.callbacks.push_back(callBack);
+//        options.update_state_every_iteration = true;
+        options.minimizer_progress_to_stdout = true;
+        options.num_threads = 5;
+        options.linear_solver_type = ceres::DENSE_QR;
+
+        ceres::Solver::Summary summary;
+
+        ceres::Solve(options, &problem, &summary);
+        LOG_INFO(summary.BriefReport())
+
+        return {Sophus::SO3d::exp(SO3_CtoW), POS_CtoW};
+    }
+
+    static Sophus::SE3d SelfGaussNewton(const std::vector<CorrPair> &data,
+                                        const Sophus::SO3d &initSO3,
+                                        const Sophus::Vector3d &initPOS,
+                                        Scene *scene) {
+        Sophus::SO3d SO3_CtoW = initSO3;
+        Sophus::Vector3d POS_CtoW = initPOS;
+
+        std::shared_ptr<VisualCallBack> callBack = std::make_shared<VisualCallBack>(SO3_CtoW, POS_CtoW, scene);
+
+        for (int i = 0; i != 10; ++i) {
+            Eigen::Matrix<double, 6, 6> hMat = Eigen::Matrix<double, 6, 6>::Zero();
+            Eigen::Matrix<double, 6, 1> gMat = Eigen::Matrix<double, 6, 1>::Zero();
+            for (const auto &cp: data) {
+
+                auto pInW = cp.point;
+                Sophus::SE3d SE3_CtoW(SO3_CtoW, POS_CtoW);
+                auto pInC = SE3_CtoW.inverse() * pInW;
+                Sophus::Vector2d normP(pInC(0) / pInC(2), pInC(1) / pInC(2));
+
+                // compute residuals
+                Eigen::Vector2d residuals = normP - cp.feature;
+
+                // compute jacobians
+
+                const double X_C = pInC(0), Y_C = pInC(1), Z_C = pInC(2), Z_C_INV = 1.0 / Z_C;
+                Sophus::SO3d SO3_WtoC = SO3_CtoW.inverse();
+
+                using Mat23d = Eigen::Matrix<double, 2, 3>;
+                using Mat26d = Eigen::Matrix<double, 2, 6>;
+
+                Mat23d pn_pc;
+                pn_pc(0, 0) = Z_C_INV, pn_pc(0, 1) = 0.0, pn_pc(0, 2) = -X_C * Z_C_INV * Z_C_INV;
+                pn_pc(1, 0) = 0.0, pn_pc(1, 1) = Z_C_INV, pn_pc(1, 2) = -Y_C * Z_C_INV * Z_C_INV;
+
+                // the SO3
+                Mat23d e_R = pn_pc * (-SO3_WtoC.matrix() * Sophus::SO3d::hat(pInW)) * (-SO3_CtoW.matrix());
+
+                // the POS
+                Mat23d e_t = pn_pc * (-SO3_WtoC.matrix());
+
+                Mat26d j;
+                j.block<2, 3>(0, 0) = e_R;
+                j.block<2, 3>(0, 3) = e_t;
+
+                hMat += j.transpose() * j;
+                gMat += -j.transpose() * residuals;
+            }
+
+            Eigen::Matrix<double, 6, 1> delta = hMat.ldlt().solve(gMat);
+            Eigen::Vector3d deltaSO3(delta.data());
+            Eigen::Vector3d deltaPOS(delta.data() + 3);
+
+            SO3_CtoW = SO3_CtoW * Sophus::SO3d::exp(deltaSO3);
+            POS_CtoW = POS_CtoW + deltaPOS;
+
+            callBack->operator()(ceres::IterationSummary());
+
+            double change = deltaSO3.norm() + deltaPOS.norm();
+            LOG_INFO("iterator: ", i, ", change: ", change)
+            if (change < 1E-8) {
+                break;
+            }
+        }
 
         return {SO3_CtoW, POS_CtoW};
     }

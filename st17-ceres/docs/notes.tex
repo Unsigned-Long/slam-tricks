@@ -1,0 +1,126 @@
+\documentclass[12pt, onecolumn]{article}
+
+% 引入相关的包
+\usepackage{amsmath, listings, fontspec, geometry, graphicx, ctex, color, subfigure}
+
+% 设定页面的尺寸和比例
+\geometry{left = 1.5cm, right = 1.5cm, top = 1.5cm, bottom = 1.5cm}
+
+% 设定两栏之间的间距
+\setlength\columnsep{1cm}
+
+% 设定字体，为代码的插入作准备
+\newfontfamily\ubuntu{Ubuntu Mono}
+
+% 头部信息
+\title{\normf{这是标题}}
+\author{\normf{陈烁龙}}
+\date{\normf{\today}}
+
+% 代码块的风格设定
+\lstset{
+	language=C++,
+	basicstyle=\scriptsize\ubuntu,
+	keywordstyle=\textbf,
+	stringstyle=\itshape,
+	commentstyle=\itshape,
+	numberstyle=\scriptsize\ubuntu,
+	showstringspaces=false,
+	numbers=left,
+	numbersep=8pt,
+	tabsize=2,
+	frame=single,
+	framerule=1pt,
+	columns=fullflexible,
+	breaklines,
+	frame=shadowbox, 
+	backgroundcolor=\color[rgb]{0.97,0.97,0.97}
+}
+
+% 字体族的定义
+\newcommand{\normf}{\kaishu}
+\newcommand{\boldf}{\heiti}
+\newcommand\keywords[1]{\boldf{关键词：} \normf #1}
+\newcommand{\lieal[1]}{\left\lfloor #1 \right\rfloor_\times}
+
+\begin{document}
+	
+	% 插入头部信息
+	\maketitle
+	% 换页
+	\thispagestyle{empty}
+	\clearpage
+	
+	% 插入目录、图、表并换页
+	\tableofcontents
+	\listoffigures
+	\listoftables
+	\setcounter{page}{1}
+	% 罗马字母形式的页码
+	\pagenumbering{roman}
+	\clearpage
+	% 从该页开始计数
+	\setcounter{page}{1}
+	% 阿拉伯数字形式的页码
+	\pagenumbering{arabic}
+	
+	
+	\section{\normf{PnP描述}}
+	\normf
+	对于已知位置的三维点$P_w=\left[ X_w,Y_w,Z_w \right]^T $，其可通过相机的位姿${^{W}_{C}\boldsymbol{T}=\left[ {^{W}_{C}\boldsymbol{R}} |^{W}\boldsymbol{t}_C \right]}$，将其变换到局部相机坐标系下：
+	\begin{equation*}
+	\boldsymbol{P}_C={^{W}_{C}\boldsymbol{R}^{-1}}\boldsymbol{P}_W-{^{W}_{C}\boldsymbol{R}^{-1}}{^{W}\boldsymbol{t}_C}
+	\end{equation*}
+	进而将其变换到相机的归一化坐标平面上：
+	\begin{equation*}
+	\boldsymbol{p}_n=\begin{bmatrix}
+	x_n\\y_n
+	\end{bmatrix}=\begin{bmatrix}
+	X_C/Z_C\\Y_C/Z_C
+	\end{bmatrix}
+	\end{equation*}
+	如果我们测得了对应的特征点图像坐标，并通过一定的相机模型，将其转换到相机的归一化坐标平面上，得到$\boldsymbol{\tilde{p}}_n$，那么可以建立误差函数：
+	\begin{equation*}
+		\boldsymbol{e}(\boldsymbol{p}_n)=\boldsymbol{p}_n-\boldsymbol{\tilde{p}}_n
+	\end{equation*}
+	基于误差函数，对待求参数求导(旋转量使用李代数右扰动模型)：
+	\begin{equation*}
+	\begin{cases}
+		\begin{aligned}
+		\frac{\partial \boldsymbol{e}}{ \delta^{W}_{C}\boldsymbol{R}}&=\frac{\partial \boldsymbol{p}_n}{\partial \boldsymbol{P}_C}\times \frac{\partial \boldsymbol{P}_C}{\partial ^{C}_{W}\boldsymbol{R}}\times \frac{\partial ^{W}_{C}\boldsymbol{R}}{\partial ^{C}_{W}\boldsymbol{R}}
+		=\begin{bmatrix}
+		1/Z_C&0&-X_C/Z_C^2\\
+		0&1/Z_C&-Y_C/Z_C^2
+		\end{bmatrix}
+		\times \left[ -{^{W}_{C}\boldsymbol{R}^{-1}}\lieal[\boldsymbol{P}_W]\right] \times \left[- ^{W}_{C}\boldsymbol{R}\right] \\
+		\frac{\partial \boldsymbol{e}}{\partial ^{W}\boldsymbol{t}_C}&=\frac{\partial \boldsymbol{p}_n}{\partial \boldsymbol{P}_C}\times \frac{\partial \boldsymbol{P}_C}{\partial ^{W}\boldsymbol{t}_C}=\begin{bmatrix}
+		1/Z_C&0&-X_C/Z_C^2\\
+		0&1/Z_C&-Y_C/Z_C^2
+		\end{bmatrix}
+		\times \left[- {^{W}_{C}\boldsymbol{R}^{-1}}\right] 
+		\end{aligned}
+	\end{cases}
+	\end{equation*}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+\end{document}
+
