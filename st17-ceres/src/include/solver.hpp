@@ -10,6 +10,7 @@
 #include "ceres/ceres.h"
 #include "Eigen/Dense"
 #include "thread"
+#include "artwork/timer/timer.h"
 
 namespace ns_st17 {
     std::mutex mt;
@@ -246,7 +247,12 @@ namespace ns_st17 {
     static Sophus::SE3d SolvePnPWithDynamicAutoDiff(const std::vector<CorrPair> &data,
                                                     const Sophus::SO3d &initSO3,
                                                     const Sophus::Vector3d &initPOS,
-                                                    Scene *scene) {
+                                                    Scene *scene, bool countTime) {
+        LOG_ENDL()
+
+        ns_timer::Timer timer;
+        timer.re_start();
+
         Sophus::SO3d SO3_CtoW = initSO3;
         Sophus::Vector3d POS_CtoW = initPOS;
         ceres::LocalParameterization *localParameterization = new LieLocalParameterization<Sophus::SO3d>();
@@ -265,17 +271,24 @@ namespace ns_st17 {
         }
         ceres::Solver::Options options;
 
-        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
-        options.callbacks.push_back(callBack);
-        options.update_state_every_iteration = true;
-        options.minimizer_progress_to_stdout = true;
-        options.num_threads = 5;
+        if (!countTime) {
+            auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
+            options.callbacks.push_back(callBack);
+            options.update_state_every_iteration = true;
+            options.minimizer_progress_to_stdout = true;
+        }
+
+        options.num_threads = 1;
         options.linear_solver_type = ceres::DENSE_QR;
 
         ceres::Solver::Summary summary;
 
         ceres::Solve(options, &problem, &summary);
+
+        LOG_PROCESS(timer.last_elapsed("SolvePnPWithDynamicAutoDiff"))
+
         LOG_INFO(summary.BriefReport())
+
 
         return {SO3_CtoW, POS_CtoW};
     }
@@ -283,7 +296,12 @@ namespace ns_st17 {
     static Sophus::SE3d SolvePnPWithAutoDiff(const std::vector<CorrPair> &data,
                                              const Sophus::SO3d &initSO3,
                                              const Sophus::Vector3d &initPOS,
-                                             Scene *scene) {
+                                             Scene *scene, bool countTime) {
+        LOG_ENDL()
+
+        ns_timer::Timer timer;
+        timer.re_start();
+
         Sophus::SO3d SO3_CtoW = initSO3;
         Sophus::Vector3d POS_CtoW = initPOS;
         ceres::LocalParameterization *localParameterization = new LieLocalParameterization<Sophus::SO3d>();
@@ -299,16 +317,22 @@ namespace ns_st17 {
         }
         ceres::Solver::Options options;
 
-        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
-        options.callbacks.push_back(callBack);
-        options.update_state_every_iteration = true;
-        options.minimizer_progress_to_stdout = true;
-        options.num_threads = 5;
+        if (!countTime) {
+            auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
+            options.callbacks.push_back(callBack);
+            options.update_state_every_iteration = true;
+            options.minimizer_progress_to_stdout = true;
+        }
+        options.num_threads = 1;
+
         options.linear_solver_type = ceres::DENSE_QR;
 
         ceres::Solver::Summary summary;
 
         ceres::Solve(options, &problem, &summary);
+
+        LOG_PROCESS(timer.last_elapsed("SolvePnPWithAutoDiff"))
+
         LOG_INFO(summary.BriefReport())
 
         return {SO3_CtoW, POS_CtoW};
@@ -317,7 +341,12 @@ namespace ns_st17 {
     static Sophus::SE3d SolvePnPWithSizedCostFunction(const std::vector<CorrPair> &data,
                                                       const Sophus::SO3d &initSO3,
                                                       const Sophus::Vector3d &initPOS,
-                                                      Scene *scene) {
+                                                      Scene *scene, bool countTime) {
+        LOG_ENDL()
+
+        ns_timer::Timer timer;
+        timer.re_start();
+
         Sophus::Vector3d SO3_CtoW = initSO3.log();
         Sophus::Vector3d POS_CtoW = initPOS;
         ceres::LocalParameterization *localParameterization = new LieR3LocalParameterization();
@@ -334,16 +363,22 @@ namespace ns_st17 {
         }
         ceres::Solver::Options options;
 
-        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
-        options.callbacks.push_back(callBack);
-        options.update_state_every_iteration = true;
-        options.minimizer_progress_to_stdout = true;
-        options.num_threads = 5;
+        if (!countTime) {
+            auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
+            options.callbacks.push_back(callBack);
+            options.update_state_every_iteration = true;
+            options.minimizer_progress_to_stdout = true;
+        }
+
+        options.num_threads = 1;
         options.linear_solver_type = ceres::DENSE_QR;
 
         ceres::Solver::Summary summary;
 
         ceres::Solve(options, &problem, &summary);
+
+        LOG_PROCESS(timer.last_elapsed("SolvePnPWithSizedCostFunction"))
+
         LOG_INFO(summary.BriefReport())
 
         return {Sophus::SO3d::exp(SO3_CtoW), POS_CtoW};
@@ -352,13 +387,18 @@ namespace ns_st17 {
     static Sophus::SE3d SelfGaussNewton(const std::vector<CorrPair> &data,
                                         const Sophus::SO3d &initSO3,
                                         const Sophus::Vector3d &initPOS,
-                                        Scene *scene) {
+                                        Scene *scene, bool countTime) {
+        LOG_ENDL()
+
+        ns_timer::Timer timer;
+        timer.re_start();
+
         Sophus::SO3d SO3_CtoW = initSO3;
         Sophus::Vector3d POS_CtoW = initPOS;
 
         std::shared_ptr<VisualCallBack> callBack = std::make_shared<VisualCallBack>(SO3_CtoW, POS_CtoW, scene);
-
-        for (int i = 0; i != 10; ++i) {
+        int i = 0;
+        for (; i != 10; ++i) {
             Eigen::Matrix<double, 6, 6> hMat = Eigen::Matrix<double, 6, 6>::Zero();
             Eigen::Matrix<double, 6, 1> gMat = Eigen::Matrix<double, 6, 1>::Zero();
 
@@ -402,14 +442,21 @@ namespace ns_st17 {
             SO3_CtoW = SO3_CtoW * Sophus::SO3d::exp(deltaSO3);
             POS_CtoW = POS_CtoW + deltaPOS;
 
-            callBack->operator()(ceres::IterationSummary());
-
             double change = deltaSO3.norm() + deltaPOS.norm();
-            LOG_INFO("iterator: ", i, ", change: ", change)
+
+            if (!countTime) {
+                callBack->operator()(ceres::IterationSummary());
+                LOG_INFO("iterator: ", i, ", change: ", change)
+            }
+
             if (change < 1E-8) {
                 break;
             }
         }
+
+        LOG_PROCESS(timer.last_elapsed("SelfGaussNewton"))
+
+        LOG_INFO("iter num: ", i)
 
         return {SO3_CtoW, POS_CtoW};
     }

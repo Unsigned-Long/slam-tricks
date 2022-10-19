@@ -95,24 +95,24 @@ int main(int argc, char **argv) {
         });
 
         {
-            // auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
-            // auto pose = Posed::fromSE3(result);
-            // LOG_INFO("the opt pose: ", pose)
-        }
-        {
-            // auto result = SolvePnPWithAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
-            // auto pose = Posed::fromSE3(result);
-            // LOG_INFO("the opt pose: ", pose)
-        }
-        {
-            auto result = SolvePnPWithSizedCostFunction(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
+            auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
             auto pose = Posed::fromSE3(result);
             LOG_INFO("the opt pose: ", pose)
         }
         {
-            // auto result = SelfGaussNewton(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
-            // auto pose = Posed::fromSE3(result);
-            // LOG_INFO("the opt pose: ", pose)
+            auto result = SolvePnPWithAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+            auto pose = Posed::fromSE3(result);
+            LOG_INFO("the opt pose: ", pose)
+        }
+        {
+            auto result = SolvePnPWithSizedCostFunction(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+            auto pose = Posed::fromSE3(result);
+            LOG_INFO("the opt pose: ", pose)
+        }
+        {
+            auto result = SelfGaussNewton(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+            auto pose = Posed::fromSE3(result);
+            LOG_INFO("the opt pose: ", pose)
         }
         // ---
         // run
