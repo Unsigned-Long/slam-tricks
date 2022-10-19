@@ -181,5 +181,68 @@ RANSCA算法是一种基于概率的模型构建手段。其相较于最小二�
 
 最经典的相机标定方法是张正友方法。但是该方法的前提是获得棋盘的格网点（结构）。本次参考论文《Automatic Camera and Range Sensor Calibration using a single Shot》，实现了鲁棒的棋盘格结构提取。[算法文档](./st10-chessCorner/docs/chessCorner.pdf)。
 
-<img src="./st10-chessCorner/docs/img/chessboard.png" width=25%><img src="./st10-chessCorner/docs/img/chessboard2.png" width=25%><img src="./st10-chessCorner/docs/img/process_muti/chessboard1.png" width=25%><img src="./st10-chessCorner/docs/img/process_muti/chessboard2.png" width=25%>
+<img src="./st10-chessCorner/docs/img/chessboard.png" width=30%><img src="./st10-chessCorner/docs/img/chessboard2.png" width=25%><img src="./st10-chessCorner/docs/img/process_muti/chessboard1.png" width=25%><img src="./st10-chessCorner/docs/img/process_muti/chessboard2.png" width=25%>
 
+### 3.0 图像全景拼接
+
+通过多张相互部分重叠的影像，得到一副全景影像：
+<figure class="third">
+    <img src="./st11-panorama/imgs/main/IMG_20220803_142612.jpg" width="32%">
+    <img src="./st11-panorama/imgs/main/IMG_20220803_142615.jpg" width="32%">
+    <img src="./st11-panorama/imgs/main/IMG_20220803_142619.jpg" width="32%">
+</figure>
+<center>
+    <img src="./st11-panorama/imgs/output/dst.png" width="600">
+</center>
+
+<center>
+    <img src="./st11-panorama/imgs/output/dst_clip.png" width="600">
+</center>
+
+### 3.1 ransacplus
+
+RANSAC算法假设数据中包含正确数据和异常数据(或称为噪声)。该算法核心思想就是随机性和假设性，随机性是根据正确数据出现概率去随机选取抽样数据，根据大数定律，随机性模拟可以近似得到正确结果。假设性是假设选取出的抽样数据都是正确数据，然后用这些正确数据通过问题满足的模型，去计算其他点，然后对这次结果进行一个评分。
+
+<figure class="half">
+    <img src="./st12-ransaplus/img/data.png" width="48%">
+    <img src="./st12-ransaplus/img/result.png" width="48%">
+</figure>
+
+### 3.2 视觉里程计之光流法
+
+直接法和特征点法结果一样，同样可以估计两相邻图像帧之间的位姿变化量。其以"光度不变理论"为假设，相较于特征点法，不需要提取特征，有着更快的运行效率和更加广阔的应用场景。
+<center>
+    <img src="./st13-directmethod/img/000000.png">
+    <img src="./st13-directmethod/img/000005.png">
+</center>
+### 3.3 惯性导航之机械编排
+
+导航是指：运动物体随时间变化的位置(Position)、速度(Velocity)和姿态(Attitude)，这三者构成了导航姿态(PVA)。导航主要有两种原理：
+
++ 航位推算(Dead Reckoning)：通过推断连续帧间导航状态的变换量得到航迹，如视觉里程计(VO)、惯导(INS)；
+
++ 直接定位(Direct Fixing)：直接获得运动物体在参考坐标系下的导航状态，如卫导(GNSS)。
+
+对于惯导而言，借助加速度计和陀螺仪测定载体相对于惯性空间的加速度和角速度。
+
+### 3.4 Git代码管理
+
+**Git** 是一个开源的分布式版本控制系统，用于敏捷高效地处理任何或小或大的项目。**Git** 是 **Linus Torvalds** 为了帮助管理 **Linux** 内核开发而开发的一个开放源码的版本控制软件。
+
+<img src="./st15-git/img/git-group.drawio.png">
+
+### 3.5 PCL可视化
+
+<figure class="half">
+    <img src="./st16-pcl-viewer/scene/1665985291926058204.png" width="48%">
+    <img src="./st16-pcl-viewer/scene/1665985314759596634.png" width="48%">
+</figure>
+### 3.6 Ceres解算
+<center>
+    <img src ="./st17-ceres/scene/1666159076732900482.png" width="50%">
+
+</center>
+<figure class="half">
+    <img src="./st17-ceres/img/debug.png" width="100%">
+    <img src="./st17-ceres/img/release.png" width="100%">
+</figure>
