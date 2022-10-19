@@ -349,18 +349,16 @@ namespace ns_st17 {
         for (int i = 0; i != 10; ++i) {
             Eigen::Matrix<double, 6, 6> hMat = Eigen::Matrix<double, 6, 6>::Zero();
             Eigen::Matrix<double, 6, 1> gMat = Eigen::Matrix<double, 6, 1>::Zero();
-            for (const auto &cp: data) {
 
-                auto pInW = cp.point;
+            for (const auto &corrPair: data) {
+                // compute residuals
+                auto pInW = corrPair.point;
                 Sophus::SE3d SE3_CtoW(SO3_CtoW, POS_CtoW);
                 auto pInC = SE3_CtoW.inverse() * pInW;
                 Sophus::Vector2d normP(pInC(0) / pInC(2), pInC(1) / pInC(2));
-
-                // compute residuals
-                Eigen::Vector2d residuals = normP - cp.feature;
+                Eigen::Vector2d residuals = normP - corrPair.feature;
 
                 // compute jacobians
-
                 const double X_C = pInC(0), Y_C = pInC(1), Z_C = pInC(2), Z_C_INV = 1.0 / Z_C;
                 Sophus::SO3d SO3_WtoC = SO3_CtoW.inverse();
 
