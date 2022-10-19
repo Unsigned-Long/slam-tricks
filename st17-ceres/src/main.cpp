@@ -93,27 +93,28 @@ int main(int argc, char **argv) {
         std::thread visualThread([&scene]() {
             scene.RunSingleThread();
         });
-
+        LOG_WARNING("press any key to continue.")
+        std::cin.get();
         {
-            auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+            auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, false);
             auto pose = Posed::fromSE3(result);
             LOG_INFO("the opt pose: ", pose)
         }
-        {
-            auto result = SolvePnPWithAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
-            auto pose = Posed::fromSE3(result);
-            LOG_INFO("the opt pose: ", pose)
-        }
-        {
-            auto result = SolvePnPWithSizedCostFunction(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
-            auto pose = Posed::fromSE3(result);
-            LOG_INFO("the opt pose: ", pose)
-        }
-        {
-            auto result = SelfGaussNewton(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
-            auto pose = Posed::fromSE3(result);
-            LOG_INFO("the opt pose: ", pose)
-        }
+        // {
+        //     auto result = SolvePnPWithAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+        //     auto pose = Posed::fromSE3(result);
+        //     LOG_INFO("the opt pose: ", pose)
+        // }
+        // {
+        //     auto result = SolvePnPWithSizedCostFunction(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+        //     auto pose = Posed::fromSE3(result);
+        //     LOG_INFO("the opt pose: ", pose)
+        // }
+        // {
+        //     auto result = SelfGaussNewton(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene, true);
+        //     auto pose = Posed::fromSE3(result);
+        //     LOG_INFO("the opt pose: ", pose)
+        // }
         // ---
         // run
         // ---
