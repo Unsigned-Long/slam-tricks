@@ -95,7 +95,12 @@ int main(int argc, char **argv) {
         });
 
         {
-            auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
+            // auto result = SolvePnPWithDynamicAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
+            // auto pose = Posed::fromSE3(result);
+            // LOG_INFO("the opt pose: ", pose)
+        }
+        {
+            auto result = SolvePnPWithDAutoDiff(corrs, CtoW_INIT.so3, CtoW_INIT.t, &scene);
             auto pose = Posed::fromSE3(result);
             LOG_INFO("the opt pose: ", pose)
         }

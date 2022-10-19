@@ -60,15 +60,16 @@ namespace ns_st17 {
         [[nodiscard]] int LocalSize() const override { return Groupd::DoF; }
     };
 
-    struct PnPFunctor {
+    struct PnPDynamicAutoDiffFunctor {
     private:
         CorrPair _corrPair;
 
     public:
-        explicit PnPFunctor(CorrPair corrPair) : _corrPair(std::move(corrPair)) {}
+        explicit PnPDynamicAutoDiffFunctor(CorrPair corrPair) : _corrPair(std::move(corrPair)) {}
 
         static auto Create(const CorrPair &corrPair) {
-            return new ceres::DynamicAutoDiffCostFunction<PnPFunctor>(new PnPFunctor(corrPair));
+            return new ceres::DynamicAutoDiffCostFunction<PnPDynamicAutoDiffFunctor>(
+                    new PnPDynamicAutoDiffFunctor(corrPair));
         }
 
         template<typename T>
@@ -86,6 +87,36 @@ namespace ns_st17 {
             Eigen::Map<Sophus::Vector2<T>> residualsMap(residuals);
             residualsMap = normP - _corrPair.feature.template cast<T>();
 
+            return true;
+        }
+    };
+
+    struct PnPAutoDiffFunctor {
+    private:
+        CorrPair _corrPair;
+
+    public:
+        explicit PnPAutoDiffFunctor(CorrPair corrPair) : _corrPair(std::move(corrPair)) {}
+
+        static auto Create(const CorrPair &corrPair) {
+            return new ceres::AutoDiffCostFunction<PnPAutoDiffFunctor, 2, 4, 3>(
+                    new PnPAutoDiffFunctor(corrPair));
+        }
+
+        template<typename T>
+        bool operator()(const T *const SO3_CtoW_DATA, const T *const POS_CtoW_DATA, T *residuals) const {
+            // get params
+            Eigen::Map<const Sophus::SO3<T>> SO3_CtoW(SO3_CtoW_DATA);
+            Eigen::Map<const Sophus::Vector3<T>> POS_CtoW(POS_CtoW_DATA);
+
+            // trans
+            Sophus::SE3<T> SE3_CtoW(SO3_CtoW, POS_CtoW);
+            Sophus::Vector3<T> pInC = SE3_CtoW.inverse() * _corrPair.point.template cast<T>();
+            Sophus::Vector2<T> normP(pInC(0) / pInC(2), pInC(1) / pInC(2));
+
+            // compute residuals
+            Eigen::Map<Sophus::Vector2<T>> residualsMap(residuals);
+            residualsMap = normP - _corrPair.feature.template cast<T>();
             return true;
         }
     };
@@ -120,7 +151,7 @@ namespace ns_st17 {
 
         ceres::Problem problem;
         for (const auto &item: data) {
-            auto costFunc = PnPFunctor::Create(item);
+            auto costFunc = PnPDynamicAutoDiffFunctor::Create(item);
             costFunc->AddParameterBlock(4);
             costFunc->AddParameterBlock(3);
             costFunc->SetNumResiduals(2);
@@ -151,8 +182,34 @@ namespace ns_st17 {
                                               const Sophus::SO3d &initSO3,
                                               const Sophus::Vector3d &initPOS,
                                               Scene *scene) {
-        // TODO: ...
-        return {};
+        Sophus::SO3d SO3_CtoW = initSO3;
+        Sophus::Vector3d POS_CtoW = initPOS;
+        ceres::LocalParameterization *localParameterization = new LieLocalParameterization<Sophus::SO3d>();
+
+        ceres::Problem problem;
+        for (const auto &item: data) {
+            auto costFunc = PnPAutoDiffFunctor::Create(item);
+
+            problem.AddResidualBlock(costFunc, nullptr, {SO3_CtoW.data(), POS_CtoW.data()});
+
+            // local param
+            problem.AddParameterBlock(SO3_CtoW.data(), 4, localParameterization);
+        }
+        ceres::Solver::Options options;
+
+        auto *callBack = new VisualCallBack(SO3_CtoW, POS_CtoW, scene);
+        options.callbacks.push_back(callBack);
+        options.update_state_every_iteration = true;
+        options.minimizer_progress_to_stdout = true;
+        options.num_threads = 5;
+        options.linear_solver_type = ceres::DENSE_QR;
+
+        ceres::Solver::Summary summary;
+
+        ceres::Solve(options, &problem, &summary);
+        LOG_INFO(summary.BriefReport())
+
+        return {SO3_CtoW, POS_CtoW};
     }
 }
 
