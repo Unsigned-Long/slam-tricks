@@ -283,3 +283,76 @@ Git协助示意图：
    
 
 7. TODO:跨团队协作流程
+
+## 5. Git子模块
+
+当需要在朱项目中使用别的子模块，可以使用**submodule**:
+
+1. 为项目添加一个子模块：
+
+   ```sh
+   $ git submodule add the-submodule-link submodule-target-path
+   ```
+
+   这个时候：
+
+   ```sh
+   $ git status
+   On branch master
+   
+   No commits yet
+   
+   Changes to be committed:
+     (use "git rm --cached <file>..." to unstage)
+   	new file:   .gitmodules
+   	new file:   thirdparty/logger
+   ```
+
+   产生了两个新文件，记录了子模块的添加信息，比如**.gitmodules**文件内容为：
+
+   ```sh
+   [submodule "thirdparty/logger"]
+   	path = thirdparty/logger
+   	url = https://github.com/Unsigned-Long/logger.git
+   ```
+
+   
+
+2. 当正在使用的子模块版本落后与远程仓库时，可以使用远程更新：
+
+   ```sh
+   $ git submodule update --remote
+   ```
+
+   
+
+3. 当不想使用该子模块时，可以对其进行删除：
+
+   ```sh
+   $ git submodule deinit --force submodule-target-path
+   $ git rm -r submodule-target-path
+   ```
+
+   恢复删除后的子模块：
+
+   ```sh
+   $ git submodule add --force  https://github.com/Unsigned-Long/logger.git ./thirdparty/logger
+   ```
+
+   需要加一个**--force** 选项。
+
+   
+
+4. 当克隆的项目带有子模块时，可以使用递归克隆：
+
+   ```sh
+   $ git clone --recurse-submodules the-cloned-project
+   ```
+
+   不带**--recurse-submodules**时，不会克隆项目的子模块。这时可以使用命令进行子模块的获取：
+
+   ```sh
+   $ git submodule update --init --recursive
+   ```
+
+   其中**--recursive**是为了在获取子模块的时候，同时递归获取子模块的子模块。
