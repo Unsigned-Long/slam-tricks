@@ -1,0 +1,5 @@
+/.idea
+/library/.idea
+/program/.idea
+/library/cmake-build-debug
+/program/cmake-build-debug
