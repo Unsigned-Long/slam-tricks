@@ -1,0 +1,78 @@
+\documentclass[12pt, twocolumn]{article}
+
+% 引入相关的包
+\usepackage{amsmath, listings, fontspec, geometry, graphicx, ctex, color, subfigure}
+
+% 设定页面的尺寸和比例
+\geometry{left = 1.5cm, right = 1.5cm, top = 1.5cm, bottom = 1.5cm}
+
+% 设定两栏之间的间距
+\setlength\columnsep{1cm}
+
+% 设定字体，为代码的插入作准备
+\newfontfamily\ubuntu{Ubuntu Mono}
+
+% 头部信息
+\title{\normf{这是标题}}
+\author{\normf{陈烁龙}}
+\date{\normf{\today}}
+
+% 代码块的风格设定
+\lstset{
+	language=C++,
+	basicstyle=\scriptsize\ubuntu,
+	keywordstyle=\textbf,
+	stringstyle=\itshape,
+	commentstyle=\itshape,
+	numberstyle=\scriptsize\ubuntu,
+	showstringspaces=false,
+	numbers=left,
+	numbersep=8pt,
+	tabsize=2,
+	frame=single,
+	framerule=1pt,
+	columns=fullflexible,
+	breaklines,
+	frame=shadowbox, 
+	backgroundcolor=\color[rgb]{0.97,0.97,0.97}
+}
+
+% 字体族的定义
+\newcommand{\normf}{\kaishu}
+\newcommand{\boldf}{\heiti}
+\newcommand\keywords[1]{\boldf{关键词：} \normf #1}
+
+\begin{document}
+	
+	% 插入头部信息
+	\maketitle
+	% 换页
+	\thispagestyle{empty}
+	\clearpage
+	
+	% 插入目录、图、表并换页
+	\tableofcontents
+	\listoffigures
+	\listoftables
+	\setcounter{page}{1}
+	% 罗马字母形式的页码
+	\pagenumbering{roman}
+	\clearpage
+	% 从该页开始计数
+	\setcounter{page}{1}
+	% 阿拉伯数字形式的页码
+	\pagenumbering{arabic}
+	
+	\section{\normf{MSCKF}}
+	\normf
+	多状态约束卡尔曼滤波。使用IMU输出进行状态预测，使用特征点和相机之间的约束进行测量更新。且测量更新发生在特征点工作丢失或者滑动窗口内部的相机数目超过阈值。
+	
+	对误差方程做边缘化，将特征点的三维坐标投影到零空间消除，只解算相机的位姿。
+	\section{\normf{逆深度}}
+	假定地图符合高斯分布，那么地图点在某个相机坐标系下，其深度$d$在$(0,+\infty)$范围内，且大部分的点发布在较近的位置，较少点发布在较远的位置，最近处没有点。所以使用深度表示特征点不太符合高斯分布，而逆深度$\lambda=1/d$则大致符合高斯分布，且其在估计中具有比较好的精度。
+	
+	\section{\normf{因子图优化}}
+	$TODO$
+	
+\end{document}
+
