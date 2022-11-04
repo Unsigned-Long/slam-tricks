@@ -58,6 +58,7 @@ namespace ns_st19 {
                 _shut.copyTo(_fullScene(cv::Range(0, IMG_SIZE), cv::Range(IMG_SIZE, IMG_SIZE * 2)));
 
                 _fullScene.col(IMG_SIZE).setTo(cv::Scalar(0, 0, 0));
+                _fullScene.row(_curRowIdx / _shutSpeedInv).setTo(cv::Scalar(0, 0, 0));
 
                 cv::imshow("Camera-Rolling-Shut", _fullScene);
 
