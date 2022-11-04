@@ -13,18 +13,13 @@
 #include "thread"
 #include "memory"
 #include "artwork/logger/logger.h"
-#include "artwork/timer/timer.h"
 #include "mutex"
 #include "colour.hpp"
 
 namespace ns_st19 {
 
-    std::mutex mt;
-
     class CameraScene {
     private:
-        std::shared_ptr<std::thread> _buildThread;
-
         bool _finished;
         double _factor;
 
@@ -42,7 +37,7 @@ namespace ns_st19 {
         }
 
         explicit CameraScene(std::string dirname)
-                : _buildThread(nullptr), _finished(false), _factor(0.0), _shutSpeedInv(1),
+                : _finished(false), _factor(0.0), _shutSpeedInv(1),
                   _curRowIdx(0), _shut(IMG_SIZE, IMG_SIZE, CV_8UC3, cv::Scalar(255, 255, 255)),
                   _dirname(std::move(dirname)) {}
 
@@ -56,7 +51,6 @@ namespace ns_st19 {
                 _fullScene = cv::Mat(IMG_SIZE, IMG_SIZE * 2, CV_8UC3);
                 scene.copyTo(_fullScene(cv::Range(0, IMG_SIZE), cv::Range(0, IMG_SIZE)));
                 _shut.copyTo(_fullScene(cv::Range(0, IMG_SIZE), cv::Range(IMG_SIZE, IMG_SIZE * 2)));
-
                 _fullScene.col(IMG_SIZE).setTo(cv::Scalar(0, 0, 0));
                 _fullScene.row(_curRowIdx / _shutSpeedInv).setTo(cv::Scalar(0, 0, 0));
 
