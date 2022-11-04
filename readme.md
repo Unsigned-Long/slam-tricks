@@ -246,3 +246,84 @@ RANSAC算法假设数据中包含正确数据和异常数据(或称为噪声)。
     <img src="./st17-ceres/img/debug.png" width="100%">
     <img src="./st17-ceres/img/release.png" width="100%">
 </figure>
+
+### 3.7 CMake
+
+```cmake
+# -----------
+# for install
+# -----------
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+# Export package for use from the build tree
+set(LIBRARY_CMAKE_EXPORT_DIR ${CMAKE_INSTALL_DATADIR}/${LIBRARY_NAME}/cmake)
+
+set_target_properties(${LIBRARY_NAME} PROPERTIES EXPORT_NAME ${LIBRARY_NAMESPACE})
+
+install(
+        TARGETS ${LIBRARY_NAME}
+        EXPORT ${LIBRARY_NAMESPACE}Targets
+)
+install(
+        EXPORT ${LIBRARY_NAMESPACE}Targets
+        NAMESPACE ${LIBRARY_NAMESPACE}::
+        DESTINATION ${LIBRARY_CMAKE_EXPORT_DIR}
+)
+
+export(
+        TARGETS ${LIBRARY_NAME}
+        NAMESPACE ${LIBRARY_NAMESPACE}::
+        FILE ${LIBRARY_NAMESPACE}Targets.cmake
+)
+export(
+        PACKAGE ${LIBRARY_NAMESPACE}
+)
+
+configure_package_config_file(
+        ${LIBRARY_NAMESPACE}Config.cmake.in
+        ${CMAKE_BINARY_DIR}/${LIBRARY_NAMESPACE}Config.cmake
+        INSTALL_DESTINATION ${LIBRARY_CMAKE_EXPORT_DIR}
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+
+# Write version to file
+write_basic_package_version_file(
+        ${LIBRARY_NAMESPACE}ConfigVersion.cmake
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY AnyNewerVersion
+)
+
+# Install cmake targets
+install(
+        FILES ${CMAKE_BINARY_DIR}/${LIBRARY_NAMESPACE}Config.cmake
+        ${CMAKE_BINARY_DIR}/${LIBRARY_NAMESPACE}ConfigVersion.cmake
+        DESTINATION ${LIBRARY_CMAKE_EXPORT_DIR}
+)
+
+# Install header files
+
+install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/src/include/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${LIBRARY_NAME}
+)
+```
+
+
+
+### 3.8 Distortion
+
+模拟了局部曝光相机和旋转雷达的畸变。
+
+<figure class="half">
+    <img src="./st19-distortion/img/1667555061698845052.png" width="48%">
+    <img src="./st19-distortion/img/1667555128701657802.png" width="48%">
+</figure>
+
+
+
+<figure class="half">
+    <img src="./st19-distortion/img/1667563231889769105.png" width="48%">
+    <img src="./st19-distortion/img/1667563284155420541.png" width="48%">
+</figure>
