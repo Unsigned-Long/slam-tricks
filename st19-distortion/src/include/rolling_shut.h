@@ -79,9 +79,7 @@ namespace ns_st19 {
             _shutSpeedInv = shutSpeedInv;
         }
 
-        virtual ~CameraScene() {
-            _buildThread->join();
-        }
+        virtual ~CameraScene() = default;
 
     protected:
         cv::Mat GenerateScene() {
