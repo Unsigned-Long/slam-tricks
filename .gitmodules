@@ -1,0 +1,3 @@
+[submodule "thirdparty/slam-scene-viewer"]
+	path = thirdparty/slam-scene-viewer
+	url = https://github.com/Unsigned-Long/slam-scene-viewer.git
