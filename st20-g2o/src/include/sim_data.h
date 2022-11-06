@@ -28,7 +28,11 @@ namespace ns_st20 {
     public:
         explicit ProblemScene(std::string sceneShotSaveDir = "");
 
-        void Run(std::size_t cameraIdx = 0);
+        void ShowCameraAt(std::size_t cameraIdx = 0);
+
+        void ShowFeatureAt(std::size_t featureIdx = 0);
+
+        void Show();
 
         ~ProblemScene() override;
 

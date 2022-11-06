@@ -5,6 +5,7 @@
 #include "sim_data.h"
 
 #include <utility>
+#include "algorithm"
 
 namespace ns_st20 {
 
@@ -59,9 +60,9 @@ namespace ns_st20 {
                 // add camera
                 auto trans = Eigen::Vector3d(x, y, z);
                 // x axis
-                auto xAxis = (trans - Eigen::Vector3d::Zero()).normalized();
+                auto xAxis = Eigen::Vector3d(-trans(1), trans(0), 0.0).normalized();
                 // z axis
-                auto zAxis = Eigen::Vector3d(-trans(1), trans(0), 0.0).normalized();
+                auto zAxis = (Eigen::Vector3d::Zero() - trans).normalized();
                 // y axis
                 auto yAxis = zAxis.cross(xAxis);
                 // rot
@@ -91,7 +92,7 @@ namespace ns_st20 {
 
     ProblemScene::~ProblemScene() = default;
 
-    void ProblemScene::Run(std::size_t cameraIdx) {
+    void ProblemScene::ShowCameraAt(std::size_t cameraIdx) {
         if (cameraIdx >= _cameraTraj.size()) {
             return;
         }
@@ -99,10 +100,10 @@ namespace ns_st20 {
 
         auto names = AddCamera(_cameraTraj.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
 
         for (const auto &featureIdx: _cameraFeatureVec.at(cameraIdx)) {
             const auto feature = _features->at(featureIdx);
-            const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
             AddLine(
                     {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
                     ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f, feature.a / 255.0f)
@@ -132,6 +133,54 @@ namespace ns_st20 {
                 }
             }
         }
+
+        auto featureCameraMinMax = std::minmax_element(
+                _featureCamerasVec.cbegin(), _featureCamerasVec.cend(),
+                [this](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
+                    return idx1.size() < idx2.size();
+                }
+        );
+        auto cameraFeatureMinMax = std::minmax_element(
+                _cameraFeatureVec.cbegin(), _cameraFeatureVec.cend(),
+                [this](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
+                    return idx1.size() < idx2.size();
+                }
+        );
+        LOG_PLAINTEXT("Feature count: ", _features->points.size())
+        LOG_PLAINTEXT(
+                "Feature tracked by cameras: min('idx': ", featureCameraMinMax.first - _featureCamerasVec.cbegin(),
+                ", 'num': ", featureCameraMinMax.first->size(), "), max('idx': ",
+                featureCameraMinMax.second - _featureCamerasVec.cbegin(),
+                ", 'num': ", featureCameraMinMax.second->size(), ")."
+        )
+
+        LOG_PLAINTEXT("Camera count: ", _cameraTraj.size())
+        LOG_PLAINTEXT(
+                "Camera track features: min('idx': ", cameraFeatureMinMax.first - _cameraFeatureVec.cbegin(),
+                ", 'num': ", cameraFeatureMinMax.first->size(), "), max('idx': ",
+                cameraFeatureMinMax.second - _cameraFeatureVec.cbegin(),
+                ", 'num': ", cameraFeatureMinMax.second->size(), ")."
+        )
+    }
+
+    void ProblemScene::ShowFeatureAt(std::size_t featureIdx) {
+        if (featureIdx >= _features->size()) {
+            return;
+        }
+        ns_viewer::SceneViewer::RunMultiThread();
+
+        const auto feature = _features->at(featureIdx);
+        for (const auto &cameraIdx: _featureCamerasVec.at(featureIdx)) {
+            const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
+            AddLine(
+                    {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
+                    ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f, feature.a / 255.0f)
+            );
+        }
+    }
+
+    void ProblemScene::Show() {
+        ns_viewer::SceneViewer::RunMultiThread();
     }
 
 }

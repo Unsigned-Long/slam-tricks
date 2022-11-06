@@ -7,7 +7,8 @@
 
 int main(int argc, char **argv) {
     ns_st20::ProblemScene problemScene;
-    problemScene.Run(10);
+    // problemScene.ShowCameraAt(10);
+    problemScene.ShowFeatureAt(10);
     LOG_INFO("Hello, world!")
     return 0;
 }
