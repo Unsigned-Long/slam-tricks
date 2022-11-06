@@ -137,13 +137,13 @@ namespace ns_st20 {
 
         auto featureCameraMinMax = std::minmax_element(
                 _featureCamerasVec.cbegin(), _featureCamerasVec.cend(),
-                [this](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
+                [](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
                     return idx1.size() < idx2.size();
                 }
         );
         auto cameraFeatureMinMax = std::minmax_element(
                 _cameraFeatureVec.cbegin(), _cameraFeatureVec.cend(),
-                [this](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
+                [](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
                     return idx1.size() < idx2.size();
                 }
         );
@@ -180,7 +180,7 @@ namespace ns_st20 {
         }
     }
 
-    void ProblemScene::Show() {
+    void ProblemScene::ShowCameras() {
         ns_viewer::SceneViewer::RunMultiThread();
         std::vector<std::string> cameraNames, lineNames;
         for (int cameraIdx = 0; cameraIdx < _cameraTraj.size() && !_viewer->wasStopped(); ++cameraIdx) {
@@ -193,6 +193,35 @@ namespace ns_st20 {
             const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
             for (const auto &featureIdx: _cameraFeatureVec.at(cameraIdx)) {
                 const auto feature = _features->at(featureIdx);
+                auto names = AddLine(
+                        {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
+                        ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f,
+                                          feature.a / 255.0f)
+                );
+                AppendNames(lineNames, names);
+            }
+            UnLock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+    }
+
+    void ProblemScene::ShowFeatures() {
+        ns_viewer::SceneViewer::RunMultiThread();
+
+        std::uniform_int_distribution<std::size_t> idxGen(0, _features->size() - 1);
+        std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+        std::vector<std::string> lineNames;
+
+        while (!_viewer->wasStopped()) {
+            auto featureIdx = idxGen(engine);
+            const auto feature = _features->at(featureIdx);
+
+            Lock();
+            RemoveEntities(lineNames);
+            lineNames.clear();
+
+            for (const auto &cameraIdx: _featureCamerasVec.at(featureIdx)) {
+                const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
                 auto names = AddLine(
                         {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
                         ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f,

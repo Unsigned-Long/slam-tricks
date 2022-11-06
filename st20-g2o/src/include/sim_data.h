@@ -9,8 +9,6 @@
 
 namespace ns_st20 {
 
-    static std::mutex mt;
-
     class ProblemScene : public ns_viewer::SceneViewer {
     public:
         using parent_type = ns_viewer::SceneViewer;
@@ -34,7 +32,9 @@ namespace ns_st20 {
 
         void ShowFeatureAt(std::size_t featureIdx = 0);
 
-        void Show();
+        void ShowCameras();
+
+        void ShowFeatures();
 
         ~ProblemScene() override;
 
