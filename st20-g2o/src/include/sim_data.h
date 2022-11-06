@@ -9,6 +9,8 @@
 
 namespace ns_st20 {
 
+    static std::mutex mt;
+
     class ProblemScene : public ns_viewer::SceneViewer {
     public:
         using parent_type = ns_viewer::SceneViewer;

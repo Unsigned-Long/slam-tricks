@@ -19,17 +19,19 @@ namespace ns_st20 {
 
     void ProblemScene::CreateScene() {
         std::vector<ns_viewer::CubePlane> planes{
-                ns_viewer::CubePlane(0, 0, 180, 0, 5, 0, 10, 10),
-                ns_viewer::CubePlane(0, 0, 0, 0, -5, 0, 10, 10),
-                ns_viewer::CubePlane(0, 0, -90, 5, 0, 0, 10, 10),
-                ns_viewer::CubePlane(0, 0, 90, -5, 0, 0, 10, 10),
-                ns_viewer::CubePlane(0, 90, 0, 0, 0, 5, 10, 10),
-                ns_viewer::CubePlane(0, -90, 0, 0, 0, -5, 10, 10),
+                ns_viewer::CubePlane(0, 0, 180, 0, 5, 0, 10, 10, 0.001f),
+                ns_viewer::CubePlane(0, 0, 0, 0, -5, 0, 10, 10, 0.001f),
+                ns_viewer::CubePlane(0, 0, -90, 5, 0, 0, 10, 10, 0.001f),
+                ns_viewer::CubePlane(0, 0, 90, -5, 0, 0, 10, 10, 0.001f),
+                ns_viewer::CubePlane(0, 90, 0, 0, 0, 5, 10, 10, 0.001f),
+                ns_viewer::CubePlane(0, -90, 0, 0, 0, -5, 10, 10, 0.001f),
         };
-        for (const auto &item: planes) {
+        for (auto &item: planes) {
+            item.color = ns_viewer::Colour::Black();
+            item.color.a = 0.1f;
             AddCubePlane(item, true);
 
-            auto newFeatures = item.GenerateFeatures(100, ns_viewer::CubePlane::Face::FRONT, 0.6f);
+            auto newFeatures = item.GenerateFeatures(100, ns_viewer::CubePlane::Face::FRONT, 0.4f);
             _features->points.resize(_features->size() + newFeatures->size());
             std::copy_n(
                     newFeatures->points.cbegin(), newFeatures->points.size(),
@@ -99,7 +101,6 @@ namespace ns_st20 {
         ns_viewer::SceneViewer::RunMultiThread();
 
         auto names = AddCamera(_cameraTraj.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
 
         for (const auto &featureIdx: _cameraFeatureVec.at(cameraIdx)) {
@@ -153,7 +154,7 @@ namespace ns_st20 {
                 featureCameraMinMax.second - _featureCamerasVec.cbegin(),
                 ", 'num': ", featureCameraMinMax.second->size(), ")."
         )
-
+        LOG_ENDL()
         LOG_PLAINTEXT("Camera count: ", _cameraTraj.size())
         LOG_PLAINTEXT(
                 "Camera track features: min('idx': ", cameraFeatureMinMax.first - _cameraFeatureVec.cbegin(),
@@ -181,6 +182,27 @@ namespace ns_st20 {
 
     void ProblemScene::Show() {
         ns_viewer::SceneViewer::RunMultiThread();
+        std::vector<std::string> cameraNames, lineNames;
+        for (int cameraIdx = 0; cameraIdx < _cameraTraj.size() && !_viewer->wasStopped(); ++cameraIdx) {
+            Lock();
+            RemoveEntities({cameraNames, lineNames});
+            cameraNames.clear(), lineNames.clear();
+
+            // add camera and lines
+            cameraNames = AddCamera(_cameraTraj.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
+            const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
+            for (const auto &featureIdx: _cameraFeatureVec.at(cameraIdx)) {
+                const auto feature = _features->at(featureIdx);
+                auto names = AddLine(
+                        {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
+                        ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f,
+                                          feature.a / 255.0f)
+                );
+                AppendNames(lineNames, names);
+            }
+            UnLock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
     }
 
 }
