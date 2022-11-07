@@ -10,8 +10,9 @@ int main(int argc, char **argv) {
     // problemScene.ShowFeatureAt(10);
     // problemScene.ShowCameras();
     // problemScene.ShowFeatures();
-    auto simData = problemScene.Simulation(0.3f, 30.0f, "/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
-    simData.DrawScene();
-    ns_st20::SolveWithDynamicAutoDiff(simData, false);
+    auto simData = problemScene.Simulation(true, 0.3f, 30.0f);
+    simData.Run("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene", "Simulation Data");
+    ns_st20::SolveWithCeresDynamicAutoDiff(simData, false);
+    auto truth = problemScene.Simulation("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene", false);
     return 0;
 }

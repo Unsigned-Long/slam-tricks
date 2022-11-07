@@ -10,8 +10,10 @@
 namespace ns_st20 {
 
     ProblemScene::ProblemScene(int featureCountPerFace, std::string sceneShotSaveDir)
-            : _featureCountPerFace(featureCountPerFace), ns_viewer::SceneViewer(std::move(sceneShotSaveDir)),
+            : _featureCountPerFace(featureCountPerFace),
+              ns_viewer::SceneViewer(std::move(sceneShotSaveDir)),
               _landmarks(new pcl::PointCloud<pcl::PointXYZRGBA>()) {
+        SetWindowName("Problem Scene [Ground Truth]");
         CreateScene();
         CreateTrajectory();
         CreateMeasurements();
@@ -239,8 +241,8 @@ namespace ns_st20 {
         }
     }
 
-    DataManager ProblemScene::Simulation(double posNoise, double angleNoise, const std::string &dir) const {
-        DataManager manager(dir);
+    DataManager ProblemScene::Simulation(bool addNoise, double posNoise, double angleNoise) const {
+        DataManager manager;
         manager.frontCamPoseConstraint.SO3 = _cameras.front().rotation;
         manager.frontCamPoseConstraint.POS = _cameras.front().translation;
 
@@ -275,13 +277,17 @@ namespace ns_st20 {
         manager.cameraPoses.resize(_cameras.size());
         for (int i = 0; i < _cameras.size(); ++i) {
             auto pose = _cameras.at(i);
+            if (addNoise) {
+                // noise
+                Eigen::AngleAxisd angleAxis(aNoise(engine), Eigen::Vector3d(0, 0, 1));
 
-            // noise
-            Eigen::AngleAxisd angleAxis(aNoise(engine), Eigen::Vector3d(0, 0, 1));
-
-            manager.cameraPoses.at(i).SO3 = Eigen::Matrix3d(pose.rotation * angleAxis.toRotationMatrix());
-            manager.cameraPoses.at(i).POS =
-                    pose.translation + Eigen::Vector3d(pNoise(engine), pNoise(engine), pNoise(engine));
+                manager.cameraPoses.at(i).SO3 = Eigen::Matrix3d(pose.rotation * angleAxis.toRotationMatrix());
+                manager.cameraPoses.at(i).POS =
+                        pose.translation + Eigen::Vector3d(pNoise(engine), pNoise(engine), pNoise(engine));
+            } else {
+                manager.cameraPoses.at(i).SO3 = pose.rotation;
+                manager.cameraPoses.at(i).POS = pose.translation;
+            }
         }
 
         manager.cameraPoses.front() = manager.frontCamPoseConstraint;

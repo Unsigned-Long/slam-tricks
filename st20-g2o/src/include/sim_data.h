@@ -57,11 +57,14 @@ namespace ns_st20 {
 
         std::shared_ptr<ns_viewer::SceneViewer> viewer;
 
-        explicit DataManager(const std::string &dir) : viewer(new ns_viewer::SceneViewer(dir)) {
+    public:
+        void Run(const std::string &dir, const std::string &winName) {
+            viewer = std::make_shared<ns_viewer::SceneViewer>(dir);
+            viewer->SetWindowName(winName);
             viewer->RunMultiThread();
+            DrawScene();
         }
 
-    public:
         void DrawScene() {
             viewer->Lock();
             // cameras
@@ -92,6 +95,10 @@ namespace ns_st20 {
             viewer->Lock();
             viewer->RemoveEntities();
             viewer->UnLock();
+        }
+
+        static void Evaluate(const DataManager &data1, const DataManager &data2) {
+            // TODO
         }
 
     public:
@@ -160,7 +167,8 @@ namespace ns_st20 {
 
         void ShowFeatures();
 
-        [[nodiscard]] DataManager Simulation(double posNoise, double angleNoise, const std::string &dir) const;
+        [[nodiscard]] DataManager
+        Simulation(bool addNoise, double posNoise = 1.0, double angleNoise = 1.0) const;
 
         ~ProblemScene() override;
 

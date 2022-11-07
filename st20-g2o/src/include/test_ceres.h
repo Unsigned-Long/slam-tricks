@@ -95,7 +95,7 @@ namespace ns_st20 {
 
     };
 
-    static void SolveWithDynamicAutoDiff(DataManager &dataManager, bool countTime) {
+    static void SolveWithCeresDynamicAutoDiff(DataManager &dataManager, bool countTime) {
         if (!countTime) {
             LOG_INFO("press any key to start the process...")
             std::cin.get();
@@ -146,7 +146,7 @@ namespace ns_st20 {
         ceres::Solver::Summary summary;
 
         ceres::Solve(options, &problem, &summary);
-        LOG_PROCESS(timer.last_elapsed("SolveWithDynamicAutoDiff"))
+        LOG_PROCESS(timer.last_elapsed("SolveWithCeresDynamicAutoDiff"))
 
         LOG_PLAINTEXT(summary.BriefReport())
     }
