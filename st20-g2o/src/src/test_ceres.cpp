@@ -11,8 +11,8 @@ int main(int argc, char **argv) {
     // problemScene.ShowFeatureAt(10);
     // problemScene.ShowCameras();
     // problemScene.ShowFeatures();
-    auto simData = problemScene.Simulation();
-    // simData.Show("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
+    auto simData = problemScene.Simulation(0.3f, 30.0f);
+     simData.Show("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
     LOG_INFO("Hello, world!")
     return 0;
 }

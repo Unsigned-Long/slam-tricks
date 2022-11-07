@@ -238,13 +238,13 @@ namespace ns_st20 {
         }
     }
 
-    DataManager ProblemScene::Simulation() const {
+    DataManager ProblemScene::Simulation(double posNoise, double angleNoise) const {
         DataManager manager;
-        manager.firCameraPoseConstraint.SO3 = _cameras.front().rotation;
-        manager.firCameraPoseConstraint.POS = _cameras.front().translation;
+        manager.frontCamPoseConstraint.SO3 = _cameras.front().rotation;
+        manager.frontCamPoseConstraint.POS = _cameras.front().translation;
 
-        manager.lastCameraPoseConstraint.SO3 = _cameras.back().rotation;
-        manager.lastCameraPoseConstraint.POS = _cameras.back().translation;
+        manager.backCamPoseConstraint.SO3 = _cameras.back().rotation;
+        manager.backCamPoseConstraint.POS = _cameras.back().translation;
 
         manager.landmarks.resize(this->_landmarks->size());
         for (int i = 0; i < _landmarks->size(); ++i) {
@@ -265,13 +265,38 @@ namespace ns_st20 {
             }
         }
 
+        std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+        std::normal_distribution<double> pNoise(0.0, posNoise);
+        std::normal_distribution<double> aNoise(0.0, angleNoise / 180.0 * M_PI);
+
         manager.cameraPoses.resize(_cameras.size());
         for (int i = 0; i < _cameras.size(); ++i) {
             auto pose = _cameras.at(i);
-            // noise
 
-            manager.cameraPoses.at(i).SO3 = pose.rotation;
-            manager.cameraPoses.at(i).POS = pose.translation;
+            // noise
+            Eigen::AngleAxisd angleAxis(aNoise(engine), Eigen::Vector3d(0, 0, 1));
+
+            manager.cameraPoses.at(i).SO3 = Eigen::Matrix3d(pose.rotation * angleAxis.toRotationMatrix());
+            manager.cameraPoses.at(i).POS =
+                    pose.translation + Eigen::Vector3d(pNoise(engine), pNoise(engine), pNoise(engine));
+        }
+
+        manager.cameraPoses.front() = manager.frontCamPoseConstraint;
+        manager.cameraPoses.back() = manager.backCamPoseConstraint;
+
+        // triangulate the landmarks
+        for (auto &landmark: manager.landmarks) {
+            ceres::Problem problem;
+
+            for (const auto &feature: landmark.features) {
+                const auto WtoC = manager.cameraPoses.at(feature.first).inverse();
+                auto costFunc = Triangulation::Create(WtoC, feature.second);
+                problem.AddResidualBlock(costFunc, nullptr, landmark.landmark.data());
+            }
+
+            ceres::Solver::Options options;
+            ceres::Solver::Summary summary;
+            ceres::Solve(options, &problem, &summary);
         }
 
         return manager;

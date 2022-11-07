@@ -5,41 +5,53 @@
 #ifndef ST20_G2O_SIM_DATA_H
 #define ST20_G2O_SIM_DATA_H
 
+#include <utility>
+
 #include "slam-scene-viewer/scene_viewer.h"
 #include "sophus/se3.hpp"
+#include "ceres/ceres.h"
 
 namespace ns_st20 {
     template<typename T>
     using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
+    struct OptPose {
+    public:
+        Sophus::SO3d SO3;
+        Eigen::Vector3d POS;
+
+        OptPose(const Sophus::SO3d &so3 = Sophus::SO3d(), const Eigen::Vector3d &pos = Eigen::Vector3d::Zero())
+                : SO3(so3), POS(pos) {}
+
+        OptPose inverse() const {
+            return OptPose(SO3.inverse(), -(SO3.inverse() * POS));
+        }
+
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+
+    struct LandMark {
+    public:
+        Eigen::Vector3d landmark;
+        ns_viewer::Colour color;
+        // indexed by camera index
+        aligned_vector<std::pair<std::size_t, Eigen::Vector2d>> features;
+
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    };
+
     struct DataManager {
     public:
-        struct OptPose {
-        public:
-            Sophus::SO3d SO3;
-            Eigen::Vector3d POS;
-        public:
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        };
-
-        struct LandMark {
-        public:
-            Eigen::Vector3d landmark;
-            ns_viewer::Colour color;
-            // indexed by camera index
-            aligned_vector<std::pair<std::size_t, Eigen::Vector2d>> features;
-
-        public:
-            EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        };
 
         aligned_vector<OptPose> cameraPoses;
 
         aligned_vector<LandMark> landmarks;
 
         // constraints
-        OptPose firCameraPoseConstraint;
-        OptPose lastCameraPoseConstraint;
+        OptPose frontCamPoseConstraint;
+        OptPose backCamPoseConstraint;
 
     public:
         void Show(const std::string &dir) const {
@@ -70,8 +82,34 @@ namespace ns_st20 {
     };
 
     struct Triangulation {
+    private:
+        const OptPose WtoC;
+        const Eigen::Vector2d feature;
+
     public:
-        Triangulation();
+        Triangulation(OptPose WtoC, Eigen::Vector2d feature)
+                : WtoC(std::move(WtoC)), feature(std::move(feature)) {}
+
+        static auto Create(const OptPose &WtoC, const Eigen::Vector2d &feature) {
+            return new ceres::AutoDiffCostFunction<Triangulation, 2, 3>(
+                    new Triangulation(WtoC, feature));
+        }
+
+    public:
+        template<typename T>
+        bool operator()(const T *const pInW, T *residuals) const {
+            // get params
+            Eigen::Map<const Sophus::Vector3<T>> p(pInW);
+
+            // trans
+            Sophus::Vector3<T> pInC = WtoC.SO3 * p + WtoC.POS;
+            pInC = pInC / pInC(2);
+
+            // compute residuals
+            Eigen::Map<Sophus::Vector2<T>> residualsMap(residuals);
+            residualsMap = feature.template cast<T>() - pInC.block(0, 0, 2, 1);
+            return true;
+        }
     };
 
     class ProblemScene : public ns_viewer::SceneViewer {
@@ -101,7 +139,7 @@ namespace ns_st20 {
 
         void ShowFeatures();
 
-        [[nodiscard]] DataManager Simulation() const;
+        [[nodiscard]] DataManager Simulation(double posNoise, double angleNoise) const;
 
         ~ProblemScene() override;
 
