@@ -3,6 +3,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(SlamSceneViewer_DIR /home/csl/CppWorks/artwork/slam-tricks/thirdparty/slam-scene-viewer-build)
 
 find_package(SlamSceneViewer)
+find_package(Sophus)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
@@ -18,4 +19,5 @@ add_executable(${PROJECT_NAME}_ceres ${CMAKE_CURRENT_SOURCE_DIR}/src/test_ceres.
 target_link_libraries(
         ${PROJECT_NAME}_ceres PRIVATE
         SlamSceneViewer::SlamSceneViewer
+        Sophus::Sophus
 )

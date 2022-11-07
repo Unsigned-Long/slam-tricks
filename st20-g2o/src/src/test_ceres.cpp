@@ -7,10 +7,12 @@
 
 int main(int argc, char **argv) {
     ns_st20::ProblemScene problemScene("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
-//     problemScene.ShowCameraAt(10);
-//     problemScene.ShowFeatureAt(10);
-//    problemScene.ShowCameras();
-    problemScene.ShowFeatures();
+    // problemScene.ShowCameraAt(10);
+    // problemScene.ShowFeatureAt(10);
+    // problemScene.ShowCameras();
+    // problemScene.ShowFeatures();
+    auto simData = problemScene.Simulation();
+    // simData.Show("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
     LOG_INFO("Hello, world!")
     return 0;
 }

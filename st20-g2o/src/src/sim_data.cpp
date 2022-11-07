@@ -11,7 +11,7 @@ namespace ns_st20 {
 
     ProblemScene::ProblemScene(std::string sceneShotSaveDir)
             : ns_viewer::SceneViewer(std::move(sceneShotSaveDir)),
-              _features(new pcl::PointCloud<pcl::PointXYZRGBA>()) {
+              _landmarks(new pcl::PointCloud<pcl::PointXYZRGBA>()) {
         CreateScene();
         CreateTrajectory();
         CreateMeasurements();
@@ -32,13 +32,13 @@ namespace ns_st20 {
             AddCubePlane(item, true);
 
             auto newFeatures = item.GenerateFeatures(100, ns_viewer::CubePlane::Face::FRONT, 0.4f);
-            _features->points.resize(_features->size() + newFeatures->size());
+            _landmarks->points.resize(_landmarks->size() + newFeatures->size());
             std::copy_n(
                     newFeatures->points.cbegin(), newFeatures->points.size(),
-                    _features->points.end() - static_cast<int>(newFeatures->size())
+                    _landmarks->points.end() - static_cast<int>(newFeatures->size())
             );
         }
-        AddFeatures(_features);
+        AddFeatures(_landmarks);
     }
 
     void ProblemScene::CreateTrajectory() {
@@ -74,7 +74,7 @@ namespace ns_st20 {
                 rotMatrix.col(2) = zAxis;
 
                 ns_viewer::Posed pose(rotMatrix, trans);
-                _cameraTraj.push_back(pose);
+                _cameras.push_back(pose);
                 AddCamera(pose.cast<float>(), ns_viewer::Colour(1.0f, 0.0f, 0.0f, 0.2f));
             }
 
@@ -95,16 +95,16 @@ namespace ns_st20 {
     ProblemScene::~ProblemScene() = default;
 
     void ProblemScene::ShowCameraAt(std::size_t cameraIdx) {
-        if (cameraIdx >= _cameraTraj.size()) {
+        if (cameraIdx >= _cameras.size()) {
             return;
         }
         ns_viewer::SceneViewer::RunMultiThread();
 
-        auto names = AddCamera(_cameraTraj.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
-        const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
+        auto names = AddCamera(_cameras.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
+        const auto cameraPos = _cameras.at(cameraIdx).translation.cast<float>();
 
-        for (const auto &featureIdx: _cameraFeatureVec.at(cameraIdx)) {
-            const auto feature = _features->at(featureIdx);
+        for (const auto &featureIdx: _cameraLandmarkVec.at(cameraIdx)) {
+            const auto feature = _landmarks->at(featureIdx);
             AddLine(
                     {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
                     ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f, feature.a / 255.0f)
@@ -114,14 +114,14 @@ namespace ns_st20 {
     }
 
     void ProblemScene::CreateMeasurements() {
-        _featureCamerasVec.resize(_features->size());
-        _cameraFeatureVec.resize(_cameraTraj.size());
+        _landmarkCameraVec.resize(_landmarks->size());
+        _cameraLandmarkVec.resize(_cameras.size());
 
-        for (int cameraIdx = 0; cameraIdx < _cameraTraj.size(); ++cameraIdx) {
-            const auto &CtoW = _cameraTraj.at(cameraIdx);
+        for (int cameraIdx = 0; cameraIdx < _cameras.size(); ++cameraIdx) {
+            const auto &CtoW = _cameras.at(cameraIdx);
             auto WtoC = CtoW.inverse();
-            for (int featureIdx = 0; featureIdx < _features->size(); ++featureIdx) {
-                const auto &pInW = _features->at(featureIdx);
+            for (int featureIdx = 0; featureIdx < _landmarks->size(); ++featureIdx) {
+                const auto &pInW = _landmarks->at(featureIdx);
                 const auto pInC = WtoC.trans(Eigen::Vector3d(pInW.x, pInW.y, pInW.z));
                 if (pInC(2) < 0.0) {
                     continue;
@@ -129,50 +129,54 @@ namespace ns_st20 {
                 const auto pInCamPlane = pInC / pInC(2);
                 if (std::abs(pInCamPlane.x()) < CAM_PLANE_HALF_WIDTH &&
                     std::abs(pInCamPlane.y()) < CAM_PLANE_HALF_HEIGHT) {
-                    _featureCamerasVec.at(featureIdx).push_back(cameraIdx);
-                    _cameraFeatureVec.at(cameraIdx).push_back(featureIdx);
+                    pcl::PointXY p{};
+                    p.x = pInCamPlane(0), p.y = pInCamPlane(1);
+
+                    _landmarkCameraVec.at(featureIdx).push_back({cameraIdx, p});
+                    _cameraLandmarkVec.at(cameraIdx).push_back(featureIdx);
                 }
             }
         }
 
         auto featureCameraMinMax = std::minmax_element(
-                _featureCamerasVec.cbegin(), _featureCamerasVec.cend(),
-                [](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
+                _landmarkCameraVec.cbegin(), _landmarkCameraVec.cend(),
+                [](const std::vector<std::pair<std::size_t, pcl::PointXY>> &idx1,
+                   const std::vector<std::pair<std::size_t, pcl::PointXY>> &idx2) {
                     return idx1.size() < idx2.size();
                 }
         );
         auto cameraFeatureMinMax = std::minmax_element(
-                _cameraFeatureVec.cbegin(), _cameraFeatureVec.cend(),
+                _cameraLandmarkVec.cbegin(), _cameraLandmarkVec.cend(),
                 [](const std::vector<std::size_t> &idx1, const std::vector<std::size_t> &idx2) {
                     return idx1.size() < idx2.size();
                 }
         );
-        LOG_PLAINTEXT("Feature count: ", _features->points.size())
+        LOG_PLAINTEXT("Landmark count: ", _landmarks->points.size())
         LOG_PLAINTEXT(
-                "Feature tracked by cameras: min('idx': ", featureCameraMinMax.first - _featureCamerasVec.cbegin(),
+                "Landmark tracked by cameras: min('idx': ", featureCameraMinMax.first - _landmarkCameraVec.cbegin(),
                 ", 'num': ", featureCameraMinMax.first->size(), "), max('idx': ",
-                featureCameraMinMax.second - _featureCamerasVec.cbegin(),
+                featureCameraMinMax.second - _landmarkCameraVec.cbegin(),
                 ", 'num': ", featureCameraMinMax.second->size(), ")."
         )
         LOG_ENDL()
-        LOG_PLAINTEXT("Camera count: ", _cameraTraj.size())
+        LOG_PLAINTEXT("Camera count: ", _cameras.size())
         LOG_PLAINTEXT(
-                "Camera track features: min('idx': ", cameraFeatureMinMax.first - _cameraFeatureVec.cbegin(),
+                "Camera track landmarks: min('idx': ", cameraFeatureMinMax.first - _cameraLandmarkVec.cbegin(),
                 ", 'num': ", cameraFeatureMinMax.first->size(), "), max('idx': ",
-                cameraFeatureMinMax.second - _cameraFeatureVec.cbegin(),
+                cameraFeatureMinMax.second - _cameraLandmarkVec.cbegin(),
                 ", 'num': ", cameraFeatureMinMax.second->size(), ")."
         )
     }
 
     void ProblemScene::ShowFeatureAt(std::size_t featureIdx) {
-        if (featureIdx >= _features->size()) {
+        if (featureIdx >= _landmarks->size()) {
             return;
         }
         ns_viewer::SceneViewer::RunMultiThread();
 
-        const auto feature = _features->at(featureIdx);
-        for (const auto &cameraIdx: _featureCamerasVec.at(featureIdx)) {
-            const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
+        const auto feature = _landmarks->at(featureIdx);
+        for (const auto &cameraFeatureIdx: _landmarkCameraVec.at(featureIdx)) {
+            const auto cameraPos = _cameras.at(cameraFeatureIdx.first).translation.cast<float>();
             AddLine(
                     {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
                     ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f, feature.a / 255.0f)
@@ -183,16 +187,16 @@ namespace ns_st20 {
     void ProblemScene::ShowCameras() {
         ns_viewer::SceneViewer::RunMultiThread();
         std::vector<std::string> cameraNames, lineNames;
-        for (int cameraIdx = 0; cameraIdx < _cameraTraj.size() && !_viewer->wasStopped(); ++cameraIdx) {
+        for (int cameraIdx = 0; cameraIdx < _cameras.size() && !_viewer->wasStopped(); ++cameraIdx) {
             Lock();
             RemoveEntities({cameraNames, lineNames});
             cameraNames.clear(), lineNames.clear();
 
             // add camera and lines
-            cameraNames = AddCamera(_cameraTraj.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
-            const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
-            for (const auto &featureIdx: _cameraFeatureVec.at(cameraIdx)) {
-                const auto feature = _features->at(featureIdx);
+            cameraNames = AddCamera(_cameras.at(cameraIdx).cast<float>(), ns_viewer::Colour::Red());
+            const auto cameraPos = _cameras.at(cameraIdx).translation.cast<float>();
+            for (const auto &featureIdx: _cameraLandmarkVec.at(cameraIdx)) {
+                const auto feature = _landmarks->at(featureIdx);
                 auto names = AddLine(
                         {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
                         ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f,
@@ -208,20 +212,20 @@ namespace ns_st20 {
     void ProblemScene::ShowFeatures() {
         ns_viewer::SceneViewer::RunMultiThread();
 
-        std::uniform_int_distribution<std::size_t> idxGen(0, _features->size() - 1);
+        std::uniform_int_distribution<std::size_t> idxGen(0, _landmarks->size() - 1);
         std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
         std::vector<std::string> lineNames;
 
         while (!_viewer->wasStopped()) {
             auto featureIdx = idxGen(engine);
-            const auto feature = _features->at(featureIdx);
+            const auto feature = _landmarks->at(featureIdx);
 
             Lock();
             RemoveEntities(lineNames);
             lineNames.clear();
 
-            for (const auto &cameraIdx: _featureCamerasVec.at(featureIdx)) {
-                const auto cameraPos = _cameraTraj.at(cameraIdx).translation.cast<float>();
+            for (const auto &cameraFeatureIdx: _landmarkCameraVec.at(featureIdx)) {
+                const auto cameraPos = _cameras.at(cameraFeatureIdx.first).translation.cast<float>();
                 auto names = AddLine(
                         {feature.x, feature.y, feature.z}, {cameraPos(0), cameraPos(1), cameraPos(2)},
                         ns_viewer::Colour(feature.r / 255.0f, feature.g / 255.0f, feature.b / 255.0f,
@@ -232,6 +236,45 @@ namespace ns_st20 {
             UnLock();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
+    }
+
+    DataManager ProblemScene::Simulation() const {
+        DataManager manager;
+        manager.firCameraPoseConstraint.SO3 = _cameras.front().rotation;
+        manager.firCameraPoseConstraint.POS = _cameras.front().translation;
+
+        manager.lastCameraPoseConstraint.SO3 = _cameras.back().rotation;
+        manager.lastCameraPoseConstraint.POS = _cameras.back().translation;
+
+        manager.landmarks.resize(this->_landmarks->size());
+        for (int i = 0; i < _landmarks->size(); ++i) {
+            manager.landmarks.at(i).landmark = Eigen::Vector3d(
+                    _landmarks->at(i).x, _landmarks->at(i).y, _landmarks->at(i).z
+            );
+            manager.landmarks.at(i).color = ns_viewer::Colour(
+                    _landmarks->at(i).r / 255.0f, _landmarks->at(i).g / 255.0f,
+                    _landmarks->at(i).b / 255.0f, _landmarks->at(i).a / 255.0f
+            );
+            manager.landmarks.at(i).features.resize(_landmarkCameraVec.at(i).size());
+            for (int j = 0; j < _landmarkCameraVec.at(i).size(); ++j) {
+                manager.landmarks.at(i).features.at(j).first = _landmarkCameraVec.at(i).at(j).first;
+                manager.landmarks.at(i).features.at(j).second = Eigen::Vector2d(
+                        _landmarkCameraVec.at(i).at(j).second.x,
+                        _landmarkCameraVec.at(i).at(j).second.y
+                );
+            }
+        }
+
+        manager.cameraPoses.resize(_cameras.size());
+        for (int i = 0; i < _cameras.size(); ++i) {
+            auto pose = _cameras.at(i);
+            // noise
+
+            manager.cameraPoses.at(i).SO3 = pose.rotation;
+            manager.cameraPoses.at(i).POS = pose.translation;
+        }
+
+        return manager;
     }
 
 }
