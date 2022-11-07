@@ -53,13 +53,21 @@ namespace ns_st20 {
         OptPose frontCamPoseConstraint;
         OptPose backCamPoseConstraint;
 
+        std::vector<ns_viewer::CubePlane> box;
+
+        std::shared_ptr<ns_viewer::SceneViewer> viewer;
+
+        explicit DataManager(const std::string &dir) : viewer(new ns_viewer::SceneViewer(dir)) {
+            viewer->RunMultiThread();
+        }
+
     public:
-        void Show(const std::string &dir) const {
-            ns_viewer::SceneViewer viewer(dir);
+        void DrawScene() {
+            viewer->Lock();
             // cameras
             for (const auto &item: cameraPoses) {
                 ns_viewer::Posed pose(item.SO3.matrix(), item.POS);
-                viewer.AddCamera(pose.cast<float>(), ns_viewer::Colour(1.0f, 0.0f, 0.0f, 0.2f));
+                viewer->AddCamera(pose.cast<float>(), ns_viewer::Colour(1.0f, 0.0f, 0.0f, 0.2f));
             }
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>());
             cloud->points.resize(landmarks.size());
@@ -73,8 +81,17 @@ namespace ns_st20 {
                 cloud->points.at(i).b = landmark.color.b * 255.0f;
                 cloud->points.at(i).a = landmark.color.a * 255.0f;
             }
-            viewer.AddFeatures(cloud);
-            viewer.RunSingleThread();
+            viewer->AddFeatures(cloud);
+            for (const auto &item: box) {
+                viewer->AddCubePlane(item, true);
+            }
+            viewer->UnLock();
+        }
+
+        void RemoveScene() {
+            viewer->Lock();
+            viewer->RemoveEntities();
+            viewer->UnLock();
         }
 
     public:
@@ -125,11 +142,15 @@ namespace ns_st20 {
         // camera -> landmark
         std::vector<std::vector<std::size_t>> _cameraLandmarkVec;
 
+        std::vector<ns_viewer::CubePlane> _box;
+
         const double CAM_PLANE_HALF_WIDTH = 0.8;
         const double CAM_PLANE_HALF_HEIGHT = 0.6;
 
+        const int _featureCountPerFace;
+
     public:
-        explicit ProblemScene(std::string sceneShotSaveDir = "");
+        explicit ProblemScene(int featureCountPerFace = 100, std::string sceneShotSaveDir = "");
 
         void ShowCameraAt(std::size_t cameraIdx = 0);
 
@@ -139,7 +160,7 @@ namespace ns_st20 {
 
         void ShowFeatures();
 
-        [[nodiscard]] DataManager Simulation(double posNoise, double angleNoise) const;
+        [[nodiscard]] DataManager Simulation(double posNoise, double angleNoise, const std::string &dir) const;
 
         ~ProblemScene() override;
 

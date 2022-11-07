@@ -3,16 +3,15 @@
 //
 
 #include "test_ceres.h"
-#include "sim_data.h"
 
 int main(int argc, char **argv) {
-    ns_st20::ProblemScene problemScene("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
+    ns_st20::ProblemScene problemScene(100, "/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
     // problemScene.ShowCameraAt(10);
     // problemScene.ShowFeatureAt(10);
     // problemScene.ShowCameras();
     // problemScene.ShowFeatures();
-    auto simData = problemScene.Simulation(0.3f, 30.0f);
-     simData.Show("/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
-    LOG_INFO("Hello, world!")
+    auto simData = problemScene.Simulation(0.3f, 30.0f, "/home/csl/CppWorks/artwork/slam-tricks/st20-g2o/scene");
+    simData.DrawScene();
+    ns_st20::SolveWithDynamicAutoDiff(simData, false);
     return 0;
 }

@@ -9,8 +9,8 @@
 
 namespace ns_st20 {
 
-    ProblemScene::ProblemScene(std::string sceneShotSaveDir)
-            : ns_viewer::SceneViewer(std::move(sceneShotSaveDir)),
+    ProblemScene::ProblemScene(int featureCountPerFace, std::string sceneShotSaveDir)
+            : _featureCountPerFace(featureCountPerFace), ns_viewer::SceneViewer(std::move(sceneShotSaveDir)),
               _landmarks(new pcl::PointCloud<pcl::PointXYZRGBA>()) {
         CreateScene();
         CreateTrajectory();
@@ -31,13 +31,14 @@ namespace ns_st20 {
             item.color.a = 0.1f;
             AddCubePlane(item, true);
 
-            auto newFeatures = item.GenerateFeatures(100, ns_viewer::CubePlane::Face::FRONT, 0.4f);
+            auto newFeatures = item.GenerateFeatures(_featureCountPerFace, ns_viewer::CubePlane::Face::FRONT, 0.4f);
             _landmarks->points.resize(_landmarks->size() + newFeatures->size());
             std::copy_n(
                     newFeatures->points.cbegin(), newFeatures->points.size(),
                     _landmarks->points.end() - static_cast<int>(newFeatures->size())
             );
         }
+        _box = planes;
         AddFeatures(_landmarks);
     }
 
@@ -238,13 +239,15 @@ namespace ns_st20 {
         }
     }
 
-    DataManager ProblemScene::Simulation(double posNoise, double angleNoise) const {
-        DataManager manager;
+    DataManager ProblemScene::Simulation(double posNoise, double angleNoise, const std::string &dir) const {
+        DataManager manager(dir);
         manager.frontCamPoseConstraint.SO3 = _cameras.front().rotation;
         manager.frontCamPoseConstraint.POS = _cameras.front().translation;
 
         manager.backCamPoseConstraint.SO3 = _cameras.back().rotation;
         manager.backCamPoseConstraint.POS = _cameras.back().translation;
+
+        manager.box = _box;
 
         manager.landmarks.resize(this->_landmarks->size());
         for (int i = 0; i < _landmarks->size(); ++i) {
