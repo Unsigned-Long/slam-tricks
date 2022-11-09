@@ -10,6 +10,10 @@
 #include "slam-scene-viewer/scene_viewer.h"
 #include "sophus/se3.hpp"
 #include "ceres/ceres.h"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
 
 namespace ns_st20 {
     template<typename T>
@@ -99,6 +103,59 @@ namespace ns_st20 {
 
         static void Evaluate(const DataManager &data1, const DataManager &data2) {
             // TODO
+        }
+
+        cv::Mat Hessian() {
+            constexpr int scale = 10;
+            Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> jMat = Jacobian();
+            Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> hMat = jMat.transpose() * jMat;
+            cv::Mat img(hMat.rows(), hMat.cols(), CV_8UC3, cv::Scalar(255, 255, 255));
+            LOG_PLAINTEXT("hessian matrix size: ", img.size)
+            for (int i = 0; i < img.rows; ++i) {
+                auto *row = img.ptr<uchar>(i);
+                for (int j = 0; j < img.cols; ++j) {
+                    if (hMat(i, j) == 1) {
+                        row[j * img.channels() + 0] = 0;
+                        row[j * img.channels() + 1] = 0;
+                        row[j * img.channels() + 2] = 255;
+                    }
+                }
+            }
+            cv::resize(img, img, cv::Size(img.rows * scale, img.cols * scale), 0, 0,
+                       cv::InterpolationFlags::INTER_NEAREST);
+            for (int i = 0; i < img.rows; i += scale) {
+                img.row(i).setTo(cv::Scalar(0));
+            }
+            img.row(img.rows - 1).setTo(cv::Scalar(0));
+            for (int j = 0; j < img.cols; j += scale) {
+                img.col(j).setTo(cv::Scalar(0));
+            }
+            img.col(img.cols - 1).setTo(cv::Scalar(0));
+            return img;
+        }
+
+    protected:
+        [[nodiscard]] Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Jacobian() const {
+            int residuals = 0;
+            for (const auto &landmark: landmarks) {
+                residuals += landmark.features.size();
+            }
+            /**
+             *             | cameras | landmarks |
+             * residual        ...        ...
+             */
+            Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> jMat(residuals, cameraPoses.size() + landmarks.size());
+            jMat.setZero();
+            residuals = 0;
+            for (int i = 0; i < landmarks.size(); ++i) {
+                const auto &landmark = landmarks.at(i);
+                jMat(residuals, cameraPoses.size() + i) = 1;
+                for (const auto &[cameraIdx, feature]: landmark.features) {
+                    jMat(residuals, cameraIdx) = 1;
+                    ++residuals;
+                }
+            }
+            return jMat;
         }
 
     public:

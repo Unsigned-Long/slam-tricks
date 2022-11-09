@@ -279,9 +279,11 @@ namespace ns_st20 {
             auto pose = _cameras.at(i);
             if (addNoise) {
                 // noise
-                Eigen::AngleAxisd angleAxis(aNoise(engine), Eigen::Vector3d(0, 0, 1));
+                Eigen::AngleAxisd a1(aNoise(engine), Eigen::Vector3d(0, 0, 1));
+                Eigen::AngleAxisd a2(aNoise(engine), Eigen::Vector3d(0, 1, 0));
+                Eigen::AngleAxisd a3(aNoise(engine), Eigen::Vector3d(1, 0, 0));
 
-                manager.cameraPoses.at(i).SO3 = Eigen::Matrix3d(pose.rotation * angleAxis.toRotationMatrix());
+                manager.cameraPoses.at(i).SO3 = Eigen::Matrix3d(pose.rotation * (a1 * a2 * a3).toRotationMatrix());
                 manager.cameraPoses.at(i).POS =
                         pose.translation + Eigen::Vector3d(pNoise(engine), pNoise(engine), pNoise(engine));
             } else {
