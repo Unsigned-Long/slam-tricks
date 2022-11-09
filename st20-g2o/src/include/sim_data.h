@@ -114,7 +114,7 @@ namespace ns_st20 {
             for (int i = 0; i < img.rows; ++i) {
                 auto *row = img.ptr<uchar>(i);
                 for (int j = 0; j < img.cols; ++j) {
-                    if (hMat(i, j) == 1) {
+                    if (hMat(i, j) != 0) {
                         row[j * img.channels() + 0] = 0;
                         row[j * img.channels() + 1] = 0;
                         row[j * img.channels() + 2] = 255;
@@ -149,8 +149,8 @@ namespace ns_st20 {
             residuals = 0;
             for (int i = 0; i < landmarks.size(); ++i) {
                 const auto &landmark = landmarks.at(i);
-                jMat(residuals, cameraPoses.size() + i) = 1;
                 for (const auto &[cameraIdx, feature]: landmark.features) {
+                    jMat(residuals, cameraPoses.size() + i) = 1;
                     jMat(residuals, cameraIdx) = 1;
                     ++residuals;
                 }
