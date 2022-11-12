@@ -23,3 +23,16 @@ target_link_libraries(
         Sophus::Sophus
         ${CERES_LIBRARIES}
 )
+add_executable(ceres_bound ${CMAKE_CURRENT_SOURCE_DIR}/ceres_bound.cpp)
+
+target_include_directories(
+        ceres_bound
+        PRIVATE
+        ${CERES_INCLUDE_DIRS}
+)
+
+target_link_libraries(
+        ceres_bound
+        PRIVATE
+        ${CERES_LIBRARIES}
+)
