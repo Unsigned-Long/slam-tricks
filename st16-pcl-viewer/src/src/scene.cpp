@@ -4,6 +4,7 @@
 
 #include "scene.h"
 #include "thread"
+#include "pcl/io/pcd_io.h"
 
 namespace ns_st16 {
 
@@ -31,7 +32,7 @@ namespace ns_st16 {
             _features->resize(featureNum * 2);
             for (int i = 0; i < featureNum; ++i) {
                 {
-                    auto &pt = _features->at(i);
+                    auto &pt = _features->at(i * 2);
                     pt.r = pt.g = pt.b = 0.0f;
 
                     Eigen::Vector3f pos(0.5f * _xSpan, uy(engine), uz(engine));
@@ -182,7 +183,22 @@ namespace ns_st16 {
                     "Feature-" + std::to_string(i)
             );
         }
-
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        for (const auto &plane: planes) {
+            for (const auto &colorPoint: (*plane._features)) {
+                pcl::PointXYZ p;
+                p.x = colorPoint.x;
+                p.y = colorPoint.y;
+                p.z = colorPoint.z;
+                cloud->points.push_back(p);
+                LOG_VAR(p)
+            }
+        }
+        cloud->width = cloud->points.size();
+        cloud->height = 1;
+        pcl::io::savePCDFile(
+                "/home/csl/CppWorks/artwork/slam-tricks/st16-pcl-viewer/data/feature/features.pcd", *cloud
+        );
     }
 
     void Scene::KeyBoardCallBack(const pcl::visualization::KeyboardEvent &ev) {
