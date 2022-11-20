@@ -12,10 +12,11 @@
 #include "g2o/core/optimization_algorithm_levenberg.h"
 #include "g2o/core/linear_solver.h"
 #include "g2o/solvers/csparse/linear_solver_csparse.h"
+#include "g2o/types/sba/edge_project_xyz.h"
 
 namespace ns_st20 {
 
-    struct VertexHello : public g2o::BaseVertex<6, OptPose> {
+    struct VertexCamera : public g2o::BaseVertex<6, OptPose> {
         bool read(istream &is) override {
             return false;
         }
@@ -57,7 +58,8 @@ namespace ns_st20 {
 
     protected:
         void oplusImpl(const number_t *v) override {
-            _estimate = _estimate + Eigen::Vector3d(v[0], v[1], v[2]);
+            Eigen::Map<const Eigen::Vector3d> update(v);
+            _estimate += update;
         }
 
         void setToOriginImpl() override {
@@ -68,9 +70,10 @@ namespace ns_st20 {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };
 
-    struct EdgeProject : public g2o::BaseBinaryEdge<2, Eigen::Vector2d, VertexHello, VertexLandmark> {
+    struct EdgeProject : public g2o::BaseBinaryEdge<2, Eigen::Vector2d, VertexCamera, VertexLandmark> {
+
         void computeError() override {
-            auto cameraPoseVertex = dynamic_cast<VertexHello *>(_vertices[0]);
+            auto cameraPoseVertex = dynamic_cast<VertexCamera *>(_vertices[0]);
             auto landmarkVertex = dynamic_cast<VertexLandmark *>(_vertices[1]);
             auto pInCameraPlane = cameraPoseVertex->Project(landmarkVertex->estimate());
             _error = pInCameraPlane - _measurement;
@@ -95,6 +98,52 @@ namespace ns_st20 {
         auto solver = new g2o::OptimizationAlgorithmLevenberg(
                 g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>())
         );
+
+        g2o::SparseOptimizer optimizer;
+        optimizer.setAlgorithm(solver);
+        optimizer.setVerbose(true);
+
+        std::vector<VertexCamera *> cameraVertexVec;
+        std::vector<VertexLandmark *> landmarkVertexVec;
+        for (int i = 0; i < dataManager.cameraPoses.size(); ++i) {
+            const auto &camera = dataManager.cameraPoses.at(i);
+            auto cameraVertex = new VertexCamera();
+            cameraVertex->setId(i);
+            cameraVertex->setEstimate(camera);
+            optimizer.addVertex(cameraVertex);
+            cameraVertexVec.push_back(cameraVertex);
+        }
+        for (int i = 0; i < dataManager.landmarks.size(); ++i) {
+            const auto &landmark = dataManager.landmarks.at(i);
+            auto *landmarkVertex = new VertexLandmark();
+            landmarkVertex->setId(i + static_cast<int>(dataManager.cameraPoses.size()));
+            landmarkVertex->setEstimate(landmark.landmark);
+            landmarkVertex->setMarginalized(true);
+            optimizer.addVertex(landmarkVertex);
+            landmarkVertexVec.push_back(landmarkVertex);
+            for (auto [cameraIdx, point]: landmark.features) {
+                auto *e = new EdgeProject;
+                e->setVertex(0, cameraVertexVec.at(cameraIdx));
+                e->setVertex(1, landmarkVertex);
+                e->setMeasurement(point);
+                e->setInformation(Eigen::Matrix2d::Identity());
+                optimizer.addEdge(e);
+            }
+        }
+
+        optimizer.initializeOptimization();
+        optimizer.optimize(40);
+
+        for (int i = 0; i < dataManager.landmarks.size(); ++i) {
+            auto &landmark = dataManager.landmarks.at(i);
+            landmark.landmark = landmarkVertexVec[i]->estimate();
+        }
+
+        for (int i = 0; i < dataManager.cameraPoses.size(); ++i) {
+            auto camera = dataManager.cameraPoses.at(i);
+            camera = cameraVertexVec.at(i)->estimate();
+        }
+
     }
 }
 

@@ -31,7 +31,7 @@ namespace ns_st16 {
         CubePlane(float roll, float pitch, float yaw,
                   float dx, float dy, float dz,
                   float width, float height = 4.5f, float thickness = 0.1f,
-                  int featureNum = 20, const Colour &color = CubePlane::_colourWheel.GetUniqueColour());
+                  int featureNum = 10, const Colour &color = CubePlane::_colourWheel.GetUniqueColour());
 
     protected:
         static float DegreeToRadian(float deg) {

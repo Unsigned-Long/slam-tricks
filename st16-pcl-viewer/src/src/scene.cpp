@@ -164,12 +164,12 @@ namespace ns_st16 {
                         pcl::visualization::RenderingProperties::PCL_VISUALIZER_LINE_WIDTH,
                         4.0, "CubePlane-" + std::to_string(i)
                 );
-            } else {
-                _viewer->setShapeRenderingProperties(
-                        pcl::visualization::RenderingProperties::PCL_VISUALIZER_OPACITY,
-                        opacity, "CubePlane-" + std::to_string(i)
-                );
             }
+            _viewer->setShapeRenderingProperties(
+                    pcl::visualization::RenderingProperties::PCL_VISUALIZER_OPACITY,
+                    opacity, "CubePlane-" + std::to_string(i)
+            );
+
 
             _viewer->setShapeRenderingProperties(
                     pcl::visualization::RenderingProperties::PCL_VISUALIZER_COLOR,
