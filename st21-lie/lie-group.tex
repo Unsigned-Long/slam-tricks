@@ -1,0 +1,298 @@
+\documentclass[12pt, twocolumn]{article}
+
+% 引入相关的包
+\usepackage{amsmath, listings, fontspec, geometry, graphicx, ctex, color, subfigure}
+
+% 设定页面的尺寸和比例
+\geometry{left = 1.5cm, right = 1.5cm, top = 1.5cm, bottom = 1.5cm}
+
+% 设定两栏之间的间距
+\setlength\columnsep{1cm}
+
+% 设定字体，为代码的插入作准备
+\newfontfamily\ubuntu{Ubuntu Mono}
+
+% 头部信息
+\title{\normf{这是标题}}
+\author{\normf{陈烁龙}}
+\date{\normf{\today}}
+
+% 代码块的风格设定
+\lstset{
+	language=C++,
+	basicstyle=\scriptsize\ubuntu,
+	keywordstyle=\textbf,
+	stringstyle=\itshape,
+	commentstyle=\itshape,
+	numberstyle=\scriptsize\ubuntu,
+	showstringspaces=false,
+	numbers=left,
+	numbersep=8pt,
+	tabsize=2,
+	frame=single,
+	framerule=1pt,
+	columns=fullflexible,
+	breaklines,
+	frame=shadowbox, 
+	backgroundcolor=\color[rgb]{0.97,0.97,0.97}
+}
+
+% 字体族的定义
+\newcommand{\normf}{\kaishu}
+\newcommand{\boldf}{\heiti}
+\newcommand\keywords[1]{\boldf{关键词：} \normf #1}
+\newcommand{\lieal[1]}{\left\lfloor #1 \right\rfloor_\times}
+
+\begin{document}
+	
+	% 插入头部信息
+	\maketitle
+	% 换页
+	\thispagestyle{empty}
+	\clearpage
+	
+	% 插入目录、图、表并换页
+	\tableofcontents
+	\listoffigures
+	\listoftables
+	\setcounter{page}{1}
+	% 罗马字母形式的页码
+	\pagenumbering{roman}
+	\clearpage
+	% 从该页开始计数
+	\setcounter{page}{1}
+	% 阿拉伯数字形式的页码
+	\pagenumbering{arabic}
+	
+	\section{\normf{李代数的有用公式}}
+	\normf
+	以下公式对于左扰动和右扰动均成立。通过级数展开：
+	\begin{equation*}
+		\exp(\lieal[\boldsymbol{\theta}])=\boldsymbol{I}+\lieal[\boldsymbol{\theta}]+\frac{1}{2!}\lieal[\boldsymbol{\theta}]^2+\frac{1}{3!}\lieal[\boldsymbol{\theta}]^3+\dots
+	\end{equation*}
+	可以得到：
+	\begin{equation}
+		\exp(\lieal[\delta\boldsymbol{\theta}])=\boldsymbol{I}+\lieal[\delta\boldsymbol{\theta}]
+	\end{equation}
+	\begin{equation}
+	\exp(t\lieal[\boldsymbol{\theta}])=\exp(\lieal[t\boldsymbol{\theta}])=\exp(\lieal[\boldsymbol{\theta}])^t
+	\end{equation}
+	\begin{equation}
+		\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}^{-1}=\exp(\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1})
+	\end{equation}
+	\begin{equation}
+	\boldsymbol{R}^{-1}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}=\exp(\boldsymbol{R}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R})
+	\end{equation}
+	\begin{equation}
+		\boldsymbol{R}^{-1}=\boldsymbol{R}^T
+	\end{equation}
+	\begin{equation}
+	\boldsymbol{\mathrm{Ad}_R}\delta\boldsymbol{\theta}=(\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1})^{\vee}=\boldsymbol{R}\delta\boldsymbol{\theta}
+\end{equation}
+\begin{equation}
+	\boldsymbol{\mathrm{Ad}_R}^{-1}\delta\boldsymbol{\theta}=(\boldsymbol{R}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R})^{\vee}=\boldsymbol{R}^{-1}\delta\boldsymbol{\theta}
+\end{equation}
+
+
+	以下公式以右扰动模型为依据：
+	\begin{equation}	{\delta^{\boldsymbol{R}}\boldsymbol{\theta}}=\boldsymbol{Q}\ominus\boldsymbol{R}=\mathrm{Log}(\boldsymbol{R}^{-1}\boldsymbol{Q})
+	\end{equation}
+
+	以下公式以左扰动模型为依据：
+	\begin{equation}	{\delta^{\boldsymbol{I}}\boldsymbol{\theta}}=\boldsymbol{Q}\ominus\boldsymbol{R}=\mathrm{Log}(\boldsymbol{Q}\boldsymbol{R}^{-1})
+\end{equation}
+
+将右扰动(局部扰动)化为左扰动(全局扰动)的公：
+	\begin{equation}
+	\begin{cases}
+		\begin{aligned}
+				\boldsymbol{R}\exp(\lieal[\delta^{\boldsymbol{R}}\boldsymbol{\theta}])=&\exp(\boldsymbol{R}\lieal[\delta^{\boldsymbol{R}}\boldsymbol{\theta}]\boldsymbol{R}^{-1})\boldsymbol{R}\\
+				\lieal[\delta{^{\boldsymbol{I}}\boldsymbol{\theta}}]=&\boldsymbol{R}\lieal[\delta^{\boldsymbol{R}}\boldsymbol{\theta}]\boldsymbol{R}^{-1}
+			\end{aligned}
+	\end{cases}
+\end{equation}
+
+将左扰动化为右扰动的公式：
+\begin{equation}
+		\begin{cases}
+		\begin{aligned}
+	\exp(\lieal[\delta^{\boldsymbol{I}}\boldsymbol{\theta}])\boldsymbol{R}=&\boldsymbol{R}\exp(\boldsymbol{R}^{-1}\lieal[\delta^{\boldsymbol{I}}\boldsymbol{\theta}]\boldsymbol{R})\\
+	\lieal[\delta{^{\boldsymbol{R}}\boldsymbol{\theta}}]=&\boldsymbol{R}^{-1}\lieal[\delta^{\boldsymbol{I}}\boldsymbol{\theta}]\boldsymbol{R}
+				\end{aligned}
+\end{cases}
+\end{equation}
+
+注意：大写$\mathrm{LOG}$直接将旋转矩阵变成三维向量，小写$\log$将旋转矩阵变成李代数，$\mathrm{Exp}$和$\exp$有同样意韵，但是恰好相反：
+\begin{equation*}
+	\begin{cases}
+		\begin{aligned}
+				\exp(\lieal[\boldsymbol{\theta}])&=\mathrm{Exp}(\boldsymbol{\theta})\\
+				\log(\boldsymbol{R})^{\vee}&=\mathrm{Log}(\boldsymbol{R})
+		\end{aligned}
+	\end{cases}
+\end{equation*}
+\section{\normf{线性化}}
+\normf
+记非线性函数为$f(\boldsymbol{R})$，则对于右扰动模型：
+\begin{equation*}
+	f(\boldsymbol{R}\oplus\delta{^{\boldsymbol{R}}}\boldsymbol{\theta})=f(\boldsymbol{R})\oplus\frac{{^{\boldsymbol{R}}\partial f(\boldsymbol{R})}}{\partial \delta{^{\boldsymbol{R}}}\boldsymbol{\theta}}\delta{^{\boldsymbol{R}}}\boldsymbol{\theta}
+\end{equation*}
+对于左扰动模型：
+\begin{equation*}
+	f(\delta{^{\boldsymbol{I}}}\boldsymbol{\theta}\oplus\boldsymbol{R})=\frac{{^{\boldsymbol{I}}\partial f(\boldsymbol{R})}}{\partial \delta{^{\boldsymbol{I}}}\boldsymbol{\theta}}\delta{^{\boldsymbol{I}}}\boldsymbol{\theta}\oplus f(\boldsymbol{R})
+\end{equation*}
+且二者导数之间应有如下的关系(可以用来验证推导结果)：
+\begin{equation*}
+	\begin{aligned}
+		\boldsymbol{\mathrm{Ad}}_{f(\boldsymbol{R})}\frac{{^{\boldsymbol{R}}\partial f(\boldsymbol{R})}}{\partial \delta{^{\boldsymbol{R}}}\boldsymbol{\theta}}&=\frac{{^{\boldsymbol{I}}\partial f(\boldsymbol{R})}}{\partial \delta{^{\boldsymbol{I}}}\boldsymbol{\theta}}\boldsymbol{\mathrm{Ad}}_{\boldsymbol{R}}\\
+		\to\boldsymbol{\mathrm{Ad}}_{\boldsymbol{R}}&=\boldsymbol{R}
+	\end{aligned}
+\end{equation*}
+
+
+\section{\normf{公式应用}}
+注意，以下推导过程中$\boldsymbol{R}$、$\boldsymbol{Q}$为旋转矩阵，$\delta\boldsymbol{\theta}$为对旋转矩阵$\boldsymbol{R}$施加的扰动量，$\boldsymbol{p}$为点向量。
+\subsection{\normf{左扰动}}
+\begin{equation*}
+	\begin{aligned}
+		\frac{{^{\boldsymbol{I}}\partial \boldsymbol{R}}}{\partial \delta\boldsymbol{\theta}}&=\frac{\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}\ominus\boldsymbol{R}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}\boldsymbol{R}^{-1})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\lieal[\delta\boldsymbol{\theta}]))}{\delta\boldsymbol{\theta}}	\\&=\frac{\mathrm{LOG}(\mathrm{Exp}(\delta\boldsymbol{\theta}))}{\delta\boldsymbol{\theta}}=\boldsymbol{I}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+			\frac{^{\boldsymbol{I}}\partial\boldsymbol{R}^{-1}}{\partial \delta\boldsymbol{\theta}}&=\frac{(\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R})^{-1}\ominus\boldsymbol{R}^{-1}}{\delta\boldsymbol{\theta}}
+			\\&=\frac{\mathrm{Log}((\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R})^{-1}\boldsymbol{R})}{\delta\boldsymbol{\theta}}
+			\\&=\frac{\mathrm{Log}(\boldsymbol{R}^{-1}\exp(-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R})}{\delta\boldsymbol{\theta}}
+			\\&=\frac{\mathrm{Log}(\exp(-\boldsymbol{R}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}))}{\delta\boldsymbol{\theta}}
+			\\&=\frac{\mathrm{Log}(\mathrm{Exp}((-\boldsymbol{R}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R})^{\vee}))}{\delta\boldsymbol{\theta}}
+			\\&=\frac{(-\boldsymbol{R}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R})^{\vee}}{\delta\boldsymbol{\theta}}
+			\\&=\frac{-\boldsymbol{R}^{-1}\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=-\boldsymbol{R}^{-1}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{{^{\boldsymbol{I}}}\partial \boldsymbol{Rp}}{\partial \delta\boldsymbol{\theta}}&=\frac{\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Rp}-\boldsymbol{Rp}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(\boldsymbol{I}+\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Rp}-\boldsymbol{Rp}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\lieal[\delta\boldsymbol{\theta}]\boldsymbol{Rp}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{-\lieal[\boldsymbol{Rp}]\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=-\lieal[\boldsymbol{Rp}]
+	\end{aligned}
+\end{equation*}
+
+
+
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{I}}\partial \boldsymbol{R}^{-1}\boldsymbol{p}}{\partial \delta\boldsymbol{\theta}}&=\frac{(\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R})^{-1}\boldsymbol{p}-\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\boldsymbol{R}^{-1}\exp(-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{p}-\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\boldsymbol{R}^{-1}(\boldsymbol{I}-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{p}-\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{-\boldsymbol{R}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\boldsymbol{R}^{-1}\lieal[\boldsymbol{p}]\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=\boldsymbol{R}^{-1}\lieal[\boldsymbol{p}]
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{I}}\partial \boldsymbol{RQ}}{\partial \delta\boldsymbol{\theta}}&=\frac{\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{RQ}\ominus\boldsymbol{RQ}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{RQ}\boldsymbol{Q}^{-1}\boldsymbol{R}^{-1})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\lieal[\delta\boldsymbol{\theta}]))}{\delta\boldsymbol{\theta}}=\boldsymbol{I}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{I}}\partial \boldsymbol{R}^{-1}\boldsymbol{Q}}{\partial \delta\boldsymbol{\theta}}&=\frac{(\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R})^{-1}\boldsymbol{Q}\ominus\boldsymbol{R}^{-1}\boldsymbol{Q}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{R}^{-1}\exp(-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Q}\boldsymbol{Q}^{-1}\boldsymbol{R})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\boldsymbol{R}^{-1}\lieal[-\delta\boldsymbol{\theta}]\boldsymbol{R}))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(\boldsymbol{R}^{-1}\lieal[-\delta\boldsymbol{\theta}]\boldsymbol{R})^{\vee}}{\delta\boldsymbol{\theta}}=-\boldsymbol{R}^{-1}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{I}}\partial \boldsymbol{QR}}{\partial \delta\boldsymbol{\theta}}&=\frac{\boldsymbol{Q}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}\ominus\boldsymbol{QR}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{Q}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}\boldsymbol{R}^{-1}\boldsymbol{Q}^{-1})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{Q}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Q}^{-1})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\boldsymbol{Q}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{Q}^{-1}))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(\boldsymbol{Q}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{Q}^{-1})^{\vee}}{\delta\boldsymbol{\theta}}=\boldsymbol{Q}
+	\end{aligned}
+\end{equation*}
+\subsection{\normf{右扰动}}
+\begin{equation*}
+	\begin{aligned}
+		\frac{{^{\boldsymbol{R}}\partial \boldsymbol{R}}}{\partial \delta\boldsymbol{\theta}}&=\frac{\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}])\ominus\boldsymbol{R}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{R}^{-1}\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}]))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\lieal[\delta\boldsymbol{\theta}]))}{\delta\boldsymbol{\theta}}	\\&=\frac{\mathrm{LOG}(\mathrm{Exp}(\delta\boldsymbol{\theta}))}{\delta\boldsymbol{\theta}}=\boldsymbol{I}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{R}}\partial\boldsymbol{R}^{-1}}{\partial \delta\boldsymbol{\theta}}&=\frac{(\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}]))^{-1}\ominus\boldsymbol{R}^{-1}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{R}\exp(-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}^{-1})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(-\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1}))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\mathrm{Exp}((-\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1})^{\vee}))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(-\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1})^{\vee}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{-\boldsymbol{R}\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=-\boldsymbol{R}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{{^{\boldsymbol{R}}}\partial \boldsymbol{Rp}}{\partial \delta\boldsymbol{\theta}}&=\frac{\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{p}-\boldsymbol{Rp}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\boldsymbol{R}(\boldsymbol{I}+\lieal[\delta\boldsymbol{\theta}])\boldsymbol{p}-\boldsymbol{Rp}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{-\boldsymbol{R}\lieal[\boldsymbol{p}]\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=-\boldsymbol{R}\lieal[\boldsymbol{p}]
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{R}}\partial \boldsymbol{R}^{-1}\boldsymbol{p}}{\partial \delta\boldsymbol{\theta}}&=\frac{(\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}]))^{-1}\boldsymbol{p}-\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\exp(-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}^{-1}\boldsymbol{p}-\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(\boldsymbol{I}-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}^{-1}\boldsymbol{p}-\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{-\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1}\boldsymbol{p}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\lieal[\boldsymbol{R}^{-1}\boldsymbol{p}]\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=\lieal[\boldsymbol{R}^{-1}\boldsymbol{p}]
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{R}}\partial \boldsymbol{RQ}}{\partial \delta\boldsymbol{\theta}}&=\frac{\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Q}\ominus\boldsymbol{RQ}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{Q}^{-1}\boldsymbol{R}^{-1}\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Q})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{Q}^{-1}\exp(\lieal[\delta\boldsymbol{\theta}])\boldsymbol{Q})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\boldsymbol{Q}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{Q})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\mathrm{Exp}((\boldsymbol{Q}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{Q})^{\vee}))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(\boldsymbol{Q}^{-1}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{Q})^{\vee}}{\delta\boldsymbol{\theta}}=\boldsymbol{Q}^{-1}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{I}}\partial \boldsymbol{R}^{-1}\boldsymbol{Q}}{\partial \delta\boldsymbol{\theta}}&=\frac{(\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}]))^{-1}\boldsymbol{Q}\ominus\boldsymbol{R}^{-1}\boldsymbol{Q}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{Q}^{-1}\boldsymbol{R}\exp(-\lieal[\delta\boldsymbol{\theta}])\boldsymbol{R}^{-1}\boldsymbol{Q})}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(-\boldsymbol{Q}^{-1}\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1}\boldsymbol{Q}))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{(-\boldsymbol{Q}^{-1}\boldsymbol{R}\lieal[\delta\boldsymbol{\theta}]\boldsymbol{R}^{-1}\boldsymbol{Q})^{\vee}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{-\boldsymbol{Q}^{-1}\boldsymbol{R}\delta\boldsymbol{\theta}}{\delta\boldsymbol{\theta}}=-\boldsymbol{Q}^{-1}\boldsymbol{R}
+	\end{aligned}
+\end{equation*}
+\begin{equation*}
+	\begin{aligned}
+		\frac{^{\boldsymbol{R}}\partial \boldsymbol{QR}}{\partial \delta\boldsymbol{\theta}}&=\frac{\boldsymbol{Q}\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}])\ominus\boldsymbol{QR}}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\boldsymbol{R}^{-1}\boldsymbol{Q}^{-1}\boldsymbol{Q}\boldsymbol{R}\exp(\lieal[\delta\boldsymbol{\theta}]))}{\delta\boldsymbol{\theta}}
+		\\&=\frac{\mathrm{Log}(\exp(\lieal[\delta\boldsymbol{\theta}]))}{\delta\boldsymbol{\theta}}=\boldsymbol{I}
+	\end{aligned}
+\end{equation*}
+	\section{\normf{符号说明}}
+	符号$\lieal[\delta\boldsymbol{v}]$表示将向量$\delta\boldsymbol{v}$变换成反对称矩阵(从向量空间到李代数空间)。比如对于三维维空间旋转而言：
+		\begin{equation*}
+		\begin{cases}
+			\delta\boldsymbol{\theta}=\begin{pmatrix}
+				\delta\theta_x&\delta\theta_y&\delta\theta_z
+			\end{pmatrix}^T\\
+			\lieal[\delta\boldsymbol{\theta}]=\begin{pmatrix}
+				0&-\delta\theta_z&\delta\theta_y\\\delta\theta_z&0&-\delta\theta_x\\
+				-\delta\theta_y&\delta\theta_x&0
+			\end{pmatrix}
+		\end{cases}
+	\end{equation*}
+	事实上：
+	\begin{equation*}
+		\exp(\lieal[\delta\boldsymbol{\theta}])=\boldsymbol{I}+\lieal[\delta\boldsymbol{\theta}]=\boldsymbol{R}(\delta\boldsymbol{\theta})
+	\end{equation*}
+	正好对应了小角度旋转情况下的旋转矩阵。
+\end{document}
+
