@@ -1,0 +1,16 @@
+/docs/*.pdf
+/docs/*.dtmp
+/docs/*.bkp
+/docs/*.log
+/docs/*.out
+/docs/*.lof
+/docs/*.bbl
+/docs/*.blg
+/docs/*.aux
+/docs/*.lot
+/docs/*.gz
+/docs/*.toc
+
+.idea/*
+cmake-build-debug/*
+cmake-build-release/*
