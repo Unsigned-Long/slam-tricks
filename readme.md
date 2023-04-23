@@ -327,3 +327,13 @@ install(
     <img src="./st19-distortion/img/1667563231889769105.png" width="48%">
     <img src="./st19-distortion/img/1667563284155420541.png" width="48%">
 </figure>
+
+
+### 3.9 两视图几何
+
+纯视觉SLAM需要一个鲁棒的初始化过程，通常通过两个有一定基线距离的视图恢复出相对位姿。可以通过F矩阵恢复，也可以通过E矩阵或者H矩阵恢复，本处使用F矩阵恢复两视图位姿进行初始化，同时涉及三角化的步骤。
+
+<figure class="half">
+    <img src="./st22-two-view/img/1682223712607425623.png" width="48%">
+    <img src="./st22-two-view/img/1682232866030576577.png" width="48%">
+</figure>
