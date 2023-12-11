@@ -605,7 +605,13 @@
 			\bsm{R}&-\liehat{1}\cdot\bsm{t}\\
 			\bsm{0}&1
 			\end{bmatrix}
+	\qquad
+	\bsm{Ad}_{\bsm{M}}^{-1}=\begin{bmatrix}
+			 			\bsm{R}^\top&\bsm{R}^\top\cdot\liehat{1}\cdot\bsm{t}\\
+			 			\bsm{0}&1
+			 			\end{bmatrix}
 	\end{equation}
+	于是得到:
 	\begin{enumerate}
 	\item 右雅克比
 	\begin{equation}
@@ -703,9 +709,231 @@
 	\end{equation}
 	
 	\section{\normf 三维旋转群SO(3)}
-	
-	
-	
+	有：
+	\begin{equation}
+	\liehat{\bsm{\tau}}=\liehat{\bsm{\theta}}=\begin{bmatrix}
+	0&-\theta_z&\theta_y\\
+	\theta_z&0&-\theta_x\\
+	-\theta_y&\theta_x&0
+	\end{bmatrix}
+	\qquad
+	\bsm{Ad}_{\bsm{R}}\cdot\bsm{\theta}=\bsm{R}\cdot\bsm{\theta}
+	\qquad
+	\bsm{Ad}_{\bsm{R}}=\bsm{R}
+	\end{equation}
+		于是得到:
+	\begin{enumerate}
+	\item 右雅克比
+	\begin{equation}
+	\begin{gathered}
+	\bsm{J}_{\bsm{R}}^{\bsm{R}}=\bsm{I}_3
+	\qquad
+	\bsm{J}_{\bsm{R}}^{\bsm{R}^{-1}}=-\bsm{R}
+	\qquad
+	\bsm{J}_{\bsm{R}}^{\bsm{R}\cdot\bsm{Q}}=\bsm{Q}^\top
+	\qquad
+	\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}}=\bsm{I}_3
+	\qquad
+	\bsm{J}_{\bsm{R}}^{\bsm{R}^{-1}\cdot\bsm{Q}}=-\bsm{Q}^\top\cdot\bsm{R}
+	\\
+	\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}^{-1}}=-\bsm{R}
+	\qquad
+	\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}\cdot\bsm{P}}=\bsm{P}^\top
+	\qquad
+	\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}^{-1}\cdot\bsm{P}}=
+	-\bsm{P}^\top\cdot\bsm{R}
+	\end{gathered}
+	\end{equation}
+
+	\item 左雅克比
+	\begin{equation}
+	\begin{gathered}
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{R}}=\bsm{I}_3
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{R}^{-1}}=-\bsm{R}^\top
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{R}\cdot\bsm{Q}}=\bsm{I}_3
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}}=\bsm{Q}
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{R}^{-1}\cdot\bsm{Q}}=-\bsm{R}^\top
+	\\
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}^{-1}}=-\bsm{Q}\cdot\bsm{R}^\top
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}\cdot\bsm{P}}=\bsm{Q}
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{Q}\cdot\bsm{R}^{-1}\cdot\bsm{P}}=-\bsm{Q}\cdot\bsm{R}^\top
+	\end{gathered}
+	\end{equation}
+	\end{enumerate}
+	特别的，对于向量$\bsm{v}$的操作，有右雅克比矩阵：
+	\begin{equation}
+	\begin{aligned}
+	\bsm{J}_{\bsm{R}}^{\bsm{R}\cdot\bsm{v}}&=
+	\lim\frac{\left( \bsm{R}\oplus\bsm{\tau}\right) \cdot\bsm{v}- \bsm{R}\cdot\bsm{v}}{\bsm{\tau}}=
+	\lim\frac{\bsm{R}\cdot\Exp{\bsm{\tau}} \cdot\bsm{v}- \bsm{R}\cdot\bsm{v}}{\bsm{\tau}}
+	\\
+	&=\lim\frac{\bsm{R}\cdot\left( \bsm{I}+\liehat{\bsm{\tau}}\right)  \cdot\bsm{v}- \bsm{R}\cdot\bsm{v}}{\bsm{\tau}}
+	=\lim\frac{\bsm{R}\cdot\liehat{\bsm{\tau}}  \cdot\bsm{v}}{\bsm{\tau}}
+	=\lim\frac{-\bsm{R}\cdot\skewmat{\bsm{v}}  \cdot\bsm{\tau}}{\bsm{\tau}}
+	=-\bsm{R}\cdot\skewmat{\bsm{v}}
+	\end{aligned}
+	\end{equation}
+	和左雅克比矩阵：
+	\begin{equation}
+	\begin{aligned}
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{R}\cdot\bsm{v}}&=
+	\lim\frac{\left( \bsm{\tau}\oplus\bsm{R}\right) \cdot\bsm{v}- \bsm{R}\cdot\bsm{v}}{\bsm{\tau}}=
+	\lim\frac{\Exp{\bsm{\tau}} \cdot\bsm{R}\cdot\bsm{v}- \bsm{R}\cdot\bsm{v}}{\bsm{\tau}}
+	\\
+	&=\lim\frac{\left( \bsm{I}+\liehat{\bsm{\tau}}\right)  \cdot\bsm{R}\cdot\bsm{v}- \bsm{R}\cdot\bsm{v}}{\bsm{\tau}}
+	=\lim\frac{\liehat{\bsm{\tau}}  \cdot\bsm{R}\cdot\bsm{v}}{\bsm{\tau}}
+	=\lim\frac{-\skewmat{\bsm{R}\cdot\bsm{v}}\cdot\bsm{\tau}}{\bsm{\tau}}
+	=-\skewmat{\bsm{R}\cdot\bsm{v}}
+	\end{aligned}
+	\end{equation}
+	也可以通过如下推导得到：
+	\begin{equation}
+	^\mathcal{E}\bsm{J}_{\bsm{R}}^{\bsm{R}\cdot\bsm{v}}=
+	\bsm{Ad}_{f(\mathcal{X})}\cdot\frac{{^\mathcal{X}Df(\mathcal{X})}}{D\mathcal{X}}
+		\cdot\bsm{Ad}_{\mathcal{X}}^{-1}
+		=\bsm{I}_3\cdot\left(-\bsm{R}\cdot\skewmat{\bsm{v}} \right) \cdot \bsm{R}^\top
+		=-\skewmat{\bsm{R}\cdot\bsm{v}}
+	\end{equation}
+	\section{\normf 三维刚体运动群SE(3)}
+	有：
+	\begin{equation}
+	\bsm{M}=\begin{bmatrix}
+	\bsm{R}&\bsm{t}\\
+	\bsm{0}&1
+	\end{bmatrix}
+	\qquad
+	\liehat{\bsm{\tau}}=\begin{bmatrix}
+	\liehat{\bsm\theta}&\bsm{\rho}\\
+	\bsm{0}&0
+	\end{bmatrix}\in\mathfrak{se}(3)
+	\qquad
+	\bsm{\tau}=\begin{bmatrix}
+	\bsm{\rho}\\\bsm\theta
+	\end{bmatrix}\in\mathbb{R}^6
+	\qquad
+	\bsm{Ad}_{\bsm{M}}=\begin{bmatrix}
+	\bsm{R}&\liehat{\bsm{t}}\cdot\bsm{R}\\
+	\bsm{0}&\bsm{R}
+	\end{bmatrix}
+	\end{equation}
+	且有：
+	\begin{equation}
+	\bsm{M}^{-1}=\begin{bmatrix}
+	\bsm{R}^\top&-\bsm{R}^\top\cdot\bsm{t}\\
+	\bsm{0}&1
+	\end{bmatrix}
+		\qquad
+		\bsm{Ad}_{\bsm{M}}^{-1}=\begin{bmatrix}
+			\bsm{R}^\top&\liehat{\left( -\bsm{R}^\top\cdot\bsm{t}\right) }\cdot\bsm{R}^\top\\
+			\bsm{0}&\bsm{R}^\top
+			\end{bmatrix}
+		=\begin{bmatrix}
+					\bsm{R}^\top&-\bsm{R}^\top\cdot\skewmat{\bsm{t}}\\
+					\bsm{0}&\bsm{R}^\top
+					\end{bmatrix}
+	\end{equation}
+	于是得到:
+	\begin{enumerate}
+	\item 右雅克比
+	\begin{equation}
+	\begin{gathered}
+	\bsm{J}_{\bsm{M}}^{\bsm{M}}=\bsm{I}_4
+	\qquad
+	\bsm{J}_{\bsm{M}}^{\bsm{M}^{-1}}=-\bsm{Ad}_{\bsm{M}}
+	\qquad
+	\bsm{J}_{\bsm{M}}^{\bsm{M}\cdot\bsm{N}}=\bsm{Ad}_{\bsm{N}}^{-1}
+	\qquad
+	\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}}=\bsm{I}_4
+	\qquad
+	\bsm{J}_{\bsm{M}}^{\bsm{M}^{-1}\cdot\bsm{N}}=-\bsm{Ad}_{\bsm{N}}^{-1}\cdot\bsm{Ad}_{\bsm{M}}
+	\\
+	\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}^{-1}}=-\bsm{Ad}_{\bsm{M}}
+	\qquad
+	\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}\cdot\bsm{L}}=\bsm{Ad}_{\bsm{L}}^{-1}
+	\qquad
+	\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}^{-1}\cdot\bsm{L}}=
+	-\bsm{Ad}_{\bsm{L}}^{-1}\cdot\bsm{Ad}_{\bsm{M}}
+	\end{gathered}
+	\end{equation}
+
+	\item 左雅克比
+	\begin{equation}
+	\begin{gathered}
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{M}}=\bsm{I}_4
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{M}^{-1}}=-\bsm{Ad}_{\bsm{M}}^{-1}
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{M}\cdot\bsm{N}}=\bsm{I}_4
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}}=\bsm{Ad}_{\bsm{N}}
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{M}^{-1}\cdot\bsm{N}}=-\bsm{Ad}_{\bsm{M}}^{-1}
+	\\
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}^{-1}}=-\bsm{Ad}_{\bsm{N}}\cdot\bsm{Ad}_{\bsm{M}}^{-1}
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}\cdot\bsm{L}}=\bsm{Ad}_{\bsm{N}}
+	\qquad
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{N}\cdot\bsm{M}^{-1}\cdot\bsm{L}}=-\bsm{Ad}_{\bsm{N}}\cdot\bsm{Ad}_{\bsm{M}}^{-1}
+	\end{gathered}
+	\end{equation}
+	\end{enumerate}
+	特别的，对于点$\bsm{p}$的操作，有右雅克比矩阵：
+	\begin{equation}
+	\begin{aligned}
+	\bsm{J}_{\bsm{M}}^{\bsm{M}\cdot\bsm{p}}&=
+	\lim\frac{\left( \bsm{M}\oplus\bsm{\tau}\right) \cdot\bsm{p}- \bsm{M}\cdot\bsm{p}}{\bsm{\tau}}=
+	\lim\frac{\bsm{M}\cdot\Exp{\bsm{\tau}} \cdot\bsm{p}- \bsm{M}\cdot\bsm{p}}{\bsm{\tau}}
+	=\lim\frac{\bsm{M}\cdot\left( \bsm{I}+\liehat{\bsm{\tau}}\right)  \cdot\bsm{p}- \bsm{M}\cdot\bsm{p}}{\bsm{\tau}}
+	\\&
+	=\lim\frac{\bsm{M}\cdot\liehat{\bsm{\tau}}  \cdot\bsm{p}}{\bsm{\tau}}
+	=\lim\frac{\begin{bmatrix}
+	\bsm{R}&\bsm{t}
+	\end{bmatrix}\cdot\liehat{\bsm{\tau}}  \cdot	\begin{bmatrix}
+	\bsm{p}\\1
+	\end{bmatrix}}{\bsm{\tau}}
+	=\begin{bmatrix}
+	\bsm{R}&-\bsm{R}\cdot\skewmat{\bsm{p}}
+	\end{bmatrix}_{3\times 6}
+	\end{aligned}
+	\end{equation}
+	和左雅克比矩阵：
+	\begin{equation}
+	\begin{aligned}
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{M}\cdot\bsm{p}}&=
+	\lim\frac{\liehat{\bsm{\tau}}  \cdot\bsm{M}\cdot\bsm{p}}{\bsm{\tau}}
+		=\lim\frac{\liehat{\bsm{\tau}}  \cdot	\begin{bmatrix}
+		\bsm{R}&\bsm{t}\\\bsm{0}&1
+		\end{bmatrix}\cdot\begin{bmatrix}
+			\bsm{p}\\1
+			\end{bmatrix}}{\bsm{\tau}}
+		=\begin{bmatrix}
+		\bsm{I}_3&-\skewmat{\bsm{R}\cdot\bsm{p}+\bsm{t}}
+		\end{bmatrix}_{3\times 6}
+	\end{aligned}
+	\end{equation}
+	也可以通过如下推导得到：
+	\begin{equation}
+	^\mathcal{E}\bsm{J}_{\bsm{M}}^{\bsm{M}\cdot\bsm{p}}=
+	\bsm{Ad}_{f(\mathcal{X})}\cdot\frac{{^\mathcal{X}Df(\mathcal{X})}}{D\mathcal{X}}
+		\cdot\bsm{Ad}_{\mathcal{X}}^{-1}
+		=\bsm{I}_3\cdot
+		\begin{bmatrix}
+			\bsm{R}&-\bsm{R}\cdot\skewmat{\bsm{p}}
+			\end{bmatrix}
+		 \cdot\begin{bmatrix}
+		 					\bsm{R}^\top&-\bsm{R}^\top\cdot\skewmat{\bsm{t}}\\
+		 					\bsm{0}&\bsm{R}^\top
+		 					\end{bmatrix}=
+		\begin{bmatrix}
+		\bsm{I}_3&-\skewmat{\bsm{R}\cdot\bsm{p}+\bsm{t}}
+		\end{bmatrix}
+	\end{equation}
 	
 	\newpage
 	\bibliographystyle{IEEEtran}
