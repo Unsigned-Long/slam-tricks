@@ -442,7 +442,7 @@
 	\sin\theta&\cos\theta
 	\end{bmatrix}
 	\qquad
-	\liehat{\bsm{\tau}}=\liehat{\theta}=\begin{bmatrix}
+	\liehat{\bsm{\tau}}=\liehat{\theta}=\skewmat{{\theta}}=\begin{bmatrix}
 	0&-\theta\\
 	\theta&0
 	\end{bmatrix}
@@ -555,7 +555,7 @@
 	\bsm{0}&1
 	\end{bmatrix}
 	\qquad
-	\liehat{\bsm{\tau}}=\begin{bmatrix}
+	\liehat{\bsm{\tau}}=\skewmat{\bsm{\tau}}=\begin{bmatrix}
 	\liehat{\theta}&\bsm{\rho}\\
 	\bsm{0}&0
 	\end{bmatrix}\in\mathfrak{se}(2)
@@ -711,7 +711,7 @@
 	\section{\normf 三维旋转群SO(3)}
 	有：
 	\begin{equation}
-	\liehat{\bsm{\tau}}=\liehat{\bsm{\theta}}=\begin{bmatrix}
+	\liehat{\bsm{\tau}}=\liehat{\bsm{\theta}}=\skewmat{\bsm{\theta}}=\begin{bmatrix}
 	0&-\theta_z&\theta_y\\
 	\theta_z&0&-\theta_x\\
 	-\theta_y&\theta_x&0
@@ -808,7 +808,7 @@
 	\bsm{0}&1
 	\end{bmatrix}
 	\qquad
-	\liehat{\bsm{\tau}}=\begin{bmatrix}
+	\liehat{\bsm{\tau}}=\skewmat{\bsm{\tau}}=\begin{bmatrix}
 	\liehat{\bsm\theta}&\bsm{\rho}\\
 	\bsm{0}&0
 	\end{bmatrix}\in\mathfrak{se}(3)
@@ -934,6 +934,194 @@
 		\bsm{I}_3&-\skewmat{\bsm{R}\cdot\bsm{p}+\bsm{t}}
 		\end{bmatrix}
 	\end{equation}
+	
+	
+	\section{\normf 单位复数二维旋转}
+	有：
+	\begin{equation}
+	\bsm{z}=\cos\theta+i\cdot\sin\theta\Rightarrow\begin{bmatrix}
+	\cos\theta\\\sin\theta
+	\end{bmatrix}=\begin{bmatrix}
+			z_x\\z_y
+			\end{bmatrix}
+	\qquad
+	\bsm{z}^{-1}=\bsm{z}^*=\cos\theta-i\cdot\sin\theta\Rightarrow\begin{bmatrix}
+		\cos\theta\\-\sin\theta
+		\end{bmatrix}=\begin{bmatrix}
+					z_x\\-z_y
+					\end{bmatrix}
+	\end{equation}
+	乘法运算(将复数乘法转换为矩阵乘法)：
+	\begin{equation}
+	\bsm{z}_1=\cos\theta_1+i\cdot\sin\theta_1
+	\qquad
+	\bsm{z}_2=\cos\theta_2+i\cdot\sin\theta_2
+	\end{equation}
+	\begin{equation}
+	\bsm{z}_1\circ\bsm{z}_2=\left(\cos\theta_1\cos\theta_2-\sin\theta_1\sin\theta_2
+	\right)+i\cdot \left(\cos\theta_1\sin\theta_2+\sin\theta_1\cos\theta_2 \right) 
+	\end{equation}
+	\begin{equation}
+	\bsm{z}_1\circ\bsm{z}_2=\begin{bmatrix}
+	\cos\theta_1&-\sin\theta_1\\
+	\sin\theta_1&\cos\theta_1
+	\end{bmatrix}\begin{bmatrix}
+	\cos\theta_2\\\sin\theta_2
+	\end{bmatrix}=\mathcal{L}(\bsm{z}_1)\cdot\bsm{z}_2
+	\Rightarrow\begin{bmatrix}
+		\cos\theta_2&-\sin\theta_2\\
+		\sin\theta_2&\cos\theta_2
+		\end{bmatrix}\begin{bmatrix}
+		\cos\theta_1\\\sin\theta_1
+		\end{bmatrix}=\mathcal{R}(\bsm{z}_2)\cdot\bsm{z}_1
+	\end{equation}
+	所以有右扰动雅克比：
+	\begin{equation}
+	\bsm{J}^{\bsm{z}}_{\theta}=\frac{\partial \left( \bsm{z}\circ\delta\bsm{z}-\bsm{z}\right) }{\partial \theta}
+	=\frac{\partial \left( \mathcal{L}(\bsm{z})\cdot\left( \delta\bsm{z}-\bsm{1}\right) \right) }{\partial \theta}
+	=\frac{\partial \left( \mathcal{L}(\bsm{z})\cdot\left( \begin{bmatrix}
+	1\\\theta
+	\end{bmatrix}-\begin{bmatrix}
+		1\\0
+		\end{bmatrix}\right) \right) }{\partial \theta}
+	=\mathcal{L}(\bsm{z})\cdot\begin{bmatrix}
+			0\\1
+			\end{bmatrix}
+	=\begin{bmatrix}
+				-\sin\theta\\\cos\theta
+				\end{bmatrix}
+	\end{equation}
+	左扰动雅克比：
+	\begin{equation}
+	\bsm{J}^{\bsm{z}}_{\theta}=\frac{\partial \left( \delta\bsm{z}\circ\bsm{z}-\bsm{z}\right) }{\partial \theta}
+	=\frac{\partial \left( \mathcal{R}(\bsm{z})\cdot\left( \delta\bsm{z}-\bsm{1}\right) \right) }{\partial \theta}
+	=\mathcal{R}(\bsm{z})\cdot\begin{bmatrix}
+			0\\1
+			\end{bmatrix}
+	=\begin{bmatrix}
+				-\sin\theta\\\cos\theta
+				\end{bmatrix}
+	\end{equation}
+	对向量$\bsm{v}$进行旋转，有：
+	\begin{equation}
+	\begin{bmatrix}
+	0\\\bsm{v}^\prime
+	\end{bmatrix}=\bsm{z}\circ\begin{bmatrix}
+	0\\\bsm{v}
+	\end{bmatrix}\circ\bsm{z}^*
+	\end{equation}
+	
+	\section{\normf 单位四元数三维旋转}
+	有：
+	\begin{equation}
+	\bsm{q}=\cos(\theta/2) +\bsm{u}\cdot\sin(\theta/2)\Rightarrow\begin{bmatrix}
+	\cos(\theta/2)\\\bsm{u}\cdot\sin(\theta/2)
+	\end{bmatrix}=\begin{bmatrix}
+			w\\\bsm{v}
+			\end{bmatrix}
+	\qquad
+	\bsm{z}^{-1}=\bsm{z}^*\Rightarrow\begin{bmatrix}
+		\cos(\theta/2)\\-\bsm{u}\cdot\sin(\theta/2)
+		\end{bmatrix}=\begin{bmatrix}
+								w\\-\bsm{v}
+								\end{bmatrix}
+	\end{equation}
+	乘法运算(将四元数乘法转换为矩阵乘法)：
+	\begin{equation}
+	\bsm{q}_1\circ\bsm{q}_2=\begin{bmatrix}
+	w_1&-\bsm{v}_1^\top\\\bsm{v}_1&
+	w_1\cdot\bsm{I}_3+\skewmat{\bsm{v}_1}
+	\end{bmatrix}=\mathcal{L}(\bsm{q}_1)\cdot\bsm{q}_2
+	\Rightarrow
+	\begin{bmatrix}
+	w_2&-\bsm{v}_2^\top\\\bsm{v}_2&
+	w_2\cdot\bsm{I}_3-\skewmat{\bsm{v}_2}
+	\end{bmatrix}=\mathcal{R}(\bsm{q}_2)\cdot\bsm{q}_1
+	\end{equation}
+	所以有右扰动雅克比：
+	\begin{equation}
+	\bsm{J}^{\bsm{q}}_{\bsm{\theta}}=\frac{\partial \left( \bsm{q}\circ\delta\bsm{q}-\bsm{q}\right) }{\partial \bsm{\theta}}
+	=\frac{\partial \left( \mathcal{L}(\bsm{q})\cdot\left( \delta\bsm{q}-\bsm{1}\right) \right) }{\partial \bsm{\theta}}
+	=\frac{\partial \left( \mathcal{L}(\bsm{q})\cdot\left( \begin{bmatrix}
+	1\\\bsm{\theta}/2
+	\end{bmatrix}-\begin{bmatrix}
+		1\\\bsm{0}_{3\times 1}
+		\end{bmatrix}\right) \right) }{\partial \theta}
+	=\frac{1}{2}\cdot\mathcal{L}(\bsm{q})\cdot\begin{bmatrix}
+			\bsm{0}_{1\times 3}\\\bsm{I}_3
+			\end{bmatrix}
+	\end{equation}
+	左扰动雅克比：
+	\begin{equation}
+	^\mathcal{E}\bsm{J}^{\bsm{q}}_{\bsm{\theta}}=\frac{\partial \left( \delta\bsm{q}\circ\bsm{q}-\bsm{q}\right) }{\partial \bsm{\theta}}
+	=\frac{\partial \left( \mathcal{R}(\bsm{q})\cdot\left( \delta\bsm{q}-\bsm{1}\right) \right) }{\partial \bsm{\theta}}
+	=\frac{1}{2}\cdot\mathcal{R}(\bsm{q})\cdot\begin{bmatrix}
+			\bsm{0}_{1\times 3}\\\bsm{I}_3
+			\end{bmatrix}
+	\end{equation}
+	对向量$\bsm{v}$进行旋转，有：
+	\begin{equation}
+	\begin{bmatrix}
+		0\\\bsm{v}^\prime
+		\end{bmatrix}=\bsm{q}\circ\begin{bmatrix}
+	0\\\bsm{v}
+	\end{bmatrix}\circ\bsm{q}^*
+	\end{equation}
+	对应的雅可比：
+	\begin{equation}
+	\begin{aligned}
+		\bsm{J}^{\bsm{q}\cdot\bsm{v}}_{\bsm{q}}=
+		\bsm{J}^{\bsm{q}\circ\bsm{v}\circ\bsm{q}^{*}}_{\bsm{q}}&=
+		\frac{\partial \begin{bmatrix}
+		\bsm{0}_{3\times 1}&\bsm{I}_3
+		\end{bmatrix}\cdot\mathcal{R}(\bsm{q}^*)\cdot\mathcal{R}\left(\begin{bmatrix}
+		0\\\bsm{v}
+		\end{bmatrix} \right)\cdot\bsm{q} }{\partial \bsm{q}}
+		+
+		\frac{\partial \begin{bmatrix}
+		\bsm{0}_{3\times 1}&\bsm{I}_3
+		\end{bmatrix}\cdot\mathcal{L}\left( \mathcal{R}\left(\begin{bmatrix}
+		0\\\bsm{v}
+		\end{bmatrix} \right)\cdot\bsm{q}\right) \cdot\bsm{q}^* }{\partial \bsm{q}^*}
+		\cdot\frac{\partial \bsm{q}^*}{\partial \bsm{q}}
+		\\&=\begin{bmatrix}
+				\bsm{0}_{3\times 1}&\bsm{I}_3
+				\end{bmatrix}\cdot\mathcal{R}(\bsm{q}^*)\cdot\mathcal{R}\left(\begin{bmatrix}
+				0\\\bsm{v}
+				\end{bmatrix} \right)+
+			\begin{bmatrix}
+					\bsm{0}_{3\times 1}&\bsm{I}_3
+					\end{bmatrix}\cdot\mathcal{L}\left( \mathcal{R}\left(\begin{bmatrix}
+					0\\\bsm{v}
+					\end{bmatrix} \right)\cdot\bsm{q}\right)
+					\cdot
+					\begin{bmatrix}
+							1&\bsm{0}\\
+							\bsm{0}&-\bsm{I}_3
+							\end{bmatrix}
+	\end{aligned}
+	\end{equation}
+	连续旋转：
+	\begin{equation}
+	\bsm{J}^{\bsm{q}^{*}}_{\bsm{q}}=
+	\frac{\partial \begin{bmatrix}
+	w\\-\bsm{v}
+	\end{bmatrix}}{\partial \begin{bmatrix}
+		w\\\bsm{v}
+		\end{bmatrix}}=\begin{bmatrix}
+		1&\bsm{0}\\
+		\bsm{0}&-\bsm{I}_3
+		\end{bmatrix}
+	\qquad
+	\bsm{J}^{\bsm{q}\circ\bsm{p}}_{\bsm{q}}=
+	\frac{\partial \mathcal{R}(\bsm{p})\cdot\bsm{q}}{\partial \bsm{q}}=\mathcal{R}(\bsm{p})
+	\qquad
+	\bsm{J}^{\bsm{p}\circ\bsm{q}}_{\bsm{q}}=
+	\frac{\partial \mathcal{L}(\bsm{p})\cdot\bsm{q}}{\partial \bsm{q}}=\mathcal{L}(\bsm{p})
+	\end{equation}
+	
+	
+	
 	
 	\newpage
 	\bibliographystyle{IEEEtran}
