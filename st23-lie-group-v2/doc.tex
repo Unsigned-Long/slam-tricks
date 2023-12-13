@@ -240,6 +240,64 @@
 	\cdot\bsm{Ad}_{\mathcal{X}}^{-1}
 	\end{equation}
 	\end{enumerate}
+	
+	\item 流形的雅克比：
+	\begin{enumerate}
+	\item 流形$\mathcal{M}$的右雅克比定义为李群$\mathcal{X}=\Exp{\bsm\tau}$的右雅克比：
+	\begin{equation}
+	\bsm{J}_r(\bsm\tau)=\frac{^{\bsm{\tau}}D\Exp{\bsm\tau}}{D\bsm\tau}\in\mathbb{R}^{m\times m}
+	\end{equation}
+	有常用性质：
+	\begin{equation}
+	\begin{aligned}
+		\Exp{\bsm{\tau}+\delta\bsm{\tau}}&\approx\Exp{\bsm\tau}\circ\Exp{\bsm{J}_r(\bsm\tau)\delta\bsm{\tau}}
+		\\
+		\Exp{\bsm\tau}\circ\Exp{\delta\bsm\tau}&\approx\Exp{\bsm{\tau}+\bsm{J}_r^{-1}(\bsm\tau)\delta\bsm{\tau}}
+		\\
+		\Log{\Exp{\bsm\tau}\circ\Exp{\delta\bsm\tau}}&\approx\bsm{\tau}+\bsm{J}_r^{-1}(\bsm\tau)\delta\bsm{\tau}
+	\end{aligned}
+	\end{equation}	
+	
+	\item 流形$\mathcal{M}$的左雅克比定义为李群$\mathcal{X}=\Exp{\bsm\tau}$的左雅克比：
+		\begin{equation}
+		\bsm{J}_l(\bsm\tau)=\frac{^\mathcal{E}D\Exp{\bsm\tau}}{D\bsm\tau}\in\mathbb{R}^{m\times m}
+		\end{equation}
+	有常用性质：
+	\begin{equation}
+	\begin{aligned}
+		\Exp{\bsm{\tau}+\delta\bsm{\tau}}&\approx\Exp{\bsm{J}_l(\bsm\tau)\delta\bsm{\tau}}\circ\Exp{\bsm\tau}
+		\\
+		\Exp{\delta\bsm\tau}\circ\Exp{\bsm\tau}&\approx\Exp{\bsm{\tau}+\bsm{J}_l^{-1}(\bsm\tau)\delta\bsm{\tau}}
+		\\
+		\Log{\Exp{\delta\bsm\tau}\circ\Exp{\bsm\tau}}&\approx\bsm{\tau}+\bsm{J}_l^{-1}(\bsm\tau)\delta\bsm{\tau}
+	\end{aligned}
+	\end{equation}	
+	
+	\item 对于两者，有：
+	\begin{equation}
+	\bsm{Ad}_{\Exp{\bsm{\tau}}}=\bsm{J}_l(\bsm\tau)\cdot\bsm{J}_r^{-1}(\bsm\tau)
+	\end{equation}
+	\begin{equation}
+	\bsm{J}_r(-\bsm\tau)=\bsm{J}^{\Exp{-\bsm\tau}}_{-\bsm\tau}
+	=\bsm{J}^{\Exp{\bsm\tau}^{-1}}_{\bsm\tau}\cdot\bsm{J}^{\bsm\tau}_{-\bsm\tau}
+	=-\bsm{J}^{\Exp{\bsm\tau}^{-1}}_{\Exp{\bsm\tau}}\cdot\bsm{J}^{\Exp{\bsm\tau}}_{\bsm\tau}\cdot\bsm{I}
+	=\bsm{Ad}_{\Exp{\bsm{\tau}}}\cdot\bsm{J}_r(\bsm\tau)=\bsm{J}_l(\bsm\tau)
+	\end{equation}
+	
+	\item 另有：
+	\begin{equation}
+	\begin{aligned}
+	^\mathcal{X}\bsm{J}^{\Log{\mathcal{X}}}_{\mathcal{\mathcal{X}}}&=
+	\frac{\partial \left( \Log{\Exp{\bsm\tau}\circ\Exp{\delta\bsm\tau}}-\Log{\Exp{\bsm\tau}}\right)}{\partial \delta\bsm{\tau}}
+	\\
+	&=\frac{\partial \left( \bsm{\tau}+\bsm{J}_r^{-1}(\bsm\tau)\delta\bsm{\tau}-\bsm\tau\right)}{\partial \delta\bsm{\tau}}=\bsm{J}_r^{-1}(\bsm\tau)
+	\end{aligned}
+	\qquad
+	^\mathcal{E}\bsm{J}^{\Log{\mathcal{X}}}_{\mathcal{\mathcal{X}}}
+	=\bsm{J}_l^{-1}(\bsm\tau)
+	\end{equation}
+	\end{enumerate}
+	
 	\end{enumerate}
 	
 	\section{\normf 常用的雅克比}
