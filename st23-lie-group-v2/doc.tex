@@ -72,6 +72,7 @@
 
 \newcommand\bsm[1]{\boldsymbol{\mathrm{#1}}}
 \newcommand\rotation[2]{{\bsm{R}_{#1}^{#2}}}
+\newcommand\quaternion[2]{{\bsm{q}_{#1}^{#2}}}
 \newcommand\angvel[2]{{\bsm{\omega}_{#1}^{#2}}}
 \newcommand\translation[2]{{\bsm{p}_{#1}^{#2}}}
 \newcommand\translationhat[2]{{\hat{\bsm{p}}_{#1}^{#2}}}
@@ -1125,40 +1126,6 @@
 	0\\\bsm{v}
 	\end{bmatrix}\circ\bsm{q}^*
 	\end{equation}
-	对应的雅可比：
-	\begin{equation}
-	\begin{aligned}
-		\bsm{J}^{\bsm{q}\cdot\bsm{v}}_{\bsm{q}}=
-		\bsm{J}^{\bsm{q}\circ\bsm{v}\circ\bsm{q}^{*}}_{\bsm{q}}&=
-		\frac{\partial \begin{bmatrix}
-		\bsm{0}_{3\times 1}&\bsm{I}_3
-		\end{bmatrix}\cdot\mathcal{R}(\bsm{q}^*)\cdot\mathcal{R}\left(\begin{bmatrix}
-		0\\\bsm{v}
-		\end{bmatrix} \right)\cdot\bsm{q} }{\partial \bsm{q}}
-		+
-		\frac{\partial \begin{bmatrix}
-		\bsm{0}_{3\times 1}&\bsm{I}_3
-		\end{bmatrix}\cdot\mathcal{L}\left( \mathcal{R}\left(\begin{bmatrix}
-		0\\\bsm{v}
-		\end{bmatrix} \right)\cdot\bsm{q}\right) \cdot\bsm{q}^* }{\partial \bsm{q}^*}
-		\cdot\frac{\partial \bsm{q}^*}{\partial \bsm{q}}
-		\\&=\begin{bmatrix}
-				\bsm{0}_{3\times 1}&\bsm{I}_3
-				\end{bmatrix}\cdot\mathcal{R}(\bsm{q}^*)\cdot\mathcal{R}\left(\begin{bmatrix}
-				0\\\bsm{v}
-				\end{bmatrix} \right)+
-			\begin{bmatrix}
-					\bsm{0}_{3\times 1}&\bsm{I}_3
-					\end{bmatrix}\cdot\mathcal{L}\left( \mathcal{R}\left(\begin{bmatrix}
-					0\\\bsm{v}
-					\end{bmatrix} \right)\cdot\bsm{q}\right)
-					\cdot
-					\begin{bmatrix}
-							1&\bsm{0}\\
-							\bsm{0}&-\bsm{I}_3
-							\end{bmatrix}
-	\end{aligned}
-	\end{equation}
 	连续旋转：
 	\begin{equation}
 	\bsm{J}^{\bsm{q}^{*}}_{\bsm{q}}=
@@ -1178,8 +1145,62 @@
 	\frac{\partial \mathcal{L}(\bsm{p})\cdot\bsm{q}}{\partial \bsm{q}}=\mathcal{L}(\bsm{p})
 	\end{equation}
 	
-	
-	
+	\section{\normf 应用案例：预积分}
+	\normf
+		IMU的坐标系记为$\coordframe{b}$，世界坐标系记为$\coordframe{w}$，则有：
+		\begin{equation}
+		\begin{aligned}
+		\bsm{a}_\tau&=\rotation{b_\tau}{w} ^\top\cdot\left(
+		\linacce{b_\tau}{w}-\gravity{w}
+		\right) 
+		\\
+		\bsm{\omega}_\tau&=\rotation{b_\tau}{w} ^\top\cdot\angvel{b_\tau}{w}
+		\end{aligned}
+		\end{equation}
+		$\bsm{a}_\tau$和$\bsm{\omega}_\tau$为$\tau$时刻IMU的理想输出，$\linacce{b_\tau}{w}$和$\angvel{b_\tau}{w}$为$\tau$时刻$\coordframe{b}$相对于$\coordframe{w}$的线加速度和角速度，表达在$\coordframe{w}$下。
+		通过变换，得到：
+		\begin{equation}
+		\begin{aligned}
+		\linacce{b_\tau}{w}&=\rotation{b_\tau}{w} \cdot \bsm{a}_\tau+\gravity{w}
+		\\
+		\angvel{b_\tau}{w}&=\rotation{b_\tau}{w}\cdot\bsm{\omega}_\tau
+		\end{aligned}
+		\end{equation}
+		对于速度和位置，通过积分得到：
+		\begin{equation}
+		\begin{aligned}
+			\linvel{b_{k+1}}{w}&=\linvel{b_{k}}{w}+\gravity{w}\cdot\Delta\tau
+			+\int_{\tau_{k}}^{\tau_{k+1}}
+			\rotation{b_t}{w} \cdot \bsm{a}_t \cdot dt
+			\\
+			\translation{b_{k+1}}{w}&=\translation{b_{k}}{w}
+			+\linvel{b_{k}}{w}\cdot\Delta\tau
+			+\frac{1}{2}\cdot\gravity{w}\cdot\Delta\tau^2+\iint_{\tau_{k}}^{\tau_{k+1}}
+			\rotation{b_t}{w} \cdot \bsm{a}_t \cdot dt^2
+		\end{aligned}
+		\end{equation}
+		对于姿态，使用右扰动模型，得到四元素的姿态微分方程：
+		\begin{equation}
+		\dot{\bsm{q}}_{b_\tau}^{w}=\lim_{\delta \tau\to 0}\frac{\quaternion{b}{w}(\tau+\delta\tau)-\quaternion{b}{w}(\tau)}{\delta \tau}
+		=\quaternion{b}{w}(\tau)\circ\begin{bmatrix}
+		0\\
+		\begin{aligned}
+		\frac{1}{2}\cdot\bsm{\omega}_\tau
+		\end{aligned}
+		\end{bmatrix}
+		=\frac{1}{2}\cdot\mathcal{R}\left(\begin{bmatrix}
+				0\\
+				\bsm{\omega}_\tau
+				\end{bmatrix}\right) \cdot\quaternion{b_\tau}{w}
+		\end{equation}
+		所以有：
+		\begin{equation}
+		\quaternion{b_{k+1}}{w}=\quaternion{b_k}{w}\circ
+					 \int_{\tau_{k}}^{\tau_{k+1}}\frac{1}{2}\cdot\mathcal{R}\left( \begin{bmatrix}
+					 		0\\
+					 		\bsm{\omega}_\tau
+					 		\end{bmatrix}\right) \cdot\quaternion{b_\tau}{b_k}\cdot dt
+		\end{equation}
 	
 	\newpage
 	\bibliographystyle{IEEEtran}
